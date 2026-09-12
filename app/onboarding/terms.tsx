@@ -14,11 +14,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 
+import { useAuth } from '../_layout';
+
 export default function TermsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [accepted, setAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { refreshProfile } = useAuth();
 
   const handleAccept = async () => {
     setLoading(true);
@@ -27,8 +30,9 @@ export default function TermsScreen() {
       if (user) {
         await supabase
           .from('profiles')
-          .upsert({ id: user.id, terms_accepted: true })
+          .update({ terms_accepted: true })
           .eq('id', user.id);
+        await refreshProfile();
       }
     } catch (e) {
       console.log('terms update error', e);

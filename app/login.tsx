@@ -12,7 +12,7 @@ import { Image } from 'react-native';
 const { width } = Dimensions.get('window');
 
 WebBrowser.maybeCompleteAuthSession();
-const redirectTo = Linking.createURL('login');
+const redirectTo = Linking.createURL('login', { scheme: 'exp' });
 
 function queryParamsFromUrl(url: string) {
   const hashIndex = url.indexOf('#');

@@ -28,8 +28,7 @@ interface Message {
   created_at: string;
 }
 
-import AjakMainSheet from '../../components/AjakMainSheet';
-import SparingInviteCard from '../../components/SparingInviteCard';
+import { AjakMainTrigger, AjakMainModal, SparingTicketBubble } from '../../components/AjakMainWidget';
 
 // Dummy list of positive chemistry snippets to rotate
 const CHEMISTRY_MESSAGES = [
@@ -117,7 +116,7 @@ export default function ChatScreen() {
     }, 100);
   };
 
-  const handleSendSparingInvite = async (inviteData: any) => {
+  const handleSendSparingInvite = async (inviteData: { sport: string; venue: string; dateTime: string }) => {
     if (!currentUserId) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
@@ -130,9 +129,8 @@ export default function ChatScreen() {
       metadata: {
         invite_id: 'temp-' + Date.now(), // Will be real UUID after db insert
         sport: inviteData.sport,
-        venue_name: inviteData.venue_name,
-        scheduled_at: inviteData.scheduled_at,
-        note: inviteData.note,
+        venue_name: inviteData.venue,
+        scheduled_at: inviteData.dateTime,
         status: 'pending'
       },
       created_at: new Date().toISOString()
@@ -153,14 +151,12 @@ export default function ChatScreen() {
     if (item.type === 'sparing_invite' && item.metadata) {
       return (
         <View style={[styles.messageBubbleContainer, isMe ? styles.myMessageContainer : styles.theirMessageContainer]}>
-          <SparingInviteCard
-            inviteId={item.metadata.invite_id}
+          <SparingTicketBubble
             sport={item.metadata.sport}
-            venueName={item.metadata.venue_name}
-            scheduledAt={item.metadata.scheduled_at}
+            venue={item.metadata.venue_name}
+            dateTime={item.metadata.scheduled_at}
             status={item.metadata.status}
-            isReceiver={!isMe}
-            note={item.metadata.note}
+            isSender={isMe}
             onAccept={() => console.log('Accept invite')}
             onDecline={() => console.log('Decline invite')}
           />
@@ -223,16 +219,10 @@ export default function ChatScreen() {
         />
       )}
 
+      <AjakMainTrigger onPress={() => setShowAjakSheet(true)} />
       <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <TouchableOpacity style={styles.attachBtn}>
           <Ionicons name="add" size={24} color={Colors.textSecondary} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.ajakMainBtn}
-          onPress={() => setShowAjakSheet(true)}
-        >
-          <Ionicons name="calendar-sharp" size={22} color={Colors.primary} />
         </TouchableOpacity>
         
         <TextInput
@@ -253,11 +243,10 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </View>
 
-      <AjakMainSheet 
+      <AjakMainModal 
         visible={showAjakSheet} 
         onClose={() => setShowAjakSheet(false)} 
-        onSend={handleSendSparingInvite}
-        partnerName={name as string}
+        onSubmit={handleSendSparingInvite}
       />
     </KeyboardAvoidingView>
   );

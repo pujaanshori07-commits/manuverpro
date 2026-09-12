@@ -33,7 +33,7 @@ const PRESET_SPORTS: SportItem[] = [
   { id: 'cycling', name: 'Cycling', icon: 'bicycle-outline' },
   { id: 'swimming', name: 'Renang', icon: 'water-outline' },
   { id: 'boxing', name: 'Boxing', icon: 'fitness-outline' },
-  { id: 'volleyball', name: 'Voli', icon: 'volleyball-outline' },
+  { id: 'volleyball', name: 'Voli', icon: 'basketball-outline' },
   { id: 'calisthenics', name: 'Calisthenics', icon: 'pulse-outline' },
 ];
 

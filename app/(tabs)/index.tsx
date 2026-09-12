@@ -29,6 +29,7 @@ import Animated, {
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import MultiPhotoCard from '../../components/MultiPhotoCard';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
@@ -283,71 +284,23 @@ export default function DiscoverScreen() {
             {/* Active Swiping Card */}
             <GestureDetector gesture={panGesture}>
               <Animated.View style={[styles.card, animatedCardStyle]}>
-                <Image
-                  source={{ uri: currentProfile.foto_url }}
-                  style={styles.cardImage}
-                  resizeMode="cover"
+                <MultiPhotoCard
+                  photos={[currentProfile.foto_url, currentProfile.foto_url]}
+                  name={currentProfile.nama}
+                  age={currentProfile.umur || 24}
+                  location={currentProfile.alamat || 'Jakarta'}
+                  distance={currentProfile.jarak || '3 km away'}
+                  sports={currentProfile.hobi || ['Badminton', 'Gym']}
+                  bio={currentProfile.bio}
                 />
 
                 {/* LIKE / PASS Visual Feedback Stamps */}
-                <Animated.View style={[styles.stampBadge, styles.likeBadge, likeStampStyle]}>
+                <Animated.View style={[styles.stampBadge, styles.likeBadge, likeStampStyle]} pointerEvents="none">
                   <Text style={styles.likeBadgeText}>LIKE</Text>
                 </Animated.View>
-                <Animated.View style={[styles.stampBadge, styles.passBadge, passStampStyle]}>
+                <Animated.View style={[styles.stampBadge, styles.passBadge, passStampStyle]} pointerEvents="none">
                   <Text style={styles.passBadgeText}>PASS</Text>
                 </Animated.View>
-
-                {/* Full-bleed Gradient Overlay */}
-                <LinearGradient
-                  colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.95)']}
-                  locations={[0.3, 0.7, 1.0]}
-                  style={styles.cardGradient}
-                >
-                  <View style={styles.cardInfo}>
-                    {/* 1. Name & age */}
-                    <View style={styles.nameRow}>
-                      <Text style={styles.profileName}>
-                        {currentProfile.nama}, {currentProfile.umur}
-                      </Text>
-                      <View style={styles.verifiedCheck}>
-                        <Ionicons name="checkmark-sharp" size={12} color={Colors.white} />
-                      </View>
-                    </View>
-
-                    {/* 2. Sport tags — immediately below the name, first thing after the face */}
-                    {currentProfile.hobi && currentProfile.hobi.length > 0 && (
-                      <View style={styles.sportTagsRow}>
-                        {currentProfile.hobi.slice(0, 3).map((item, idx) => (
-                          <View key={idx} style={styles.sportTag}>
-                            <Ionicons name="fitness" size={12} color="#FFFFFF" />
-                            <Text style={styles.sportTagText}>{item}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-
-                    {/* 3. Bio */}
-                    {currentProfile.bio ? (
-                      <Text style={styles.bioText} numberOfLines={2}>
-                        {currentProfile.bio}
-                      </Text>
-                    ) : null}
-
-                    {/* 4. Favorite venue pill */}
-                    <View style={styles.venuePill}>
-                      <Ionicons name="location-sharp" size={12} color="#FF5A1F" />
-                      <Text style={styles.venuePillText} numberOfLines={1}>
-                        Sering latihan di: {currentProfile.alamat || 'GBK Senayan'}
-                      </Text>
-                    </View>
-
-                    {/* 5. Distance */}
-                    <View style={styles.locationRow}>
-                      <Ionicons name="navigate-outline" size={13} color="#B7BCCB" />
-                      <Text style={styles.locationText}>{currentProfile.jarak || '3 km away'}</Text>
-                    </View>
-                  </View>
-                </LinearGradient>
               </Animated.View>
             </GestureDetector>
 

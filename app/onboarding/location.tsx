@@ -14,7 +14,8 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
-
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../_layout';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function LocationPermissionScreen() {
@@ -22,12 +23,30 @@ export default function LocationPermissionScreen() {
   const router = useRouter();
   const [requesting, setRequesting] = useState(false);
 
+  const { refreshProfile } = useAuth();
+
+  const markOnboardingComplete = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ location_asked: true, onboarding_complete: true })
+          .eq('id', user.id);
+        await refreshProfile();
+      }
+    } catch (e) {
+      console.log('Failed to update onboarding status', e);
+    }
+  };
+
   const handleEnableLocation = async () => {
     try {
       setRequesting(true);
       // Optional: hook into expo-location (Location.requestForegroundPermissionsAsync)
       // For now, simulate rapid authorization & route to main app
-      setTimeout(() => {
+      setTimeout(async () => {
+        await markOnboardingComplete();
         setRequesting(false);
         router.replace('/(tabs)/');
       }, 700);
@@ -37,7 +56,8 @@ export default function LocationPermissionScreen() {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    await markOnboardingComplete();
     router.replace('/(tabs)/');
   };
 

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,14 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import MatchExpiryAvatar from '../../components/MatchExpiryAvatar';
 
 interface MatchUser {
   id: string;
   name: string;
   avatar: string;
   isNew?: boolean;
+  hoursRemaining?: number;
 }
 
 interface ConversationItem {
@@ -137,11 +139,16 @@ export default function MatchesScreen() {
         const partner = m.user_a_id === currentUserId ? m.user_b : m.user_a;
         if (!partner) continue;
 
+        const matchDate = new Date(m.created_at);
+        const diffHours = Math.floor((Date.now() - matchDate.getTime()) / (1000 * 60 * 60));
+        const hoursRemaining = Math.max(0, 48 - diffHours);
+
         parsedMatches.push({
           id: partner.id,
           name: partner.nama || 'Partner',
           avatar: partner.foto_url || DEMO_NEW_MATCHES[0].avatar,
           isNew: true,
+          hoursRemaining,
         });
 
         parsedConversations.push({
@@ -234,20 +241,13 @@ export default function MatchesScreen() {
                 contentContainerStyle={styles.newMatchesList}
               >
                 {newMatches.map((item) => (
-                  <TouchableOpacity
+                  <MatchExpiryAvatar
                     key={item.id}
-                    style={styles.avatarCard}
+                    avatarUrl={item.avatar}
+                    name={item.name}
+                    hoursRemaining={item.hoursRemaining || 47}
                     onPress={() => openChat(item.id, item.name, item.avatar)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.avatarRing}>
-                      <Image source={{ uri: item.avatar }} style={styles.newMatchAvatar} />
-                      {item.isNew && <View style={styles.unreadDot} />}
-                    </View>
-                    <Text style={styles.newMatchName} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 ))}
               </ScrollView>
             </View>

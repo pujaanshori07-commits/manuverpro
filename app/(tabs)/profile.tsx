@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import ReliabilityBadge from '../../components/ReliabilityBadge';
 
 interface ProfileData {
   nama: string;
@@ -185,6 +186,9 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
               <Text style={styles.photoHint}>Tap untuk mengubah foto</Text>
+              <View style={{ marginTop: 12 }}>
+                <ReliabilityBadge score={98} />
+              </View>
             </View>
 
             {/* Form Inputs */}
