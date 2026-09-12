@@ -1,36 +1,40 @@
 /**
- * Panduan Warna Premium (Light & Dark Mode)
- * Menggunakan palet yang bersih, modern, dan tidak terlalu mencolok (non-generic)
+ * Exact Manuver Design Reference Colors
+ * Primary: Vibrant Manuver Orange
+ * Dark Mode: Deep charcoal/near-black
+ * Light Mode: Warm off-white
  */
 
-export const tintColorLight = '#FF5A2A'; // Vibrant Orange khas Manuver
-export const tintColorDark = '#FF7A59';
+const tintColorLight = '#FF5A2A'; // Manuver Orange
+const tintColorDark = '#FF5A2A';
 
 export const Colors = {
   light: {
     text: '#11181C',
-    textSecondary: '#687076',
-    background: '#FAFAFA',
-    card: '#FFFFFF',
+    secondaryText: '#687076',
+    background: '#F8F9FA', // Warm off-white
+    surface: '#FFFFFF',
+    border: '#EAEAEA',
     tint: tintColorLight,
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconSelected: tintColorLight,
-    border: '#EAEAEA',
-    success: '#34D399',
-    error: '#EF4444',
+    primary: '#FF5A2A',
+    success: '#4CAF50',
+    error: '#F44336',
   },
   dark: {
-    text: '#ECEDEE',
-    textSecondary: '#9BA1A6',
-    background: '#0B0D12',
-    card: '#161921',
+    text: '#FFFFFF',
+    secondaryText: '#A1A1AA',
+    background: '#0B0D12', // Near-black charcoal
+    surface: '#181A20', // Slightly lighter for cards
+    border: '#272A35',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
-    border: '#242833',
-    success: '#10B981',
-    error: '#F87171',
+    primary: '#FF5A2A',
+    success: '#4CAF50',
+    error: '#F44336',
   },
 };

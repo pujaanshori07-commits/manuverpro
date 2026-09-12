@@ -1,9 +1,20 @@
 import { Session } from '@supabase/supabase-js';
-import { Redirect, Stack, useSegments } from 'expo-router';
+import { Redirect, Stack, SplashScreen, useSegments } from 'expo-router';
 import React, { Component, ErrorInfo, ReactNode, createContext, useCallback, useContext, useEffect, useState, useRef } from 'react';
 import { ActivityIndicator, Text, View, Platform, TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import { Montserrat_800ExtraBold_Italic } from '@expo-google-fonts/montserrat';
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from '@expo-google-fonts/poppins';
 import { supabase } from '../lib/supabase';
+
+SplashScreen.preventAutoHideAsync();
 
 type Profile = {
   id: string;
@@ -106,6 +117,21 @@ export default function RootLayout() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [checkingProfile, setCheckingProfile] = useState(true);
   const isMounted = useRef(true);
+
+  // Load fonts dari Lovable theme
+  const [fontsLoaded, fontError] = useFonts({
+    Montserrat_800ExtraBold_Italic,
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -211,14 +237,15 @@ export default function RootLayout() {
   return (
     <RootErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar style="light" />
         <AuthContext.Provider value={{ session, profile, loading, checkingProfile, refreshProfile: fetchProfile }}>
-          <Stack screenOptions={{ headerShown: false }} />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#090A0D' } }} />
           {redirectTo && <Redirect href={redirectTo as any} />}
           
           {/* Loading Overlay to prevent unmounting the Stack context */}
           {(loading || (session && checkingProfile && !profile)) && (
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#0B0D12', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-              <ActivityIndicator size="large" color="#FF5A2A" />
+            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#090A0D', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+              <ActivityIndicator size="large" color="#FF572F" />
             </View>
           )}
         </AuthContext.Provider>

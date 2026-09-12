@@ -422,11 +422,8 @@ export default function EditProfileScreen() {
           numberOfLines={3}
         />
 
-        <Text style={styles.label}>Hobi & Minat</Text>
-        <TextInput style={styles.input} placeholder="Hobi Anda" placeholderTextColor="#666" value={hobi} onChangeText={setHobi} />
-
         {/* Sports Chips */}
-        <Text style={styles.label}>Minat Olahraga</Text>
+        <Text style={styles.label}>Hobi & Olahraga</Text>
         <View style={styles.sportsWrap}>
           {sports.map((sport) => {
             const active = selectedSports.includes(sport.id);
@@ -438,9 +435,12 @@ export default function EditProfileScreen() {
             );
           })}
           <TouchableOpacity style={[styles.sportChip, styles.addSportChip]} onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.addSportChipText}>+ Tambah olahraga lain</Text>
+            <Text style={styles.addSportChipText}>+ Tambah lainnya</Text>
           </TouchableOpacity>
         </View>
+        {selectedSports.length === 0 && (
+          <Text style={styles.sportHint}>Pilih minimal satu olahraga agar kamu muncul di Discover.</Text>
+        )}
 
         {/* Action Button */}
         <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving || uploading}>
@@ -676,33 +676,40 @@ const styles = StyleSheet.create({
   sportChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A1D24',
+    gap: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#2E323A',
-    borderRadius: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     marginBottom: 4,
   },
   sportChipActive: {
-    backgroundColor: '#FF5A2A',
-    borderColor: '#FF5A2A',
+    backgroundColor: 'rgba(255, 90, 31, 0.15)',
+    borderColor: '#FF5A1F',
   },
   sportChipText: {
-    color: '#888A90',
+    color: '#8F94A6',
     fontSize: 13,
     fontWeight: '500',
   },
   sportChipTextActive: {
     color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '600',
+  },
+  sportHint: {
+    fontSize: 12,
+    color: '#8F94A6',
+    marginTop: 6,
   },
   addSportChip: {
     borderStyle: 'dashed',
-    borderColor: '#FF5A2A',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'transparent',
   },
   addSportChipText: {
-    color: '#FF5A2A',
+    color: '#8F94A6',
     fontSize: 13,
     fontWeight: '600',
   },

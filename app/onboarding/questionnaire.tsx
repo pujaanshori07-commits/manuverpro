@@ -1,755 +1,590 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { 
-  View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Dimensions, 
-  ScrollView, TextInput, KeyboardAvoidingView, Platform, Image, Alert
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { supabase } from '../../lib/supabase';
-import { useAuth } from '../_layout';
-import { COLORS, SIZES } from '../../constants/DesignSystem';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { SlideInRight, SlideOutLeft, SlideInLeft, SlideOutRight } from 'react-native-reanimated';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
-import { decode } from 'base64-arraybuffer';
+import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 
-const { width } = Dimensions.get('window');
-const TOTAL_SLIDES = 15;
+interface SportItem {
+  id: string;
+  name: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}
 
+const PRESET_SPORTS: SportItem[] = [
+  { id: 'badminton', name: 'Badminton', icon: 'tennisball-outline' },
+  { id: 'running', name: 'Running', icon: 'walk-outline' },
+  { id: 'gym', name: 'Gym & Fitness', icon: 'barbell-outline' },
+  { id: 'futsal', name: 'Futsal', icon: 'football-outline' },
+  { id: 'basket', name: 'Basket', icon: 'basketball-outline' },
+  { id: 'yoga', name: 'Yoga', icon: 'body-outline' },
+  { id: 'tennis', name: 'Tennis', icon: 'baseball-outline' },
+  { id: 'cycling', name: 'Cycling', icon: 'bicycle-outline' },
+  { id: 'swimming', name: 'Renang', icon: 'water-outline' },
+  { id: 'boxing', name: 'Boxing', icon: 'fitness-outline' },
+  { id: 'volleyball', name: 'Voli', icon: 'volleyball-outline' },
+  { id: 'calisthenics', name: 'Calisthenics', icon: 'pulse-outline' },
+];
 
-const EDUCATION_OPTIONS = ['🎓 Sedang Kuliah', '🎓 Baru Lulus', '📚 Lanjut Studi', '🎓 Pascasarjana', '🌍 Gap Year', '🏫 Pelajar'];
-const WORK_OPTIONS = ['💼 Pegawai Tetap', '💻 Freelancer', '💼 Sambil Kuliah', '🚀 Wirausaha', '🔍 Pencari Kerja'];
+const EXPERIENCE_OPTIONS = ['< 6 bulan', '6 bln–1 thn', '1–3 tahun', '3+ tahun'];
+const GENDER_OPTIONS = ['Pria', 'Wanita', 'Semua'];
+const TIME_OPTIONS = [
+  'Pagi (06-10)',
+  'Siang (10-14)',
+  'Sore (14-18)',
+  'Malam (18-22)',
+];
+const TRAINING_TYPES = ['Santai', 'Serius', 'Kompetisi'];
+const FREQUENCY_OPTIONS = ['1x/minggu', '2-3x/minggu', 'Setiap Hari'];
 
 export default function QuestionnaireScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { session, refreshProfile } = useAuth();
-  
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [saving, setSaving] = useState(false);
-  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
-  
-  // State for all answers
-  const [nama, setNama] = useState('');
-  const [tanggalLahir, setTanggalLahir] = useState(new Date(2000, 0, 10));
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  
-  // Custom date states for Android
-  const [day, setDay] = useState('10');
-  const [month, setMonth] = useState('01');
-  const [year, setYear] = useState('2000');
-  
-  const [negara, setNegara] = useState('Indonesia');
-  const [alamat, setAlamat] = useState('');
-  
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
-  
-  const [sports, setSports] = useState<any[]>([]);
-  const [selectedSports, setSelectedSports] = useState<string[]>([]);
-  const [customSportInput, setCustomSportInput] = useState('');
-  const [showCustomSport, setShowCustomSport] = useState(false);
-  
-  const [skillLevel, setSkillLevel] = useState('');
-  const [hobi, setHobi] = useState<string[]>([]);
-  
-  const [lookingFor1, setLookingFor1] = useState('');
-  const [frequency, setFrequency] = useState('');
-  const [waktu, setWaktu] = useState<string[]>([]);
-  const [kepribadian, setKepribadian] = useState('');
-  const [lookingFor2, setLookingFor2] = useState('');
-  
-  const [selectedBackgrounds, setSelectedBackgrounds] = useState<string[]>([]);
-  
-  const [bio, setBio] = useState('');
 
-  useEffect(() => {
-    fetchSports();
-  }, []);
+  // Section 1: Sports
+  const [selectedSports, setSelectedSports] = useState<string[]>(['badminton', 'running']);
+  const [otherSport, setOtherSport] = useState('');
 
-  const fetchSports = async () => {
-    try {
-      const { data, error } = await supabase.from('sports').select('*');
-      if (!error && data) {
-        setSports(data);
-      }
-    } catch (e) {
-      console.log('No sports table or error fetching sports', e);
-    }
-  };
+  // Section 2: Experience per selected sport
+  const [sportExperience, setSportExperience] = useState<Record<string, string>>({
+    badminton: '1–3 tahun',
+    running: '6 bln–1 thn',
+  });
 
-  const handleCustomSport = async () => {
-  if (!customSportInput.trim()) return;
-  try {
-    setSaving(true);
-    const newSportName = customSportInput.trim();
-    const { data, error } = await supabase.from('sports').insert([{ nama: newSportName, icon: '🏆' }]).select().single();
-    if (error || !data) {
-      throw error || new Error('Gagal menambahkan olahraga baru.');
-    }
-    // Tidak ada lagi fallback ID lokal (local_xxx): karena sport_id di DB
-    // bertipe bigint, ID string palsu tidak pernah bisa benar-benar
-    // tersimpan ke user_sports dan akan bikin seluruh RPC complete_onboarding
-    // gagal saat submit terakhir. Kalau insert gagal, kasih tahu user saja.
-    setSports([...sports, data]);
-    toggleMulti(selectedSports, setSelectedSports, data.id, 5);
-    setShowCustomSport(false);
-    setCustomSportInput('');
-  } catch (e: any) {
-    Alert.alert('Gagal', 'Tidak bisa menambahkan olahraga baru saat ini. Coba pilih dari daftar yang tersedia, atau coba lagi nanti.');
-  } finally {
-    setSaving(false);
-  }
-};
+  // Section 3: Partner Preference
+  const [genderPref, setGenderPref] = useState('Semua');
+  const [minAge, setMinAge] = useState('18');
+  const [maxAge, setMaxAge] = useState('40');
+  const [activeTimes, setActiveTimes] = useState<string[]>(['Sore (14-18)', 'Malam (18-22)']);
+  const [trainingType, setTrainingType] = useState('Santai');
+  const [frequency, setFrequency] = useState('2-3x/minggu');
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
+  // Section 4: Basic Profile
+  const [nickname, setNickname] = useState('');
+  const [myAge, setMyAge] = useState('');
+  const [myHobbies, setMyHobbies] = useState('');
+  const [myBio, setMyBio] = useState('');
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      try {
-        setSaving(true);
-        const uri = result.assets[0].uri;
-        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-        
-        const fileName = `${session?.user.id}-${Date.now()}.jpg`;
-        const { data, error } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, decode(base64), { contentType: 'image/jpeg' });
-          
-        if (error) throw error;
-        
-        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-        setFotoUrl(publicUrl);
-      } catch (error: any) {
-        Alert.alert('Gagal', error.message || 'Gagal mengunggah foto');
-      } finally {
-        setSaving(false);
-      }
-    }
-  };
-
-  const toggleMulti = (arr: string[], setArr: any, item: string, max: number) => {
-    if (arr.includes(item)) {
-      setArr(arr.filter((i) => i !== item));
+  // Handlers
+  const toggleSport = (name: string) => {
+    if (selectedSports.includes(name)) {
+      setSelectedSports(selectedSports.filter((s) => s !== name));
+      const nextExp = { ...sportExperience };
+      delete nextExp[name];
+      setSportExperience(nextExp);
     } else {
-      if (arr.length < max) {
-        setArr([...arr, item]);
-      }
+      setSelectedSports([...selectedSports, name]);
+      setSportExperience({ ...sportExperience, [name]: '< 6 bulan' });
     }
   };
 
-  const goToNextSlide = () => {
-    setDirection('forward');
-    setCurrentSlide(currentSlide + 1);
-  };
-  
-  const goToPrevSlide = () => {
-    setDirection('backward');
-    if (currentSlide === 0) {
-      router.back();
-      return;
+  const handleAddOtherSport = () => {
+    const trimmed = otherSport.trim();
+    if (trimmed && !selectedSports.includes(trimmed)) {
+      setSelectedSports([...selectedSports, trimmed]);
+      setSportExperience({ ...sportExperience, [trimmed]: '< 6 bulan' });
+      setOtherSport('');
     }
-    setCurrentSlide(currentSlide - 1);
   };
 
-  // Navigasi antar slide sekarang murni lokal (tanpa network call).
-// Semua jawaban tersimpan di state React sepanjang flow, baru dikirim
-// sekali ke server saat user menekan tombol selesai di slide terakhir.
-  const handleNext = () => {
-    if (!canProceed() || (!isSkippable && !hasAnswered())) return;
-    goToNextSlide();
-  };
-
-// Menyusun seluruh jawaban onboarding jadi satu payload untuk RPC
-// `complete_onboarding` (lihat file SQL terlampir untuk definisi function-nya).
-  const buildFinalPayload = () => {
-    let isoDate = '';
-    if (Platform.OS === 'android') {
-      isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  const toggleActiveTime = (time: string) => {
+    if (activeTimes.includes(time)) {
+      setActiveTimes(activeTimes.filter((t) => t !== time));
     } else {
-      isoDate = tanggalLahir.toISOString().split('T')[0];
-    }
-
-    const edu = selectedBackgrounds.filter(item => EDUCATION_OPTIONS.includes(item)).join(', ');
-    const work = selectedBackgrounds.filter(item => WORK_OPTIONS.includes(item)).join(', ');
-    const combinedAvail = [frequency, ...waktu].filter(Boolean).join(', ');
-    const combinedLooking = [lookingFor1, lookingFor2].filter(Boolean).join(' | ');
-
-    // CATATAN: di kode lama, slide 10 (kepribadian) dan slide 13 (bio bebas)
-    // sama-sama menulis ke kolom `bio` — karena disimpan berurutan, jawaban
-    // slide 10 selalu tertimpa oleh slide 13 dan tidak pernah benar-benar
-    // tersimpan. Untuk sekarang kita utamakan teks bio bebas (lebih personal),
-    // dan pakai kepribadian sebagai fallback kalau bio dikosongkan/di-skip.
-    const combinedBio = bio || kepribadian;
-
-    // Filter defensif: pastikan hanya ID sport numerik valid yang dikirim ke
-    // RPC (kolom sport_id bertipe bigint di DB). Ini menjaga dari kasus ID
-    // lokal palsu (local_xxx) yang mungkin tersisa di state sebelum fix ini.
-    const numericSportIds = selectedSports
-      .map((id) => Number(id))
-      .filter((id) => Number.isFinite(id));
-
-    return {
-      p_nama: nama || null,
-      p_tanggal_lahir: isoDate || null,
-      p_negara: negara || null,
-      p_alamat: alamat || null,
-      p_foto_url: fotoUrl,
-      p_skill_level: skillLevel || null,
-      p_hobi: hobi.length > 0 ? hobi.join(', ') : null,
-      p_looking_for: combinedLooking || null,
-      p_availability: combinedAvail || null,
-      p_bio: combinedBio || null,
-      p_pendidikan: edu || null,
-      p_pekerjaan: work || null,
-      p_sport_ids: numericSportIds.length > 0 ? numericSportIds : null,
-    };
-  };
-
-  const finishOnboarding = async () => {
-    if (!session) return;
-    setSaving(true);
-    try {
-      // Satu panggilan RPC transaksional: update profil + sinkronisasi
-      // user_sports (delete+insert) + set onboarding_complete=true,
-      // semua dalam satu transaksi Postgres (lihat SQL terlampir).
-      const { error } = await supabase.rpc('complete_onboarding', buildFinalPayload());
-      if (error) throw error;
-      await refreshProfile();
-      router.replace('/(tabs)/' as any);
-    } catch (e: any) {
-      Alert.alert(
-        'Gagal Menyimpan',
-        e.message || 'Terjadi kesalahan saat menyelesaikan onboarding. Coba lagi.'
-      );
-    } finally {
-      setSaving(false);
+      setActiveTimes([...activeTimes, time]);
     }
   };
 
-  const canProceed = () => {
-    switch (currentSlide) {
-      case 0: return nama.trim().length > 0;
-      case 1: 
-        if (Platform.OS === 'android') {
-          const d = parseInt(day);
-          const m = parseInt(month);
-          const y = parseInt(year);
-          if (!d || !m || !y || y > new Date().getFullYear() || y < 1900 || m < 1 || m > 12 || d < 1 || d > 31) return false;
-          const age = new Date().getFullYear() - y;
-          return age >= 16;
-        } else {
-          const age = new Date().getFullYear() - tanggalLahir.getFullYear();
-          return age >= 16;
-        }
-      case 2: return alamat.trim().length > 0;
-      case 4: return selectedSports.length > 0;
-      case 14: return true;
-      default: return true; // Most are skippable, but if they want to click NEXT, we'll check if they selected
-    }
-  };
+  const isAgeInvalid = myAge !== '' && (parseInt(myAge, 10) < 18 || isNaN(parseInt(myAge, 10)));
 
-  const hasAnswered = () => {
-    switch (currentSlide) {
-      case 0: return nama.trim().length > 0;
-      case 1: return true;
-      case 2: return alamat.trim().length > 0;
-      case 3: return !!fotoUrl;
-      case 4: return selectedSports.length > 0;
-      case 5: return !!skillLevel;
-      case 6: return hobi.length > 0;
-      case 7: return !!lookingFor1;
-      case 8: return !!frequency;
-      case 9: return waktu.length > 0;
-      case 10: return !!kepribadian;
-      case 11: return !!lookingFor2;
-      case 12: return selectedBackgrounds.length > 0;
-      case 13: return !!bio;
-      case 14: return true;
-      default: return true;
-    }
+  const handleContinue = () => {
+    if (isAgeInvalid) return;
+    router.push('/onboarding/location');
   };
-
-  const isSkippable = ![0, 1, 2, 4, 14].includes(currentSlide);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        
-        {currentSlide < 14 && (
-          <View style={styles.topBar}>
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBarFill, { width: `${((currentSlide + 1) / 15) * 100}%` }]} />
-            </View>
-            <TouchableOpacity style={styles.backButton} onPress={goToPrevSlide}>
-              <Ionicons name="chevron-back" size={28} color={COLORS.text} />
-            </TouchableOpacity>
-          </View>
-        )}
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-        <View style={{ flex: 1, position: 'relative' }}>
-          <Animated.View
-            key={currentSlide}
-            entering={direction === 'forward' ? SlideInRight.duration(350) : SlideInLeft.duration(350)}
-            exiting={direction === 'forward' ? SlideOutLeft.duration(300) : SlideOutRight.duration(300)}
-            style={StyleSheet.absoluteFill}
+      <View style={[styles.container, { paddingTop: insets.top + Spacing.sm }]}>
+        {/* Top Header & Progress (Step 2 of 3) */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
           >
-            <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 100 }}>
-          {currentSlide === 0 && (
-    <View>
-{/* SLIDE 1 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Siapa namamu?</Text>
-            <Text style={styles.subtitle}>Nama panggilanmu</Text>
-            <TextInput style={styles.input} value={nama} onChangeText={setNama} placeholder="Ketik namamu..." placeholderTextColor={COLORS.secondaryText} autoFocus={currentSlide === 0} />
+            <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
+          </TouchableOpacity>
+
+          <View style={styles.stepProgressRow}>
+            <View style={[styles.stepBar, styles.stepBarDone]} />
+            <View style={[styles.stepBar, styles.stepBarActive]} />
+            <View style={styles.stepBar} />
           </View>
 
-              </View>
-  )}
-
-{currentSlide === 1 && (
-    <View>
-{/* SLIDE 2 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Kapan kamu lahir?</Text>
-            <Text style={styles.subtitle}>Usia minimal 16 tahun.</Text>
-            {Platform.OS === 'android' ? (
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <TextInput 
-                  style={[styles.input, { flex: 1, textAlign: 'center' }]} 
-                  placeholder="DD" 
-                  placeholderTextColor={COLORS.secondaryText}
-                  keyboardType="numeric"
-                  maxLength={2}
-                  value={day}
-                  onChangeText={setDay}
-                />
-                <TextInput 
-                  style={[styles.input, { flex: 1, textAlign: 'center' }]} 
-                  placeholder="MM" 
-                  placeholderTextColor={COLORS.secondaryText}
-                  keyboardType="numeric"
-                  maxLength={2}
-                  value={month}
-                  onChangeText={setMonth}
-                />
-                <TextInput 
-                  style={[styles.input, { flex: 1.5, textAlign: 'center' }]} 
-                  placeholder="YYYY" 
-                  placeholderTextColor={COLORS.secondaryText}
-                  keyboardType="numeric"
-                  maxLength={4}
-                  value={year}
-                  onChangeText={setYear}
-                />
-              </View>
-            ) : (
-              <DateTimePicker
-                value={tanggalLahir}
-                mode="date"
-                display="spinner"
-                onChange={(event, date) => {
-                  if (date) setTanggalLahir(date);
-                }}
-                maximumDate={new Date(new Date().setFullYear(new Date().getFullYear() - 16))}
-                textColor={COLORS.text}
-              />
-            )}
+          <View style={styles.stepCounterWrap}>
+            <Text style={styles.stepCounterText}>2/3</Text>
           </View>
-
-              </View>
-  )}
-
-{currentSlide === 2 && (
-    <View>
-{/* SLIDE 3 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Kamu tinggal di mana?</Text>
-            <Text style={styles.subtitle}>Kota tempat kamu beraktivitas</Text>
-            <TextInput style={styles.input} value={negara} onChangeText={setNegara} placeholder="Negara (Default: Indonesia)" placeholderTextColor={COLORS.secondaryText} />
-            <TextInput style={[styles.input, { marginTop: 16 }]} value={alamat} onChangeText={setAlamat} placeholder="Ketik nama Kota / Area..." placeholderTextColor={COLORS.secondaryText} />
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 3 && (
-    <View>
-{/* SLIDE 4 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Foto profilmu</Text>
-            <Text style={styles.subtitle}>Tambahkan foto agar mudah dikenali</Text>
-            <View style={{ alignItems: 'center', marginTop: 40 }}>
-              <TouchableOpacity style={styles.photoContainer} onPress={pickImage}>
-                {fotoUrl ? (
-                  <Image source={{ uri: fotoUrl }} style={styles.photo} />
-                ) : (
-                  <Ionicons name="camera" size={40} color={COLORS.secondaryText} />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 4 && (
-    <View>
-{/* SLIDE 5 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Olahraga apa yang kamu tekuni?</Text>
-            <Text style={styles.subtitle}>Pilih hingga 5 olahraga.</Text>
-            <ScrollView style={{ marginTop: 20 }}>
-              <View style={styles.chipContainer}>
-                {sports.map(sport => (
-                  <TouchableOpacity 
-                    key={sport.id} 
-                    style={[styles.chip, selectedSports.includes(sport.id) && styles.chipSelected]}
-                    onPress={() => toggleMulti(selectedSports, setSelectedSports, sport.id, 5)}
-                  >
-                    <Text style={[styles.chipText, selectedSports.includes(sport.id) && styles.chipTextSelected]}>
-                      {sport.icon} {sport.nama}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-                
-                {showCustomSport ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, width: '100%' }}>
-                    <TextInput style={[styles.input, { flex: 1, paddingVertical: 8, marginBottom: 0 }]} value={customSportInput} onChangeText={setCustomSportInput} placeholder="Olahraga lain..." placeholderTextColor={COLORS.secondaryText} />
-                    <TouchableOpacity onPress={handleCustomSport} style={{ marginLeft: 8, backgroundColor: COLORS.primary, padding: 12, borderRadius: 12 }}>
-                      <Ionicons name="checkmark" size={20} color={COLORS.text} />
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <TouchableOpacity style={styles.chip} onPress={() => setShowCustomSport(true)}>
-                    <Text style={styles.chipText}>+ Tambah olahraga lain</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </ScrollView>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 5 && (
-    <View>
-{/* SLIDE 6 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Level kemampuanmu?</Text>
-            <Text style={styles.subtitle}>Jujur saja, tidak ada yang menghakimi.</Text>
-            <View style={styles.optionsContainer}>
-              {['🌱 Pemula — masih belajar', '⚡ Menengah — sudah rutin', '🏆 Mahir — kompetitif', '🥇 Pro — level profesional'].map(opt => (
-                <TouchableOpacity key={opt} style={[styles.card, skillLevel === opt && styles.cardSelected]} onPress={() => setSkillLevel(opt)}>
-                  <Text style={[styles.cardText, skillLevel === opt && styles.cardTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 6 && (
-    <View>
-{/* SLIDE 7 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Kamu lebih suka olahraga seperti apa?</Text>
-            <Text style={styles.subtitle}>Pilih maksimal 2 jenis.</Text>
-            <View style={styles.optionsContainer}>
-              {['🏢 Indoor (gym, badminton, tenis meja)', '🌳 Outdoor (lari, sepeda, hiking)', '👥 Tim (futsal, basket, voli)', '🧘 Solo (renang, yoga, kalistenik)'].map(opt => (
-                <TouchableOpacity key={opt} style={[styles.card, hobi.includes(opt) && styles.cardSelected]} onPress={() => toggleMulti(hobi, setHobi, opt, 2)}>
-                  <Text style={[styles.cardText, hobi.includes(opt) && styles.cardTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 7 && (
-    <View>
-{/* SLIDE 8 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Apa tujuan utamamu di Manuver?</Text>
-            <Text style={styles.subtitle}>Bantu kami mencarikan teman yang pas.</Text>
-            <View style={styles.optionsContainer}>
-              {['🏋️ Cari teman latihan rutin', '⚔️ Cari lawan tanding', '👥 Cari tim / grup olahraga', '🌱 Cari teman yang baru mulai olahraga'].map(opt => (
-                <TouchableOpacity key={opt} style={[styles.card, lookingFor1 === opt && styles.cardSelected]} onPress={() => setLookingFor1(opt)}>
-                  <Text style={[styles.cardText, lookingFor1 === opt && styles.cardTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 8 && (
-    <View>
-{/* SLIDE 9 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Seberapa sering kamu berolahraga?</Text>
-            <Text style={styles.subtitle}>Pilih frekuensi olahragamu.</Text>
-            <View style={styles.optionsContainer}>
-              {['🔥 Setiap hari', '💪 3–5x seminggu', '🚶 1–2x seminggu', '🌟 Baru mau mulai'].map(opt => (
-                <TouchableOpacity key={opt} style={[styles.card, frequency === opt && styles.cardSelected]} onPress={() => setFrequency(opt)}>
-                  <Text style={[styles.cardText, frequency === opt && styles.cardTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 9 && (
-    <View>
-{/* SLIDE 10 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Kapan kamu biasanya berolahraga?</Text>
-            <Text style={styles.subtitle}>Pilih maksimal 2 waktu.</Text>
-            <View style={styles.optionsContainer}>
-              {['🌅 Pagi (05.00–09.00)', '☀️ Siang (10.00–14.00)', '🌤️ Sore (15.00–18.00)', '🌙 Malam (19.00–22.00)'].map(opt => (
-                <TouchableOpacity key={opt} style={[styles.card, waktu.includes(opt) && styles.cardSelected]} onPress={() => toggleMulti(waktu, setWaktu, opt, 2)}>
-                  <Text style={[styles.cardText, waktu.includes(opt) && styles.cardTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 10 && (
-    <View>
-{/* SLIDE 11 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Kepribadian olahragamu?</Text>
-            <Text style={styles.subtitle}>Saat sedang berolahraga kamu itu...</Text>
-            <View style={styles.optionsContainer}>
-              {['😊 Santai — yang penting gerak dan ngobrol', '🎯 Serius — fokus target dan progress', '🌊 Fleksibel — tergantung suasana', '🔥 Kompetitif — suka tantangan dan menang'].map(opt => (
-                <TouchableOpacity key={opt} style={[styles.card, kepribadian === opt && styles.cardSelected]} onPress={() => setKepribadian(opt)}>
-                  <Text style={[styles.cardText, kepribadian === opt && styles.cardTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 11 && (
-    <View>
-{/* SLIDE 12 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Yang paling penting dari teman olahraga?</Text>
-            <Text style={styles.subtitle}>Pilih yang paling krusial buatmu.</Text>
-            <View style={styles.optionsContainer}>
-              {['✅ Konsisten & tidak ghosting jadwal', '⚖️ Skill level yang sebanding', '📍 Lokasi yang dekat', '💥 Semangat yang sama'].map(opt => (
-                <TouchableOpacity key={opt} style={[styles.card, lookingFor2 === opt && styles.cardSelected]} onPress={() => setLookingFor2(opt)}>
-                  <Text style={[styles.cardText, lookingFor2 === opt && styles.cardTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 12 && (
-    <View>
-{/* SLIDE 13 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Latar Belakangmu</Text>
-            <Text style={[styles.subtitle, { color: COLORS.text, fontWeight: '500' }]}>Pilih hingga 3 untuk menemukan teman dengan rutinitas serupa.</Text>
-            
-            <View style={{ marginTop: 10 }}>
-              <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold', marginBottom: 16 }}>Pendidikan</Text>
-              <View style={styles.chipContainer}>
-                {EDUCATION_OPTIONS.map(opt => (
-                  <TouchableOpacity 
-                    key={opt}
-                    style={[styles.chip, selectedBackgrounds.includes(opt) && styles.chipSelected, { borderRadius: 30, paddingVertical: 10, paddingHorizontal: 16 }]}
-                    onPress={() => toggleMulti(selectedBackgrounds, setSelectedBackgrounds, opt, 3)}
-                  >
-                    <Text style={[styles.chipText, selectedBackgrounds.includes(opt) && styles.chipTextSelected]}>{opt}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold', marginBottom: 16, marginTop: 32 }}>Pekerjaan</Text>
-              <View style={styles.chipContainer}>
-                {WORK_OPTIONS.map(opt => (
-                  <TouchableOpacity 
-                    key={opt}
-                    style={[styles.chip, selectedBackgrounds.includes(opt) && styles.chipSelected, { borderRadius: 30, paddingVertical: 10, paddingHorizontal: 16 }]}
-                    onPress={() => toggleMulti(selectedBackgrounds, setSelectedBackgrounds, opt, 3)}
-                  >
-                    <Text style={[styles.chipText, selectedBackgrounds.includes(opt) && styles.chipTextSelected]}>{opt}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          </View>
-
-    </View>
-  )}
-
-{currentSlide === 13 && (
-    <View>
-{/* SLIDE 14 */}
-          <View style={styles.slide}>
-            <Text style={styles.title}>Bio singkat</Text>
-            <Text style={styles.subtitle}>Ceritakan sedikit tentang dirimu atau gaya olahragamu...</Text>
-            <TextInput 
-              style={[styles.input, { height: 120, textAlignVertical: 'top' }]} 
-              value={bio} 
-              onChangeText={text => { if (text.length <= 150) setBio(text); }} 
-              placeholder="Saya suka lari pagi..." 
-              placeholderTextColor={COLORS.secondaryText} 
-              multiline
-            />
-            <Text style={{ color: COLORS.secondaryText, textAlign: 'right', marginTop: 8 }}>{bio.length}/150</Text>
-          </View>
-
-              </View>
-  )}
-
-{currentSlide === 14 && (
-    <View>
-{/* SLIDE 15 */}
-          <View style={[styles.slide, { justifyContent: 'center', alignItems: 'center' }]}>
-            <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: COLORS.surface, justifyContent: 'center', alignItems: 'center', marginBottom: 40, borderWidth: 2, borderColor: COLORS.primary }}>
-              <Ionicons name="flame" size={60} color={COLORS.primary} />
-            </View>
-            <Text style={[styles.title, { textAlign: 'center', fontSize: 36 }]}>Jadikan Olahraga Bagian Termudah dalam Hidupmu</Text>
-            <Text style={[styles.subtitle, { textAlign: 'center', fontSize: 18, marginTop: 16 }]}>Temukan partner olahragamu sekarang. Ribuan orang sedang menunggumu di sekitarmu.</Text>
-            
-            <TouchableOpacity style={[styles.nextButton, { width: '100%', marginTop: 60, paddingVertical: 18 }]} onPress={finishOnboarding} disabled={saving}>
-              {saving ? <ActivityIndicator color={COLORS.background} /> : <Text style={[styles.nextText, { fontSize: 18 }]}>MULAI PETUALANGANMU ⚡</Text>}
-            </TouchableOpacity>
-          </View>
-
-    </View>
-  )}
-
-            </ScrollView>
-          </Animated.View>
         </View>
 
-        {/* Footer Navigation (hidden on slide 15) */}
-        {currentSlide < 14 && (
-          <View style={styles.footer}>
-            {isSkippable ? (
-              <TouchableOpacity style={styles.skipButton} onPress={() => { goToNextSlide(); }} disabled={saving}>
-                <Text style={styles.skipText}>Skip</Text>
-              </TouchableOpacity>
-            ) : (
-              <View style={{ width: 60 }} />
-            )}
-
-            {currentSlide === 12 && (
-              <Text style={{ color: COLORS.secondaryText, fontSize: 14, fontWeight: '600' }}>
-                {selectedBackgrounds.length}/3 dipilih
-              </Text>
-            )}
-
-            <TouchableOpacity 
-              style={[styles.nextButton, (!canProceed() || !hasAnswered()) && styles.nextButtonDisabled]}
-              onPress={handleNext}
-              disabled={saving || !canProceed() || (!isSkippable && !hasAnswered())}
-            >
-              {saving ? (
-                <ActivityIndicator color={COLORS.background} />
-              ) : (
-                <Ionicons name="chevron-forward" size={24} color={(!canProceed() || (!isSkippable && !hasAnswered())) ? COLORS.secondaryText : COLORS.background} />
-              )}
-            </TouchableOpacity>
+        <ScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 24) + 90 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Headline */}
+          <View style={styles.titleSection}>
+            <View style={styles.tagBadge}>
+              <Text style={styles.tagBadgeText}>PARTNER MATCHING SETUP</Text>
+            </View>
+            <Text style={styles.titleText}>Sesuaikan Olahragamu</Text>
+            <Text style={styles.subtitleText}>
+              Beri tahu kami aktivitas, gaya bermain, dan kriteria partner yang kamu cari.
+            </Text>
           </View>
-        )}
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+          {/* ================= SECTION 1: SPORTS SELECTION ================= */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={styles.sectionTitleGroup}>
+                <Ionicons name="fitness" size={18} color={Colors.primary} />
+                <Text style={styles.sectionTitle}>1. Pilihan Olahraga</Text>
+              </View>
+              <Text style={styles.counterBadge}>{selectedSports.length} dipilih</Text>
+            </View>
+
+            <View style={styles.pillsWrap}>
+              {PRESET_SPORTS.map((sport) => {
+                const selected = selectedSports.includes(sport.name);
+                return (
+                  <TouchableOpacity
+                    key={sport.id}
+                    style={[styles.glassPill, selected && styles.glassPillActive]}
+                    onPress={() => toggleSport(sport.name)}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons
+                      name={sport.icon}
+                      size={16}
+                      color={selected ? Colors.white : Colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.glassPillText,
+                        selected && styles.glassPillTextActive,
+                      ]}
+                    >
+                      {sport.name}
+                    </Text>
+                    {selected && (
+                      <Ionicons name="checkmark-circle" size={14} color={Colors.white} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Custom Sport Input */}
+            <View style={styles.customSportRow}>
+              <TextInput
+                style={styles.customSportInput}
+                value={otherSport}
+                onChangeText={setOtherSport}
+                placeholder="Olahraga lainnya... (misal: Padel, Muay Thai)"
+                placeholderTextColor={Colors.textMuted}
+                onSubmitEditing={handleAddOtherSport}
+                returnKeyType="done"
+              />
+              <TouchableOpacity
+                style={styles.customSportAddBtn}
+                onPress={handleAddOtherSport}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add" size={20} color={Colors.white} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* ================= SECTION 2: EXPERIENCE ================= */}
+          {selectedSports.length > 0 && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionTitleGroup}>
+                <Ionicons name="ribbon-outline" size={18} color={Colors.primary} />
+                <Text style={styles.sectionTitle}>2. Tingkat Pengalaman</Text>
+              </View>
+
+              <View style={styles.experienceList}>
+                {selectedSports.map((sport) => (
+                  <View key={sport} style={styles.experienceItem}>
+                    <Text style={styles.experienceQuestion}>
+                      Sudah berapa lama kamu bermain{' '}
+                      <Text style={styles.sportHighlight}>{sport}</Text>?
+                    </Text>
+
+                    <View style={styles.expPillsRow}>
+                      {EXPERIENCE_OPTIONS.map((opt) => {
+                        const active = sportExperience[sport] === opt;
+                        return (
+                          <TouchableOpacity
+                            key={opt}
+                            style={[styles.expChip, active && styles.expChipActive]}
+                            onPress={() =>
+                              setSportExperience({
+                                ...sportExperience,
+                                [sport]: opt,
+                              })
+                            }
+                            activeOpacity={0.75}
+                          >
+                            <Text
+                              style={[
+                                styles.expChipText,
+                                active && styles.expChipTextActive,
+                              ]}
+                            >
+                              {opt}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* ================= SECTION 3: PARTNER PREFERENCE ================= */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionTitleGroup}>
+              <Ionicons name="people-outline" size={18} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>3. Preferensi Partner</Text>
+            </View>
+
+            {/* Gender Preference */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>GENDER PARTNER</Text>
+              <View style={styles.segmentedRow}>
+                {GENDER_OPTIONS.map((g) => {
+                  const active = genderPref === g;
+                  return (
+                    <TouchableOpacity
+                      key={g}
+                      style={[styles.segmentBtn, active && styles.segmentBtnActive]}
+                      onPress={() => setGenderPref(g)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.segmentBtnText,
+                          active && styles.segmentBtnTextActive,
+                        ]}
+                      >
+                        {g}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Age Range */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>USIA PARTNER (MIN 18)</Text>
+              <View style={styles.ageInputRow}>
+                <View style={styles.ageInputBox}>
+                  <Text style={styles.ageInputPrefix}>Min</Text>
+                  <TextInput
+                    style={styles.ageTextInput}
+                    value={minAge}
+                    onChangeText={setMinAge}
+                    keyboardType="numeric"
+                    maxLength={2}
+                  />
+                </View>
+                <Text style={styles.ageDivider}>—</Text>
+                <View style={styles.ageInputBox}>
+                  <Text style={styles.ageInputPrefix}>Max</Text>
+                  <TextInput
+                    style={styles.ageTextInput}
+                    value={maxAge}
+                    onChangeText={setMaxAge}
+                    keyboardType="numeric"
+                    maxLength={2}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* Active Time */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>WAKTU AKTIF BIASA OLAHRAGA</Text>
+              <View style={styles.pillsWrap}>
+                {TIME_OPTIONS.map((time) => {
+                  const active = activeTimes.includes(time);
+                  return (
+                    <TouchableOpacity
+                      key={time}
+                      style={[styles.glassPill, active && styles.glassPillActive]}
+                      onPress={() => toggleActiveTime(time)}
+                      activeOpacity={0.75}
+                    >
+                      <Ionicons
+                        name="time-outline"
+                        size={14}
+                        color={active ? Colors.white : Colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.glassPillText,
+                          active && styles.glassPillTextActive,
+                        ]}
+                      >
+                        {time}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Training Type */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>TIPE LATIHAN</Text>
+              <View style={styles.segmentedRow}>
+                {TRAINING_TYPES.map((type) => {
+                  const active = trainingType === type;
+                  return (
+                    <TouchableOpacity
+                      key={type}
+                      style={[styles.segmentBtn, active && styles.segmentBtnActive]}
+                      onPress={() => setTrainingType(type)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.segmentBtnText,
+                          active && styles.segmentBtnTextActive,
+                        ]}
+                      >
+                        {type}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Frequency */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>FREKUENSI OLAHRAGA</Text>
+              <View style={styles.segmentedRow}>
+                {FREQUENCY_OPTIONS.map((f) => {
+                  const active = frequency === f;
+                  return (
+                    <TouchableOpacity
+                      key={f}
+                      style={[styles.segmentBtn, active && styles.segmentBtnActive]}
+                      onPress={() => setFrequency(f)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.segmentBtnText,
+                          active && styles.segmentBtnTextActive,
+                        ]}
+                      >
+                        {f}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+
+          {/* ================= SECTION 4: BASIC PROFILE ================= */}
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionTitleGroup}>
+              <Ionicons name="card-outline" size={18} color={Colors.primary} />
+              <Text style={styles.sectionTitle}>4. Profil Discovery Card</Text>
+            </View>
+
+            {/* Nama Panggilan */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>NAMA PANGGILAN</Text>
+              <TextInput
+                style={styles.glassInput}
+                value={nickname}
+                onChangeText={setNickname}
+                placeholder="Contoh: Budi, Dinda, Reza"
+                placeholderTextColor={Colors.textMuted}
+              />
+            </View>
+
+            {/* Umur Kamu */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>UMUR KAMU (MIN 18)</Text>
+              <TextInput
+                style={[styles.glassInput, isAgeInvalid && styles.inputErrorBorder]}
+                value={myAge}
+                onChangeText={setMyAge}
+                placeholder="Masukkan umurmu (misal: 25)"
+                placeholderTextColor={Colors.textMuted}
+                keyboardType="numeric"
+                maxLength={2}
+              />
+              {isAgeInvalid && (
+                <View style={styles.errorRow}>
+                  <Ionicons name="alert-circle" size={14} color={Colors.danger} />
+                  <Text style={styles.errorText}>
+                    Umur minimal harus 18 tahun untuk mendaftar.
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Hobi Lainnya */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>HOBI LAINNYA (DIPISAH KOMA)</Text>
+              <TextInput
+                style={styles.glassInput}
+                value={myHobbies}
+                onChangeText={setMyHobbies}
+                placeholder="Contoh: Kopi, Membaca, Masak, Gaming"
+                placeholderTextColor={Colors.textMuted}
+              />
+            </View>
+
+            {/* Bio Singkat */}
+            <View style={styles.subFieldGroup}>
+              <Text style={styles.fieldLabel}>DESKRIPSI SINGKAT DIRIMU</Text>
+              <TextInput
+                style={[styles.glassInput, styles.textArea]}
+                value={myBio}
+                onChangeText={setMyBio}
+                placeholder="Ceritakan rutinitas olahraga atau partner seperti apa yang asik diajak main bareng..."
+                placeholderTextColor={Colors.textMuted}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* Floating Bottom Orange Gradient CTA */}
+        <View
+          style={[
+            styles.floatingFooter,
+            { paddingBottom: Math.max(insets.bottom, 16) },
+          ]}
+        >
+          <TouchableOpacity
+            style={[styles.continueButton, isAgeInvalid && styles.buttonDisabled]}
+            onPress={handleContinue}
+            activeOpacity={0.88}
+            disabled={isAgeInvalid}
+          >
+            <LinearGradient
+              colors={
+                isAgeInvalid
+                  ? ['#555', '#444']
+                  : [Colors.primary, '#E6441D']
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.gradientButton}
+            >
+              <Text style={styles.continueButtonText}>Lanjutkan</Text>
+              <Ionicons name="arrow-forward" size={18} color={Colors.white} />
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  topBar: { paddingTop: Platform.OS === 'android' ? 20 : 0 },
-  progressBarContainer: { height: 4, backgroundColor: COLORS.surface, width: '100%' },
-  progressBarFill: { height: '100%', backgroundColor: COLORS.primary },
-  backButton: { padding: 20 },
-  slide: { width, paddingHorizontal: 32, paddingTop: 10 },
-  title: { fontSize: 32, fontWeight: '900', color: COLORS.text, marginBottom: 8, lineHeight: 40 },
-  subtitle: { fontSize: 16, color: COLORS.secondaryText, marginBottom: 32 },
-  input: {
-    backgroundColor: COLORS.surface,
-    borderRadius: SIZES.borderRadius,
-    padding: 16,
-    color: COLORS.text,
-    fontSize: 18,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 16
-  },
-  datePickerButton: {
-    backgroundColor: COLORS.surface,
-    padding: 16,
-    borderRadius: SIZES.borderRadius,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  datePickerText: { color: COLORS.text, fontSize: 18 },
-  photoContainer: { width: 160, height: 160, borderRadius: 80, backgroundColor: COLORS.surface, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
-  photo: { width: '100%', height: '100%' },
-  
-  optionsContainer: { gap: 16 },
-  card: {
-    backgroundColor: COLORS.surface,
-    padding: 20,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  cardSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.elevatedSurface,
-  },
-  cardText: { fontSize: 16, color: COLORS.text, fontWeight: '600' },
-  cardTextSelected: { color: COLORS.primary },
-  
-  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { backgroundColor: COLORS.surface, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 24, borderWidth: 1, borderColor: COLORS.border },
-  chipSelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  chipText: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
-  chipTextSelected: { color: COLORS.background },
-
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingBottom: 40,
-    paddingTop: 16,
-  },
-  skipButton: { paddingVertical: 12, paddingHorizontal: 16, marginLeft: -16 },
-  skipText: { fontSize: 16, color: COLORS.secondaryText, fontWeight: '600' },
-  nextButton: {
-    backgroundColor: COLORS.primary,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  nextButtonDisabled: {
-    backgroundColor: COLORS.surface,
-  },
-  nextText: { fontSize: 16, color: COLORS.background, fontWeight: '900' },
+  root: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1, backgroundColor: Colors.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.base, paddingBottom: Spacing.md, gap: 12 },
+  backButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255, 255, 255, 0.08)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
+  stepProgressRow: { flex: 1, flexDirection: 'row', gap: 6 },
+  stepBar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255, 255, 255, 0.16)' },
+  stepBarDone: { backgroundColor: Colors.primary, opacity: 0.5 },
+  stepBarActive: { backgroundColor: Colors.primary },
+  stepCounterWrap: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: BorderRadius.sm, backgroundColor: 'rgba(255, 255, 255, 0.06)' },
+  stepCounterText: { fontFamily: Typography.fontSemiBold, fontSize: 12, color: Colors.textSecondary },
+  scrollArea: { flex: 1 },
+  scrollContent: { paddingHorizontal: Spacing.base, paddingTop: Spacing.sm, gap: 20 },
+  titleSection: { gap: 8 },
+  tagBadge: { alignSelf: 'flex-start', backgroundColor: 'rgba(255, 87, 47, 0.12)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: BorderRadius.xs, borderWidth: 1, borderColor: 'rgba(255, 87, 47, 0.28)' },
+  tagBadgeText: { fontFamily: Typography.fontSemiBold, fontSize: 10, color: Colors.primary, letterSpacing: 0.8 },
+  titleText: { fontFamily: Typography.fontHeading, fontSize: 26, color: Colors.textPrimary, lineHeight: 32 },
+  subtitleText: { fontFamily: Typography.fontRegular, fontSize: 13, color: Colors.textSecondary, lineHeight: 19 },
+  sectionCard: { backgroundColor: 'rgba(23, 26, 33, 0.65)', borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', padding: Spacing.base, gap: 16 },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  sectionTitleGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sectionTitle: { fontFamily: Typography.fontHeading, fontSize: 15, color: Colors.textPrimary },
+  counterBadge: { fontFamily: Typography.fontSemiBold, fontSize: 12, color: Colors.primary },
+  pillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  glassPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255, 255, 255, 0.05)', paddingHorizontal: 12, paddingVertical: 10, borderRadius: BorderRadius.round, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.1)' },
+  glassPillActive: { backgroundColor: Colors.primary, borderColor: Colors.primary, shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 4 },
+  glassPillText: { fontFamily: Typography.fontMedium, fontSize: 12, color: Colors.textSecondary },
+  glassPillTextActive: { color: Colors.white, fontFamily: Typography.fontSemiBold },
+  customSportRow: { flexDirection: 'row', gap: 8, marginTop: 4 },
+  customSportInput: { flex: 1, backgroundColor: 'rgba(15, 17, 21, 0.7)', borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.surfaceBorder, paddingHorizontal: 14, paddingVertical: 10, color: Colors.textPrimary, fontFamily: Typography.fontRegular, fontSize: 13 },
+  customSportAddBtn: { width: 44, height: 44, borderRadius: BorderRadius.md, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
+  experienceList: { gap: 14 },
+  experienceItem: { gap: 8, backgroundColor: 'rgba(15, 17, 21, 0.5)', padding: 12, borderRadius: BorderRadius.md },
+  experienceQuestion: { fontFamily: Typography.fontRegular, fontSize: 13, color: Colors.textPrimary },
+  sportHighlight: { fontFamily: Typography.fontHeading, color: Colors.primary },
+  expPillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  expChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: BorderRadius.round, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)' },
+  expChipActive: { backgroundColor: 'rgba(255, 87, 47, 0.2)', borderColor: Colors.primary },
+  expChipText: { fontFamily: Typography.fontRegular, fontSize: 11, color: Colors.textSecondary },
+  expChipTextActive: { color: Colors.primary, fontFamily: Typography.fontSemiBold },
+  subFieldGroup: { gap: 8 },
+  fieldLabel: { fontFamily: Typography.fontSemiBold, fontSize: 11, color: Colors.textMuted, letterSpacing: 0.8 },
+  segmentedRow: { flexDirection: 'row', backgroundColor: 'rgba(15, 17, 21, 0.7)', borderRadius: BorderRadius.round, padding: 3, borderWidth: 1, borderColor: Colors.surfaceBorder },
+  segmentBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: BorderRadius.round },
+  segmentBtnActive: { backgroundColor: Colors.primary },
+  segmentBtnText: { fontFamily: Typography.fontMedium, fontSize: 12, color: Colors.textSecondary },
+  segmentBtnTextActive: { color: Colors.white, fontFamily: Typography.fontSemiBold },
+  ageInputRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  ageInputBox: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15, 17, 21, 0.7)', borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.surfaceBorder, paddingHorizontal: 14 },
+  ageInputPrefix: { fontFamily: Typography.fontRegular, fontSize: 12, color: Colors.textMuted, marginRight: 8 },
+  ageTextInput: { flex: 1, paddingVertical: 12, color: Colors.textPrimary, fontFamily: Typography.fontSemiBold, fontSize: 14 },
+  ageDivider: { color: Colors.textMuted, fontSize: 16 },
+  glassInput: { backgroundColor: 'rgba(15, 17, 21, 0.7)', borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.surfaceBorder, paddingHorizontal: Spacing.base, paddingVertical: 12, color: Colors.textPrimary, fontFamily: Typography.fontRegular, fontSize: 14 },
+  inputErrorBorder: { borderColor: Colors.danger },
+  errorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  errorText: { fontFamily: Typography.fontRegular, fontSize: 11, color: Colors.danger },
+  textArea: { minHeight: 80, paddingTop: 12 },
+  floatingFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(9, 10, 13, 0.95)', borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.08)', paddingHorizontal: Spacing.base, paddingTop: 12 },
+  continueButton: { borderRadius: BorderRadius.round, overflow: 'hidden', shadowColor: Colors.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 6 },
+  buttonDisabled: { opacity: 0.6 },
+  gradientButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 },
+  continueButtonText: { fontFamily: Typography.fontHeading, fontSize: 15, color: Colors.white, letterSpacing: 0.4 },
 });

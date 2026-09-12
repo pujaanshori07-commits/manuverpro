@@ -1,295 +1,412 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Dimensions, Alert } from 'react-native';
+﻿import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../_layout';
-import { COLORS, SIZES } from '../../constants/DesignSystem';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
-const { width } = Dimensions.get('window');
+import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
+import { supabase } from '../../lib/supabase';
 
-export default function ProfileDashboardScreen() {
-  const { profile } = useAuth();
+interface ProfileData {
+  nama: string;
+  pekerjaan: string;
+  pendidikan: string;
+  hobi: string;
+  bio: string;
+  foto_url: string;
+}
+
+const DEFAULT_PROFILE: ProfileData = {
+  nama: 'Andi Pratama',
+  pekerjaan: 'Product Designer',
+  pendidikan: 'Universitas Indonesia',
+  hobi: 'Badminton, Gym, Running, Basket',
+  bio: 'Cari partner olahraga santai weekend atau sparring badminton rutin di Jaksel.',
+  foto_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80',
+};
+
+export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const handleEditProfile = () => {
-    router.push('/edit-profile');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData?.user?.id;
+
+      if (!userId) {
+        setProfile(DEFAULT_PROFILE);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error || !data) {
+        setProfile(DEFAULT_PROFILE);
+      } else {
+        setProfile({
+          nama: data.nama || '',
+          pekerjaan: data.pekerjaan || '',
+          pendidikan: data.pendidikan || '',
+          hobi: Array.isArray(data.hobi) ? data.hobi.join(', ') : (data.hobi || ''),
+          bio: data.bio || '',
+          foto_url: data.foto_url || DEFAULT_PROFILE.foto_url,
+        });
+      }
+    } catch {
+      setProfile(DEFAULT_PROFILE);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData?.user?.id;
+
+      if (!userId) {
+        Alert.alert('Sukses', 'Profil berhasil diperbarui!');
+        return;
+      }
+
+      const { error } = await supabase.from('profiles').upsert({
+        id: userId,
+        nama: profile.nama,
+        pekerjaan: profile.pekerjaan,
+        pendidikan: profile.pendidikan,
+        hobi: profile.hobi.split(',').map((s) => s.trim()).filter(Boolean),
+        bio: profile.bio,
+        foto_url: profile.foto_url,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (error) {
+        Alert.alert('Gagal', error.message);
+      } else {
+        Alert.alert('Sukses', 'Profil berhasil disimpan!');
+      }
+    } catch {
+      Alert.alert('Error', 'Terjadi kesalahan saat menyimpan profil.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Keluar dari Akun',
+      'Apakah kamu yakin ingin keluar dari MANUVER?',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Keluar',
+          style: 'destructive',
+          onPress: async () => {
+            await supabase.auth.signOut();
+            router.replace('/login');
+          },
+        },
+      ]
+    );
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* HEADER */}
+    <KeyboardAvoidingView
+      style={styles.keyboardRoot}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerSpacer} />
-          {/* Settings moved to Home tab per user request */}
-        </View>
-
-        {/* PROFILE INFO */}
-        <View style={styles.profileSection}>
-          <View style={styles.avatarContainer}>
-            {profile?.foto_url ? (
-              <Image source={{ uri: profile.foto_url }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarPlaceholderText}>
-                  {profile?.nama ? profile.nama.substring(0, 2).toUpperCase() : '??'}
-                </Text>
-              </View>
-            )}
-            <View style={styles.verifiedBadge}>
-              <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
-            </View>
-          </View>
-
-          <Text style={styles.nameText}>{profile?.nama || 'Athlete'}</Text>
-          <Text style={styles.locationText}>{profile?.alamat || 'Update your location'}</Text>
-
-          <TouchableOpacity style={styles.editButton} onPress={handleEditProfile} activeOpacity={0.8}>
-            <Text style={styles.editButtonText}>EDIT PROFILE</Text>
+          <Text style={styles.headerTitle}>Edit Profil</Text>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="log-out-outline" size={24} color={Colors.danger} />
           </TouchableOpacity>
         </View>
 
-        {/* METRICS & FEATURES */}
-        <View style={styles.metricsContainer}>
-          <View style={styles.metricCard}>
-            <View style={[styles.metricIconWrap, { backgroundColor: 'rgba(255, 87, 47, 0.1)' }]}>
-              <Ionicons name="flash" size={24} color={COLORS.primary} />
-            </View>
-            <Text style={styles.metricValue}>0</Text>
-            <Text style={styles.metricLabel}>Matches</Text>
+        {loading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color={Colors.primary} />
           </View>
-          <View style={styles.metricCard}>
-            <View style={[styles.metricIconWrap, { backgroundColor: 'rgba(0, 200, 83, 0.1)' }]}>
-              <Ionicons name="calendar" size={24} color={COLORS.success} />
-            </View>
-            <Text style={styles.metricValue}>0</Text>
-            <Text style={styles.metricLabel}>Games Played</Text>
-          </View>
-        </View>
-
-        {/* PROMO BANNER (Tinder Gold Style) */}
-        <TouchableOpacity style={styles.promoBanner} activeOpacity={0.9}>
-          <LinearGradient
-            colors={['#2A2E38', '#1C1F26']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.promoGradient}
+        ) : (
+          <ScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
-            <View style={styles.promoHeader}>
-              <Text style={styles.promoTitle}>MANUVER <Text style={{ color: '#FFD700' }}>PRO</Text></Text>
-              <View style={styles.promoUpgradeBtn}>
-                <Text style={styles.promoUpgradeText}>UPGRADE</Text>
+            {/* Photo Section */}
+            <View style={styles.photoSection}>
+              <View style={styles.photoCard}>
+                <Image
+                  source={{ uri: profile.foto_url }}
+                  style={styles.photoImage}
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  style={styles.cameraBtn}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    Alert.alert('Ubah Foto', 'Pilih foto dari galeri atau kamera.')
+                  }
+                >
+                  <Ionicons name="camera" size={20} color={Colors.white} />
+                </TouchableOpacity>
               </View>
+              <Text style={styles.photoHint}>Tap untuk mengubah foto</Text>
             </View>
-            
-            <View style={styles.promoFeatures}>
-              <View style={styles.promoFeatureRow}>
-                <Text style={styles.promoFeatureText}>See Who Wants To Play</Text>
-                <Ionicons name="lock-closed" size={16} color={COLORS.secondaryText} />
-              </View>
-              <View style={styles.promoFeatureRow}>
-                <Text style={styles.promoFeatureText}>Unlimited Matches</Text>
-                <Ionicons name="lock-closed" size={16} color={COLORS.secondaryText} />
-              </View>
-            </View>
-            <Text style={styles.promoFooter}>See All Features</Text>
-          </LinearGradient>
-        </TouchableOpacity>
 
-      </ScrollView>
-    </SafeAreaView>
+            {/* Form Inputs */}
+            <View style={styles.formContainer}>
+              {/* Nama Panggilan */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Nama Panggilan</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={profile.nama}
+                  onChangeText={(text) => setProfile({ ...profile, nama: text })}
+                  placeholder="Masukkan nama panggilan"
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </View>
+
+              {/* Pekerjaan */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Pekerjaan</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={profile.pekerjaan}
+                  onChangeText={(text) => setProfile({ ...profile, pekerjaan: text })}
+                  placeholder="Contoh: Product Designer, Software Engineer"
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </View>
+
+              {/* Pendidikan */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Pendidikan</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={profile.pendidikan}
+                  onChangeText={(text) => setProfile({ ...profile, pendidikan: text })}
+                  placeholder="Contoh: Universitas Indonesia"
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </View>
+
+              {/* Hobi & Olahraga */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>
+                  Hobi & Olahraga (Pisahkan dengan koma)
+                </Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={profile.hobi}
+                  onChangeText={(text) => setProfile({ ...profile, hobi: text })}
+                  placeholder="Futsal, Badminton, Running, Gym"
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </View>
+
+              {/* Bio Singkat */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Bio Singkat</Text>
+                <TextInput
+                  style={[styles.textInput, styles.textArea]}
+                  value={profile.bio}
+                  onChangeText={(text) => setProfile({ ...profile, bio: text })}
+                  placeholder="Ceritakan rutinitas olahraga atau partner seperti apa yang kamu cari..."
+                  placeholderTextColor={Colors.textMuted}
+                  multiline
+                  numberOfLines={4}
+                  textAlignVertical="top"
+                />
+              </View>
+
+              {/* Save Button */}
+              <TouchableOpacity
+                style={styles.saveBtn}
+                onPress={handleSave}
+                activeOpacity={0.8}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator color={Colors.white} size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Simpan Perubahan</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        )}
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: COLORS.background },
-  container: { flex: 1 },
-  scrollContent: { paddingBottom: 120 },
-  
+  keyboardRoot: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   header: {
+    height: 56,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    marginBottom: 20,
+    paddingHorizontal: Spacing.base,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceBorder,
   },
-  headerSpacer: { width: 44, height: 44 },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.surface,
+  headerTitle: {
+    fontFamily: Typography.fontDisplay,
+    fontSize: 22,
+    color: Colors.textPrimary,
+    letterSpacing: 0.3,
+  },
+  logoutButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: Colors.surfaceBorder,
   },
-
-  profileSection: {
+  centered: {
+    flex: 1,
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 30,
+    justifyContent: 'center',
   },
-  avatarContainer: {
+  scrollArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xxxl + 20,
+  },
+  photoSection: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  photoCard: {
+    width: 140,
+    height: 180,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceInput,
     position: 'relative',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    borderWidth: 3,
-    borderColor: COLORS.surface,
-  },
-  avatarPlaceholder: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.border,
-  },
-  avatarPlaceholderText: {
-    color: COLORS.text,
-    fontSize: 48,
-    fontWeight: 'bold',
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: 5,
-    right: 5,
-    backgroundColor: COLORS.background,
-    borderRadius: 12,
-  },
-  nameText: {
-    color: COLORS.text,
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  locationText: {
-    color: COLORS.secondaryText,
-    fontSize: 14,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginBottom: 20,
-  },
-  editButton: {
-    backgroundColor: COLORS.surface,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 24,
+    overflow: 'visible',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: Colors.surfaceBorder,
   },
-  editButtonText: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-
-  metricsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    paddingHorizontal: 20,
-    marginBottom: 30,
-  },
-  metricCard: {
-    width: (width - 56) / 2,
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  metricIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  metricValue: {
-    color: COLORS.text,
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  metricLabel: {
-    color: COLORS.secondaryText,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-
-  promoBanner: {
-    marginHorizontal: 20,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  promoGradient: {
-    padding: 20,
-  },
-  promoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  promoTitle: {
-    color: COLORS.text,
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: 1,
-    fontStyle: 'italic',
-  },
-  promoUpgradeBtn: {
-    backgroundColor: COLORS.text,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+  photoImage: {
+    width: '100%',
+    height: '100%',
     borderRadius: 20,
   },
-  promoUpgradeText: {
-    color: COLORS.background,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  promoFeatures: {
-    marginBottom: 20,
-  },
-  promoFeatureRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  cameraBtn: {
+    position: 'absolute',
+    bottom: -10,
+    right: -10,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: Colors.white,
+    elevation: 4,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
-  promoFeatureText: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: '600',
+  photoHint: {
+    fontFamily: Typography.fontRegular,
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 18,
   },
-  promoFooter: {
-    color: COLORS.text,
+  formContainer: {
+    paddingHorizontal: Spacing.base,
+    gap: 18,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontFamily: Typography.fontSemiBold,
     fontSize: 14,
-    fontWeight: '800',
-    textAlign: 'center',
-    textDecorationLine: 'underline',
-  }
+    color: Colors.textPrimary,
+  },
+  textInput: {
+    backgroundColor: Colors.surfaceInput,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: 14,
+    color: Colors.textPrimary,
+    fontFamily: Typography.fontRegular,
+    fontSize: 15,
+  },
+  textArea: {
+    minHeight: 110,
+    paddingTop: 14,
+  },
+  saveBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.round,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+    elevation: 3,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  saveBtnText: {
+    fontFamily: Typography.fontHeading,
+    fontSize: 15,
+    color: Colors.white,
+    letterSpacing: 0.3,
+  },
 });

@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './_layout';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/DesignSystem';
+import { Image } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -84,14 +85,14 @@ export default function LoginScreen() {
     );
   }
 
-  const renderLogo = (isSmall = false) => (
-    <View style={[styles.logoContainer, isSmall && styles.logoContainerSmall]}>
-      <View style={[styles.logoHexagon, isSmall && styles.logoHexagonSmall]}>
-        <View style={styles.logoDash1} />
-        <View style={styles.logoDash2} />
-        <View style={styles.logoDash3} />
-      </View>
-      <Text style={[styles.logoText, isSmall && styles.logoTextSmall]}>Manuver</Text>
+  const renderLogo = () => (
+    <View style={styles.logoContainer}>
+      <Image
+        source={require('../assets/images/logo.png')}
+        style={{ width: width * 0.85, height: width * 0.85 }}
+        resizeMode="contain"
+      />
+      <Text style={styles.taglineText}>Swipe. Match. Main Bareng.</Text>
     </View>
   );
 
@@ -128,9 +129,16 @@ export default function LoginScreen() {
               <Ionicons name="chevron-back" size={28} color={COLORS.text} />
             </TouchableOpacity>
 
-            <View style={styles.topSection}>{renderLogo(true)}</View>
+            <View style={{ flex: 1, justifyContent: 'center', paddingBottom: 20, alignItems: 'center' }}>
+              <Image
+                source={require('../assets/images/logo.png')}
+                style={{ width: width * 0.85, height: width * 0.85 }}
+                resizeMode="contain"
+              />
+              <Text style={styles.taglineTextSmall}>Temukan Partner Sparingmu</Text>
+            </View>
 
-            <View style={styles.optionsSection}>
+            <View style={styles.optionsSectionBottom}>
               
               <TouchableOpacity style={styles.optionButtonDark} onPress={() => setStep('email_input')} activeOpacity={0.8}>
                 <Ionicons name="mail" size={24} color={COLORS.text} style={styles.optionIcon} />
@@ -244,6 +252,18 @@ const styles = StyleSheet.create({
   logoDash3: { width: '40%', height: 12, backgroundColor: COLORS.background, borderRadius: 6 },
   logoText: { color: COLORS.text, fontSize: 42, fontWeight: '900', letterSpacing: -1 },
   logoTextSmall: { fontSize: 32 },
+  taglineText: {
+    color: COLORS.secondaryText,
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: -10,
+  },
+  taglineTextSmall: {
+    color: COLORS.secondaryText,
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: -5,
+  },
 
   // BUTTONS & FOOTER
   bottomSection: { paddingBottom: 20 },
@@ -263,7 +283,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderRadius: 22, justifyContent: 'center',
     alignItems: 'center', zIndex: 10,
   },
-  optionsSection: { flex: 1, gap: 12 },
+  optionsSectionBottom: { gap: 12 },
   optionButtonDark: {
     flexDirection: 'row', backgroundColor: COLORS.surface, paddingVertical: 16,
     paddingHorizontal: 20, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
