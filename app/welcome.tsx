@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,18 +13,16 @@ export default function WelcomeScreen() {
   const themeColors = Colors[colorScheme ?? 'dark'];
 
   return (
-    <ImageBackground 
-      source={{ uri: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?q=80&w=1000&auto=format&fit=crop' }} 
-      style={styles.container}
-    >
-      <LinearGradient
-        colors={['rgba(11, 13, 18, 0.1)', 'rgba(11, 13, 18, 0.8)', 'rgba(11, 13, 18, 1)']}
-        style={styles.gradientOverlay}
-      >
+    <View style={styles.container}>
         <SafeAreaView style={styles.content}>
           <View style={styles.brandContainer}>
-            <Text style={styles.brandText}>MANUVER</Text>
+            <Image 
+              source={require('../assets/images/logo.png')} 
+              style={styles.logoImage} 
+              resizeMode="contain" 
+            />
           </View>
+          
           
           <View style={styles.bottomSection}>
             <Text style={styles.headline}>Find your sports{'\n'}buddies nearby.</Text>
@@ -46,8 +43,7 @@ export default function WelcomeScreen() {
             </TouchableOpacity>
           </View>
         </SafeAreaView>
-      </LinearGradient>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -56,10 +52,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0B0D12',
   },
-  gradientOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
   content: {
     flex: 1,
     justifyContent: 'space-between',
@@ -67,15 +59,13 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   brandContainer: {
-    marginTop: 40,
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  brandText: {
-    fontFamily: 'Poppins_900Black',
-    fontSize: 32,
-    color: '#FFFFFF',
-    letterSpacing: 4,
-    fontStyle: 'italic',
+  logoImage: {
+    width: width * 0.7,
+    height: width * 0.7,
   },
   bottomSection: {
     width: '100%',
