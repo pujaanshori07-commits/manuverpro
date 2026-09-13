@@ -12,14 +12,17 @@ import { Image } from 'react-native';
 const { width } = Dimensions.get('window');
 
 WebBrowser.maybeCompleteAuthSession();
-const redirectTo = Linking.createURL('login', { scheme: 'exp' });
+const redirectTo = Linking.createURL('');
 
-function queryParamsFromUrl(url: string) {
-  const hashIndex = url.indexOf('#');
-  if (hashIndex === -1) return { params: {} as Record<string, string>, errorCode: null };
-  const hashParams = new URLSearchParams(url.substring(hashIndex + 1));
-  const params = Object.fromEntries(hashParams.entries());
-  return { params, errorCode: params.error_code ?? null };
+// Custom robust parser for React Native (avoids URLSearchParams issues)
+function parseParamsFromUrl(url: string) {
+  let paramString = url.split('#')[1] || url.split('?')[1] || '';
+  const params: Record<string, string> = {};
+  paramString.split('&').forEach(pair => {
+      const [k, v] = pair.split('=');
+      if (k && v) params[k] = decodeURIComponent(v);
+  });
+  return { params, errorCode: params.error_description || params.error || null };
 }
 
 export default function LoginScreen() {
@@ -29,12 +32,26 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const createSessionFromUrl = async (url: string) => {
-    const { params, errorCode } = queryParamsFromUrl(url);
-    if (errorCode) throw new Error(errorCode);
-    const { access_token, refresh_token } = params;
-    if (!access_token) return;
-    const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-    if (error) throw error;
+    try {
+      console.log('Received URL from Auth:', url);
+      const { params, errorCode } = parseParamsFromUrl(url);
+      
+      if (errorCode) {
+        Alert.alert('OAuth Error', errorCode);
+        return;
+      }
+      
+      const { access_token, refresh_token } = params;
+      if (!access_token) {
+        Alert.alert('Token Missing', 'No access token found in the redirect URL. URL received: ' + url.substring(0, 50) + '...');
+        return;
+      }
+
+      const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (error) throw error;
+    } catch (e: any) {
+      Alert.alert('Session Parse Error', e.message);
+    }
   };
 
   const handleGoogleLogin = async () => {
@@ -46,9 +63,16 @@ export default function LoginScreen() {
       if (error) return Alert.alert('Login failed', error.message);
 
       const result = await WebBrowser.openAuthSessionAsync(data.url!, redirectTo);
-      if (result.type === 'success') await createSessionFromUrl(result.url);
+      
+      if (result.type === 'success') {
+        await createSessionFromUrl(result.url);
+      } else if (result.type === 'cancel') {
+        // User closed browser
+      } else {
+        Alert.alert('Auth Result', 'Browser returned type: ' + result.type);
+      }
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      Alert.alert('Auth Launch Error', err.message);
     }
   };
 
