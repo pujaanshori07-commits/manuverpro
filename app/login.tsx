@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, TouchableOpacity, Alert, StyleSheet, Dimensions,  Platform, TextInput, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './_layout';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,7 +13,7 @@ import { Image } from 'react-native';
 const { width } = Dimensions.get('window');
 
 WebBrowser.maybeCompleteAuthSession();
-const redirectTo = Linking.createURL('');
+const redirectTo = makeRedirectUri();
 
 // Custom robust parser for React Native (avoids URLSearchParams issues)
 function parseParamsFromUrl(url: string) {
@@ -30,6 +31,18 @@ export default function LoginScreen() {
   const [step, setStep] = useState<'landing' | 'options' | 'email_input' | 'check_email'>('landing');
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Fallback listener for deep links if WebBrowser misses them
+  useEffect(() => {
+    const handleDeepLink = (event: Linking.EventType) => {
+      if (event.url && (event.url.includes('access_token=') || event.url.includes('error='))) {
+        createSessionFromUrl(event.url);
+      }
+    };
+    
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
+  }, []);
 
   const createSessionFromUrl = async (url: string) => {
     try {
