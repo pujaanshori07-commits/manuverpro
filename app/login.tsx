@@ -130,7 +130,7 @@ export default function LoginScreen() {
         style={{ width: width * 0.85, height: width * 0.85 }}
         resizeMode="contain"
       />
-      <Text style={styles.taglineText}>Swipe. Match. Main Bareng.</Text>
+      <Text style={styles.taglineText}>Swipe. Match. Play.</Text>
     </View>
   );
 
