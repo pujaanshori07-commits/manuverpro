@@ -251,8 +251,7 @@ const styles = StyleSheet.create({
   },
   heroNameText: {
     fontFamily: Typography.fontHeading,
-    fontSize: 27,
-    fontWeight: '700',
+    fontSize: 26,
     color: Colors.white,
   },
   verifiedCheck: {
@@ -279,17 +278,17 @@ const styles = StyleSheet.create({
   },
   sectionHeading: {
     fontFamily: Typography.fontSemiBold,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
     color: Colors.textMuted,
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
     marginBottom: 10,
   },
   bioBody: {
     fontFamily: Typography.fontRegular,
-    fontSize: 14,
+    fontSize: 15,
     color: '#E1E4F0',
-    lineHeight: 23,
+    lineHeight: 22,
   },
   sportsGrid: {
     gap: 10,
@@ -318,7 +317,6 @@ const styles = StyleSheet.create({
   sportCardTitle: {
     fontFamily: Typography.fontSemiBold,
     fontSize: 15,
-    fontWeight: '600',
     color: Colors.white,
   },
   sportBadgeRow: {
@@ -364,7 +362,6 @@ const styles = StyleSheet.create({
   routineTitle: {
     fontFamily: Typography.fontSemiBold,
     fontSize: 13,
-    fontWeight: '600',
     color: Colors.white,
   },
   routineSub: {
@@ -410,6 +407,5 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontSemiBold,
     color: Colors.white,
     fontSize: 15,
-    fontWeight: '700',
   },
 });

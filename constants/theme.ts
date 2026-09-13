@@ -75,66 +75,32 @@ export const Typography = {
 } as const;
 
 export const TypographyStyles = StyleSheet.create({
-  displayLogo: {
-    fontFamily: Typography.fontDisplay,
+  heroTitle: {
+    fontFamily: Typography.fontHeading,
     fontSize: 26,
     color: Colors.textPrimary,
-    letterSpacing: 0.5,
   } as TextStyle,
-  h1: {
-    fontFamily: Typography.fontHeading,
-    fontSize: 28,
-    color: Colors.textPrimary,
-    lineHeight: 36,
-  } as TextStyle,
-  h2: {
-    fontFamily: Typography.fontHeading,
-    fontSize: 22,
-    color: Colors.textPrimary,
-    lineHeight: 30,
-  } as TextStyle,
-  h3: {
+  sectionHeading: {
     fontFamily: Typography.fontSemiBold,
-    fontSize: 17,
-    color: Colors.textPrimary,
-    lineHeight: 24,
-  } as TextStyle,
-  subtitle: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 22,
-  } as TextStyle,
-  labelBold: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 14,
-    color: Colors.textPrimary,
-  } as TextStyle,
-  labelSecondary: {
-    fontFamily: Typography.fontMedium,
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   } as TextStyle,
   body: {
     fontFamily: Typography.fontRegular,
-    fontSize: 14,
+    fontSize: 15,
     color: Colors.textPrimary,
     lineHeight: 22,
   } as TextStyle,
-  bodySecondary: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 13,
-    color: Colors.textSecondary,
-    lineHeight: 20,
-  } as TextStyle,
-  caption: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 11,
-    color: Colors.textMuted,
-  } as TextStyle,
-  tagText: {
+  pillInteractive: {
     fontFamily: Typography.fontMedium,
     fontSize: 12,
     color: Colors.textPrimary,
+  } as TextStyle,
+  microMeta: {
+    fontFamily: Typography.fontRegular,
+    fontSize: 11,
+    color: Colors.textSecondary,
   } as TextStyle,
 });
