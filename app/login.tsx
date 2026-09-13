@@ -30,6 +30,7 @@ export default function LoginScreen() {
   const { session } = useAuth();
   const [step, setStep] = useState<'landing' | 'options' | 'email_input' | 'check_email'>('landing');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   // Fallback listener for deep links if WebBrowser misses them
@@ -89,25 +90,23 @@ export default function LoginScreen() {
     }
   };
 
-  const handleSendOtp = async () => {
+  const handleEmailLogin = async () => {
     if (!email || !email.includes('@')) return Alert.alert('Invalid Email', 'Please enter a valid email address.');
+    if (!password) return Alert.alert('Invalid Password', 'Please enter your password.');
+    
     setIsLoading(true);
     
-    // Send Magic Link using Supabase
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
-      options: {
-        emailRedirectTo: redirectTo,
-      },
+      password: password,
     });
     
     setIsLoading(false);
     
     if (error) {
-      Alert.alert('Error', error.message);
-    } else {
-      setStep('check_email');
+      Alert.alert('Login Error', error.message);
     }
+    // _layout.tsx will automatically redirect upon session change.
   };
 
   const handleDummyAction = () => {
@@ -208,8 +207,8 @@ export default function LoginScreen() {
               <Ionicons name="chevron-back" size={28} color={COLORS.text} />
             </TouchableOpacity>
             
-            <Text style={styles.authTitle}>My email is</Text>
-            <Text style={styles.authSubtitle}>We will send a 6-digit code to verify your email.</Text>
+            <Text style={styles.authTitle}>Email Login</Text>
+            <Text style={styles.authSubtitle}>Enter your email and password to log in.</Text>
 
             <View style={styles.phoneInputContainer}>
               <View style={styles.countryCodeBadge}>
@@ -227,10 +226,24 @@ export default function LoginScreen() {
               />
             </View>
 
+            <View style={[styles.phoneInputContainer, { marginTop: 24 }]}>
+              <View style={styles.countryCodeBadge}>
+                <Ionicons name="lock-closed-outline" size={24} color={COLORS.primary} />
+              </View>
+              <TextInput
+                style={[styles.phoneInput, { fontSize: 20 }]}
+                placeholder="Your password"
+                placeholderTextColor={COLORS.secondaryText}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+            </View>
+
             <TouchableOpacity 
-              style={[styles.primaryButton, { marginTop: 40, opacity: email.includes('@') ? 1 : 0.5 }]} 
-              onPress={handleSendOtp} 
-              disabled={isLoading || !email.includes('@')}
+              style={[styles.primaryButton, { marginTop: 40, opacity: email.includes('@') && password ? 1 : 0.5 }]} 
+              onPress={handleEmailLogin} 
+              disabled={isLoading || !email.includes('@') || !password}
             >
               {isLoading ? <ActivityIndicator color={COLORS.text} /> : <Text style={styles.primaryButtonText}>Continue</Text>}
             </TouchableOpacity>
