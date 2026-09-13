@@ -8,6 +8,8 @@ export default function OnboardingLayout() {
         headerShown: false,
         animation: 'fade',
       }}
-    />
+    >
+      <Stack.Screen name="flow" options={{ headerShown: false }} />
+    </Stack>
   );
 }

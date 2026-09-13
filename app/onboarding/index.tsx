@@ -56,7 +56,7 @@ export default function WelcomeScreen() {
           <TouchableOpacity
             style={styles.primaryBtn}
             activeOpacity={0.88}
-            onPress={() => router.push('/onboarding/questionnaire')}
+            onPress={() => router.push('/onboarding/flow')}
           >
             <LinearGradient
               colors={['#FF6B35', '#FF5A1F']}
