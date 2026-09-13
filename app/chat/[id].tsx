@@ -145,6 +145,42 @@ export default function ChatScreen() {
     }
   };
 
+  const handleUpdateInviteStatus = async (messageId: string, newStatus: string) => {
+    // Optimistic UI update
+    setMessages((prev) => 
+      prev.map((msg) => {
+        if (msg.id === messageId && msg.metadata) {
+          return {
+            ...msg,
+            metadata: {
+              ...msg.metadata,
+              status: newStatus
+            }
+          };
+        }
+        return msg;
+      })
+    );
+
+    // Database update
+    try {
+      const msgToUpdate = messages.find((m) => m.id === messageId);
+      if (msgToUpdate) {
+        await supabase
+          .from('messages')
+          .update({
+            metadata: {
+              ...msgToUpdate.metadata,
+              status: newStatus
+            }
+          })
+          .eq('id', messageId);
+      }
+    } catch (error) {
+      console.error("Failed to update invite status", error);
+    }
+  };
+
   // Navigate to full profile when tapping avatar or name
   const handleOpenProfile = () => {
     Haptics.selectionAsync();
@@ -160,9 +196,15 @@ export default function ChatScreen() {
     if (item.type === 'sparing_invite') {
       return (
         <SparingInviteCard
-          invite={item.metadata}
-          isSender={isMe}
-          onStatusChange={() => {}}
+          inviteId={item.id}
+          sport={item.metadata?.sport || 'Olahraga'}
+          venueName={item.metadata?.venue_name || 'Lokasi'}
+          scheduledAt={item.metadata?.scheduled_at || new Date().toISOString()}
+          status={item.metadata?.status || 'pending'}
+          isReceiver={!isMe}
+          onAccept={() => handleUpdateInviteStatus(item.id, 'accepted')}
+          onDecline={() => handleUpdateInviteStatus(item.id, 'declined')}
+          note={item.metadata?.note}
         />
       );
     }
