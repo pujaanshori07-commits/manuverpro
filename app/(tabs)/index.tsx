@@ -594,8 +594,8 @@ export default function DiscoverScreen() {
             {/* Sticky Floating Bottom Action Buttons (Pass | Interested) */}
             <View style={[styles.bottomActionContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
               <LinearGradient
-                colors={['transparent', 'rgba(11, 13, 19, 0.88)', '#0B0D13']}
-                locations={[0, 0.35, 1]}
+                colors={['transparent', 'rgba(11, 13, 19, 0.95)', '#0B0D13', '#0B0D13']}
+                locations={[0, 0.4, 0.8, 1]}
                 style={StyleSheet.absoluteFill}
                 pointerEvents="none"
               />
@@ -1038,7 +1038,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 24,
+    paddingTop: 60,
     zIndex: 30,
   },
   actionRow: {
