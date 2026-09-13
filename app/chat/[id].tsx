@@ -275,11 +275,38 @@ export default function ChatScreen() {
       <AjakMainSheet
         visible={isSheetVisible}
         onClose={() => setIsSheetVisible(false)}
-        matchId={id as string}
         partnerName={name as string}
-        onInviteSent={() => {
+        onSend={async (inviteData) => {
           setIsSheetVisible(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          
+          if (!id || !currentUserId) return;
+          
+          const newMsg: Message = {
+            id: Math.random().toString(),
+            sender_id: currentUserId,
+            content: `Mengajak sparing ${inviteData.sport} di ${inviteData.venue_name}`,
+            type: 'sparing_invite',
+            metadata: {
+              ...inviteData,
+              status: 'pending'
+            },
+            created_at: new Date().toISOString(),
+          };
+          
+          setMessages((prev) => [...prev, newMsg]);
+
+          try {
+            await supabase.from('messages').insert({
+              match_id: id,
+              sender_id: currentUserId,
+              content: newMsg.content,
+              type: 'sparing_invite',
+              metadata: newMsg.metadata
+            });
+          } catch (e) {
+            console.error("Failed to send invite", e);
+          }
         }}
       />
     </KeyboardAvoidingView>
