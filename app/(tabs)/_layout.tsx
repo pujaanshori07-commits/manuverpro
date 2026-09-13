@@ -3,14 +3,13 @@ import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing } from '../../constants/theme';
+import { Colors, Typography } from '../../constants/theme';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
-  // Tab bar height calculation for Android vs iOS safe area
-  const tabHeight = Platform.OS === 'ios' ? 64 + insets.bottom : 68;
-  const paddingBottom = Platform.OS === 'ios' ? Math.max(insets.bottom, 12) : 10;
+  const tabHeight = Platform.OS === 'ios' ? 62 + insets.bottom : 66;
+  const paddingBottom = Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10;
 
   return (
     <Tabs
@@ -25,13 +24,13 @@ export default function TabLayout() {
           height: tabHeight,
           paddingBottom: paddingBottom,
           paddingTop: 8,
-          elevation: 0, // Disable Android default shadow to keep sleek dark line
+          elevation: 0,
         },
         tabBarLabelStyle: styles.tabBarLabel,
         tabBarItemStyle: styles.tabBarItem,
       }}
     >
-      {/* 1. Discover Tab */}
+      {/* 1. Discover */}
       <Tabs.Screen
         name="index"
         options={{
@@ -48,7 +47,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 2. Open Sparing / Sesi Tab */}
+      {/* 2. Open Sparing / Sesi */}
       <Tabs.Screen
         name="sessions"
         options={{
@@ -65,24 +64,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 3. Explore / Activity Tab (matching design reference) */}
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name={focused ? 'search' : 'search-outline'}
-                size={23}
-                color={color}
-              />
-            </View>
-          ),
-        }}
-      />
-
-      {/* 3. Matches & Chat Tab */}
+      {/* 3. Matches & Chat */}
       <Tabs.Screen
         name="matches"
         options={{
@@ -99,7 +81,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 4. Profile Tab */}
+      {/* 4. Profile */}
       <Tabs.Screen
         name="profile"
         options={{
@@ -113,6 +95,14 @@ export default function TabLayout() {
               />
             </View>
           ),
+        }}
+      />
+
+      {/* Explore disabled from bottom tabs */}
+      <Tabs.Screen
+        name="explore"
+        options={{
+          href: null,
         }}
       />
     </Tabs>
@@ -134,5 +124,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontMedium,
     fontSize: 11,
     letterSpacing: 0.2,
+    fontWeight: '500',
   },
 });

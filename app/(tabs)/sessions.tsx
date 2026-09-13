@@ -12,9 +12,10 @@ import {
   StatusBar,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import CreateSessionSheet from '../../components/CreateSessionSheet';
+import { Colors, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 
 export interface SessionItem {
@@ -34,9 +35,10 @@ export interface SessionItem {
   is_joined: boolean;
 }
 
+// Valid Ionicons mapping for sport badges & filters
 const SPORT_FILTERS = [
   { id: 'all', label: 'Semua', icon: 'grid-outline' as const },
-  { id: 'badminton', label: 'Badminton', icon: 'badminton' as const },
+  { id: 'badminton', label: 'Badminton', icon: 'tennisball-outline' as const },
   { id: 'running', label: 'Running', icon: 'walk-outline' as const },
   { id: 'gym', label: 'Gym', icon: 'barbell-outline' as const },
   { id: 'tennis', label: 'Tennis', icon: 'tennisball-outline' as const },
@@ -44,8 +46,8 @@ const SPORT_FILTERS = [
   { id: 'basket', label: 'Basket', icon: 'basketball-outline' as const },
 ];
 
-const SPORT_ICON_MAP: Record<string, any> = {
-  badminton: 'badminton',
+const SPORT_ICON_MAP: Record<string, keyof typeof Ionicons.glyphMap> = {
+  badminton: 'tennisball-outline',
   running: 'walk-outline',
   gym: 'barbell-outline',
   tennis: 'tennisball-outline',
@@ -59,6 +61,7 @@ const DEFAULT_AVATAR =
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200';
 
 export default function SessionsScreen() {
+  const insets = useSafeAreaInsets();
   const [selectedSport, setSelectedSport] = useState<string>('all');
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -67,82 +70,80 @@ export default function SessionsScreen() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [actionInProgressId, setActionInProgressId] = useState<string | null>(null);
 
-  // 1. Fetch current user
-  useEffect(() => {
-    async function getCurrentUser() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      setCurrentUserId(data?.user?.id ?? null);
+    } catch {
+      setCurrentUserId(null);
     }
-    getCurrentUser();
   }, []);
 
-  // 2. Fetch sessions from Supabase
   const fetchSessions = useCallback(async () => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const uid = user?.id || currentUserId;
+      setLoading(true);
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData?.user?.id ?? currentUserId;
 
-      // Query sessions with creator profile and user's participation status
       const { data, error } = await supabase
         .from('open_sessions')
-        .select(
-          `
-          *,
+        .select(`
+          id,
+          creator_id,
+          sport,
+          title,
+          venue_name,
+          scheduled_at,
+          slots_total,
+          slots_filled,
+          gender_pref,
+          skill_note,
+          status,
           profiles:creator_id (
-            id,
-            name,
-            avatar_url
+            nama,
+            foto_url
           ),
           session_participants (
             user_id
           )
-        `
-        )
-        .neq('status', 'cancelled')
+        `)
         .order('scheduled_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching sessions:', error);
-        Alert.alert('Gagal Memuat', 'Tidak dapat mengambil sesi olahraga terbaru.');
+      if (error || !data) {
+        setSessions([]);
         return;
       }
 
-      if (data) {
-        const mapped: SessionItem[] = data.map((item: any) => {
-          const participants: { user_id: string }[] =
-            item.session_participants || [];
-          const isJoined = uid
-            ? participants.some((p) => p.user_id === uid) || item.creator_id === uid
-            : false;
+      const formatted: SessionItem[] = data.map((item: any) => {
+        const creatorProfile = Array.isArray(item.profiles)
+          ? item.profiles[0]
+          : item.profiles;
+        const participants: any[] = item.session_participants || [];
+        const isJoined = userId
+          ? participants.some((p: any) => p.user_id === userId)
+          : false;
 
-          return {
-            id: item.id,
-            creator_id: item.creator_id,
-            creator_name: item.profiles?.name || 'Anggota Manuver',
-            creator_avatar: item.profiles?.avatar_url || DEFAULT_AVATAR,
-            sport: item.sport,
-            title: item.title,
-            venue_name: item.venue_name,
-            scheduled_at: item.scheduled_at,
-            slots_total: item.slots_total,
-            slots_filled: item.slots_filled,
-            gender_pref: item.gender_pref,
-            skill_note: item.skill_note,
-            status: item.status,
-            is_joined: isJoined,
-          };
-        });
+        return {
+          id: item.id,
+          creator_id: item.creator_id,
+          creator_name: creatorProfile?.nama || 'Member Manuver',
+          creator_avatar: creatorProfile?.foto_url || DEFAULT_AVATAR,
+          sport: item.sport,
+          title: item.title,
+          venue_name: item.venue_name,
+          scheduled_at: item.scheduled_at,
+          slots_total: item.slots_total,
+          slots_filled: item.slots_filled || 0,
+          gender_pref: item.gender_pref || 'any',
+          skill_note: item.skill_note,
+          status: item.status || 'open',
+          is_joined: isJoined,
+        };
+      });
 
-        setSessions(mapped);
-      }
-    } catch (err) {
-      console.error('Unexpected error fetching sessions:', err);
+      setSessions(formatted);
+    } catch {
+      setSessions([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -150,103 +151,51 @@ export default function SessionsScreen() {
   }, [currentUserId]);
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchSessions();
-  }, [fetchSessions]);
+  }, [fetchCurrentUser, fetchSessions]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchSessions();
   };
 
-  // 3. Handle Join / Leave Sesi
-  const handleToggleJoin = async (session: SessionItem) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      Alert.alert('Login Diperlukan', 'Silakan masuk untuk bergabung dengan sesi.');
+  const handleJoinLeave = async (session: SessionItem) => {
+    if (!currentUserId) {
+      Alert.alert('Masuk Akun', 'Silakan masuk untuk bergabung dengan sesi.');
       return;
     }
 
-    if (session.creator_id === user.id) {
-      Alert.alert('Host Sesi', 'Kamu adalah host pembuat sesi ini.');
-      return;
-    }
-
-    if (session.is_joined) {
-      // Leave confirmation
-      Alert.alert('Batalkan Keikutsertaan', 'Yakin ingin keluar dari sesi ini?', [
-        { text: 'Kembali', style: 'cancel' },
-        {
-          text: 'Keluar',
-          style: 'destructive',
-          onPress: async () => {
-            setActionInProgressId(session.id);
-            try {
-              const { error } = await supabase
-                .from('session_participants')
-                .delete()
-                .eq('session_id', session.id)
-                .eq('user_id', user.id);
-
-              if (error) throw error;
-
-              // Refresh list to trigger trigger-updated slot counters
-              await fetchSessions();
-            } catch (err: any) {
-              Alert.alert('Gagal Keluar', err.message || 'Terjadi kesalahan.');
-            } finally {
-              setActionInProgressId(null);
-            }
-          },
-        },
-      ]);
-    } else {
-      // Check full
-      if (session.status === 'full' || session.slots_filled >= session.slots_total) {
-        Alert.alert('Sesi Penuh', 'Maaf, semua slot peserta untuk sesi ini sudah terisi.');
-        return;
-      }
-
-      // Join
+    try {
       setActionInProgressId(session.id);
-      try {
-        const { error } = await supabase.from('session_participants').insert({
-          session_id: session.id,
-          user_id: user.id,
-        });
+      if (session.is_joined) {
+        const { error } = await supabase
+          .from('session_participants')
+          .delete()
+          .match({ session_id: session.id, user_id: currentUserId });
 
         if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('session_participants')
+          .insert({ session_id: session.id, user_id: currentUserId });
 
-        await fetchSessions();
-        Alert.alert('Berhasil!', `Kamu telah terdaftar di "${session.title}".`);
-      } catch (err: any) {
-        Alert.alert('Gagal Bergabung', err.message || 'Gagal mendaftar ke sesi ini.');
-      } finally {
-        setActionInProgressId(null);
+        if (error) throw error;
       }
+
+      fetchSessions();
+    } catch (err: any) {
+      Alert.alert('Gagal', err.message || 'Terjadi kendala saat memperbarui sesi.');
+    } finally {
+      setActionInProgressId(null);
     }
   };
 
   const formatIndonesianDate = (isoString: string) => {
     try {
       const date = new Date(isoString);
-      const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'Mei',
-        'Jun',
-        'Jul',
-        'Ags',
-        'Sep',
-        'Okt',
-        'Nov',
-        'Des',
-      ];
+      const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
       const dayName = days[date.getDay()];
       const dayNum = date.getDate();
       const monthName = months[date.getMonth()];
@@ -275,19 +224,16 @@ export default function SessionsScreen() {
         ? 'Wanita Saja'
         : 'Semua Gender';
 
+    const sportIcon = SPORT_ICON_MAP[item.sport.toLowerCase()] || 'fitness-outline';
+
     return (
       <View style={styles.card}>
         {/* Top Badges */}
         <View style={styles.cardTopRow}>
           <View style={styles.sportBadge}>
-            <Ionicons
-              name={SPORT_ICON_MAP[item.sport] || 'fitness-outline'}
-              size={13}
-              color="#FF5A1F"
-            />
+            <Ionicons name={sportIcon} size={13} color={Colors.primary} />
             <Text style={styles.sportBadgeText}>{item.sport.toUpperCase()}</Text>
           </View>
-
           <View style={styles.genderBadge}>
             <Text style={styles.genderBadgeText}>{genderLabel}</Text>
           </View>
@@ -307,14 +253,13 @@ export default function SessionsScreen() {
         {/* Venue & Date */}
         <View style={styles.infoBlock}>
           <View style={styles.infoRow}>
-            <Ionicons name="location-sharp" size={15} color="#FF5A1F" />
+            <Ionicons name="location-sharp" size={14} color={Colors.primary} />
             <Text style={styles.venueText} numberOfLines={1}>
               {item.venue_name}
             </Text>
           </View>
-
           <View style={styles.infoRow}>
-            <Ionicons name="calendar-outline" size={14} color="#8F94A6" />
+            <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} />
             <Text style={styles.timeText}>{formatIndonesianDate(item.scheduled_at)}</Text>
           </View>
         </View>
@@ -323,23 +268,12 @@ export default function SessionsScreen() {
         <View style={styles.slotsContainer}>
           <View style={styles.slotsHeader}>
             <Text style={styles.slotsLabel}>Ketersediaan Slot</Text>
-            <View
-              style={[
-                styles.slotPill,
-                isFull ? styles.slotPillFull : styles.slotPillAvailable,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.slotPillText,
-                  isFull ? styles.slotPillTextFull : styles.slotPillTextAvailable,
-                ]}
-              >
+            <View style={[styles.slotPill, isFull ? styles.slotPillFull : styles.slotPillAvailable]}>
+              <Text style={[styles.slotPillText, isFull ? styles.slotPillTextFull : styles.slotPillTextAvailable]}>
                 {item.slots_filled} / {item.slots_total} Slot
               </Text>
             </View>
           </View>
-
           <View style={styles.progressBarTrack}>
             <View
               style={[
@@ -353,8 +287,8 @@ export default function SessionsScreen() {
 
         {/* Skill Note */}
         {item.skill_note ? (
-          <Text style={styles.skillNote} numberOfLines={2}>
-            "{item.skill_note}"
+          <Text style={styles.skillNoteText} numberOfLines={1}>
+            Catatan: {item.skill_note}
           </Text>
         ) : null}
 
@@ -362,28 +296,26 @@ export default function SessionsScreen() {
         <TouchableOpacity
           style={[
             styles.ctaButton,
-            isFull && !item.is_joined && styles.ctaButtonDisabled,
-            item.is_joined && styles.ctaButtonJoined,
+            item.is_joined
+              ? styles.ctaJoined
+              : isFull
+              ? styles.ctaDisabled
+              : styles.ctaPrimary,
           ]}
-          onPress={() => handleToggleJoin(item)}
-          disabled={(isFull && !item.is_joined) || isProcessing}
+          onPress={() => handleJoinLeave(item)}
+          disabled={(!item.is_joined && isFull) || isProcessing}
           activeOpacity={0.8}
         >
           {isProcessing ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={Colors.white} />
           ) : (
             <Text
               style={[
-                styles.ctaButtonText,
-                isFull && !item.is_joined && styles.ctaButtonTextDisabled,
-                item.is_joined && styles.ctaButtonTextJoined,
+                styles.ctaText,
+                item.is_joined ? styles.ctaTextJoined : styles.ctaTextPrimary,
               ]}
             >
-              {item.is_joined
-                ? '✓ Terdaftar (Ketuk untuk Batal)'
-                : isFull
-                ? 'Penuh'
-                : 'Gabung Sesi'}
+              {item.is_joined ? 'Batal Ikut' : isFull ? 'Sesi Penuh' : 'Gabung Sesi'}
             </Text>
           )}
         </TouchableOpacity>
@@ -392,10 +324,10 @@ export default function SessionsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0B0D12" />
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="light-content" backgroundColor="#090A0D" />
 
-      {/* Screen Title */}
+      {/* Screen Header */}
       <View style={styles.screenHeader}>
         <View>
           <Text style={styles.screenTitle}>Open Sparing</Text>
@@ -422,11 +354,9 @@ export default function SessionsScreen() {
                 <Ionicons
                   name={f.icon}
                   size={14}
-                  color={active ? '#FF5A1F' : '#8F94A6'}
+                  color={active ? Colors.primary : Colors.textSecondary}
                 />
-                <Text
-                  style={[styles.filterPillText, active && styles.filterPillTextActive]}
-                >
+                <Text style={[styles.filterPillText, active && styles.filterPillTextActive]}>
                   {f.label}
                 </Text>
               </TouchableOpacity>
@@ -438,29 +368,39 @@ export default function SessionsScreen() {
       {/* Loading or Feed List */}
       {loading ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#FF5A1F" />
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : (
         <FlatList
           data={filteredSessions}
           keyExtractor={(item) => item.id}
           renderItem={renderCard}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 84 }]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#FF5A1F"
-              colors={['#FF5A1F']}
+              tintColor={Colors.primary}
+              colors={[Colors.primary]}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="tennisball-outline" size={48} color="#262933" />
+              <View style={styles.emptyIconCircle}>
+                <Ionicons name="tennisball-outline" size={40} color={Colors.textSecondary} />
+              </View>
               <Text style={styles.emptyTitle}>Belum Ada Sesi</Text>
               <Text style={styles.emptySubtitle}>
-                Belum ada sesi olahraga untuk kategori ini. Buka sesi pertama kamu!
+                Belum ada sesi olahraga untuk kategori ini. Jadilah yang pertama membuat sesi sparing!
               </Text>
+              <TouchableOpacity
+                style={styles.emptyActionBtn}
+                onPress={() => setSheetVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="add" size={18} color={Colors.white} />
+                <Text style={styles.emptyActionBtnText}>Buat Sesi Pertama</Text>
+              </TouchableOpacity>
             </View>
           }
         />
@@ -468,11 +408,12 @@ export default function SessionsScreen() {
 
       {/* Floating Action Button (FAB) */}
       <TouchableOpacity
-        style={styles.fab}
+        style={[styles.fab, { bottom: insets.bottom + 20 }]}
         onPress={() => setSheetVisible(true)}
         activeOpacity={0.85}
+        accessibilityLabel="Tambah Sesi Baru"
       >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
+        <Ionicons name="add" size={28} color={Colors.white} />
       </TouchableOpacity>
 
       {/* Create Session Bottom Sheet Modal */}
@@ -481,14 +422,14 @@ export default function SessionsScreen() {
         onClose={() => setSheetVisible(false)}
         onCreated={() => fetchSessions()}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
-    backgroundColor: '#0B0D12',
+    backgroundColor: Colors.background,
   },
   centered: {
     flex: 1,
@@ -496,103 +437,100 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   screenHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 8,
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
   },
   screenTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
+    color: Colors.white,
+    letterSpacing: -0.4,
   },
   screenSubtitle: {
     fontSize: 13,
-    color: '#8F94A6',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   filterBarWrapper: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: Spacing.sm,
   },
   filterScroll: {
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.base,
     gap: 8,
   },
   filterPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 7,
     paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: '#1A1D24',
+    paddingVertical: 8,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: Colors.surfaceBorder,
   },
   filterPillActive: {
-    backgroundColor: 'rgba(255, 90, 31, 0.15)',
-    borderColor: '#FF5A1F',
+    backgroundColor: Colors.primaryMuted,
+    borderColor: Colors.primary,
   },
   filterPillText: {
     fontSize: 13,
-    color: '#8F94A6',
-    fontWeight: '600',
+    fontWeight: '500',
+    color: Colors.textSecondary,
   },
   filterPillTextActive: {
-    color: '#FF5A1F',
+    color: Colors.primary,
+    fontWeight: '600',
   },
   listContent: {
-    padding: 16,
-    paddingBottom: 90,
-    gap: 16,
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.xs,
   },
   card: {
-    backgroundColor: '#1A1D24',
-    borderRadius: 18,
-    padding: 16,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.base,
+    marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: Colors.surfaceBorder,
   },
   cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   sportBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(255, 90, 31, 0.15)',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 90, 31, 0.3)',
+    backgroundColor: Colors.primaryMuted,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.xs,
   },
   sportBadgeText: {
+    color: Colors.primary,
     fontSize: 11,
     fontWeight: '700',
-    color: '#FF5A1F',
     letterSpacing: 0.5,
   },
   genderBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    paddingVertical: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.xs,
   },
   genderBadgeText: {
+    color: Colors.textSecondary,
     fontSize: 11,
-    color: '#8F94A6',
     fontWeight: '500',
   },
   sessionTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.white,
     lineHeight: 22,
     marginBottom: 10,
   },
@@ -606,19 +544,18 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#262933',
   },
   creatorName: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#8F94A6',
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   infoBlock: {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    borderRadius: 12,
-    padding: 10,
     gap: 6,
     marginBottom: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    padding: 10,
+    borderRadius: BorderRadius.sm,
   },
   infoRow: {
     flexDirection: 'row',
@@ -626,17 +563,16 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   venueText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#E0E3EB',
+    fontSize: 12,
+    color: Colors.white,
     flex: 1,
   },
   timeText: {
     fontSize: 12,
-    color: '#8F94A6',
+    color: Colors.textSecondary,
   },
   slotsContainer: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   slotsHeader: {
     flexDirection: 'row',
@@ -646,33 +582,33 @@ const styles = StyleSheet.create({
   },
   slotsLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#8F94A6',
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   slotPill: {
-    paddingVertical: 3,
     paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
   },
   slotPillAvailable: {
-    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+    backgroundColor: Colors.successMuted,
   },
   slotPillFull: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: Colors.dangerMuted,
   },
   slotPillText: {
     fontSize: 11,
     fontWeight: '700',
   },
   slotPillTextAvailable: {
-    color: '#4ADE80',
+    color: Colors.success,
   },
   slotPillTextFull: {
-    color: '#EF4444',
+    color: Colors.danger,
   },
   progressBarTrack: {
-    height: 6,
-    backgroundColor: '#262933',
+    height: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -681,77 +617,102 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   progressAvailable: {
-    backgroundColor: '#4ADE80',
+    backgroundColor: Colors.success,
   },
   progressFull: {
-    backgroundColor: '#EF4444',
+    backgroundColor: Colors.danger,
   },
-  skillNote: {
-    fontStyle: 'italic',
+  skillNoteText: {
     fontSize: 12,
-    color: '#A5ABB9',
-    marginBottom: 14,
-    lineHeight: 16,
+    color: Colors.textSecondary,
+    fontStyle: 'italic',
+    marginBottom: 12,
   },
   ctaButton: {
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#FF5A1F',
-    alignItems: 'center',
+    height: 42,
+    borderRadius: BorderRadius.sm,
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  ctaButtonDisabled: {
-    backgroundColor: '#262933',
+  ctaPrimary: {
+    backgroundColor: Colors.primary,
   },
-  ctaButtonJoined: {
-    backgroundColor: 'rgba(74, 222, 128, 0.15)',
+  ctaJoined: {
+    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: '#4ADE80',
+    borderColor: Colors.danger,
   },
-  ctaButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  ctaDisabled: {
+    backgroundColor: '#20232B',
   },
-  ctaButtonTextDisabled: {
-    color: '#555B6E',
+  ctaText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
-  ctaButtonTextJoined: {
-    color: '#4ADE80',
+  ctaTextPrimary: {
+    color: Colors.white,
   },
-  fab: {
-    position: 'absolute',
-    right: 18,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF5A1F',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 8,
-    shadowColor: '#FF5A1F',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
+  ctaTextJoined: {
+    color: Colors.danger,
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 60,
-    paddingHorizontal: 24,
+    paddingHorizontal: Spacing.xl,
+  },
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
-    marginTop: 12,
-    marginBottom: 4,
+    color: Colors.white,
+    marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#8F94A6',
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
+    marginBottom: Spacing.lg,
+  },
+  emptyActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.round,
+  },
+  emptyActionBtnText: {
+    color: Colors.white,
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 99,
   },
 });

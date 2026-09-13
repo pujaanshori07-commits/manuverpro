@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,11 +30,11 @@ import Animated, {
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
-import MultiPhotoCard from '../../components/MultiPhotoCard';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.74;
+// Fixed portrait height for consistent photo presentation
+const HERO_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.22);
 
 interface Profile {
   id: string;
@@ -44,39 +45,54 @@ interface Profile {
   jarak?: string;
   hobi?: string[];
   bio?: string;
+  skill_level?: string;
+  availability?: string[];
+  distance_pref?: string;
+  interests?: string[];
 }
 
-// Fallback high-quality demo profiles matching the reference image
 const DEMO_PROFILES: Profile[] = [
   {
     id: 'demo-1',
-    nama: 'Dinda',
+    nama: 'Pengguna Baru',
     umur: 24,
     foto_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80',
-    alamat: 'Jakarta Selatan',
-    jarak: '3 km away',
-    hobi: ['Badminton', 'Gym', 'Running'],
-    bio: 'Cari partner badminton / gym / lari. Let’s move together! 💪',
+    alamat: 'GBK Senayan',
+    jarak: '2 km',
+    hobi: ['Gym', 'Running'],
+    bio: 'Senang olahraga bersama. Mencari partner latihan rutin di sekitarku dan ikut event lari bersama.',
+    skill_level: 'Intermediate',
+    availability: ['Pagi', 'Sore', 'Akhir Pekan'],
+    distance_pref: '≤ 10 km',
+    interests: ['Health', 'Travel', 'Music', 'Food'],
   },
   {
     id: 'demo-2',
-    nama: 'Reza',
-    umur: 26,
-    foto_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=80',
-    alamat: 'Gelora Bung Karno',
-    jarak: '4 km away',
-    hobi: ['Gym', 'Basket', 'Running', 'Coffee'],
-    bio: 'Gym, basket, lari, kopi. Cari teman olahraga yang konsisten.',
+    nama: 'Dinda',
+    umur: 25,
+    foto_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=80',
+    alamat: 'Senayan',
+    jarak: '3 km away',
+    hobi: ['Badminton', 'Running'],
+    bio: 'Cari partner badminton santai atau sparring lari pagi di GBK. Let’s stay active together! 💪🏸',
+    skill_level: 'Advanced',
+    availability: ['Pagi', 'Akhir Pekan'],
+    distance_pref: '≤ 5 km',
+    interests: ['Health', 'Outdoor', 'Coffee'],
   },
   {
     id: 'demo-3',
-    nama: 'Nadia',
-    umur: 26,
-    foto_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=80',
-    alamat: 'Senayan',
-    jarak: '2 km away',
-    hobi: ['Running', 'Yoga', 'Tennis'],
-    bio: 'Pagi lari santai, sore tennis match. Siapa mau join?',
+    nama: 'Reza',
+    umur: 27,
+    foto_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=80',
+    alamat: 'Cilandak',
+    jarak: '4 km away',
+    hobi: ['Gym', 'Basket', 'Running'],
+    bio: 'Gym 4x seminggu & main basket santai akhir pekan. Looking for a disciplined gym bro.',
+    skill_level: 'Intermediate',
+    availability: ['Malam', 'Akhir Pekan'],
+    distance_pref: '≤ 15 km',
+    interests: ['Fitness', 'Nutrition', 'Music'],
   },
 ];
 
@@ -86,8 +102,8 @@ export default function DiscoverScreen() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const scrollRef = useRef<ScrollView>(null);
 
-  // Fetch profiles from Supabase with fallback to demo data
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
@@ -101,15 +117,19 @@ export default function DiscoverScreen() {
       } else {
         const formatted: Profile[] = data.map((item: any) => ({
           id: item.id,
-          nama: item.nama || 'Pengguna',
-          umur: item.umur || 25,
+          nama: item.nama || 'Pengguna Baru',
+          umur: item.umur || 24,
           foto_url: item.foto_url || DEMO_PROFILES[0].foto_url,
-          alamat: item.alamat || 'Jakarta',
-          jarak: '3 km away',
+          alamat: item.alamat || 'GBK Senayan',
+          jarak: item.jarak || '2 km',
           hobi: Array.isArray(item.hobi)
             ? item.hobi
             : (item.hobi ? item.hobi.split(',').map((s: string) => s.trim()) : ['Gym', 'Running']),
-          bio: item.bio || 'Yuk cari teman olahraga bareng di Manuver!',
+          bio: item.bio || 'Senang olahraga bersama. Mencari partner latihan rutin di sekitarku.',
+          skill_level: item.skill_level || 'Intermediate',
+          availability: item.availability || ['Pagi', 'Sore', 'Akhir Pekan'],
+          distance_pref: item.distance_pref || '≤ 10 km',
+          interests: item.interests || ['Health', 'Travel', 'Music', 'Food'],
         }));
         setProfiles(formatted);
       }
@@ -127,69 +147,60 @@ export default function DiscoverScreen() {
   const currentProfile = profiles[currentIndex];
   const nextProfile = profiles[currentIndex + 1];
 
-  // Gesture shared values
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
-  const handleSwipeComplete = (direction: 'left' | 'right' | 'superlike') => {
+  const resetScrollPosition = () => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  };
+
+  const handleSwipeComplete = (direction: 'left' | 'right') => {
     const swipedId = currentProfile?.id;
     setCurrentIndex((prev) => prev + 1);
     translateX.value = 0;
     translateY.value = 0;
+    resetScrollPosition();
 
-    // Persist swipe action to Supabase
     if (swipedId) {
       supabase.auth.getUser().then(({ data }) => {
         if (data?.user?.id) {
           supabase.from('swipes').insert({
             swiper_id: data.user.id,
             swipee_id: swipedId,
-            action: direction === 'right' ? 'like' : direction === 'left' ? 'pass' : 'superlike',
+            action: direction === 'right' ? 'like' : 'pass',
           });
         }
       });
     }
   };
 
-  const triggerSwipe = (direction: 'left' | 'right' | 'superlike') => {
+  const triggerSwipe = (direction: 'left' | 'right') => {
     'worklet';
-    
-    // Provide haptic feedback based on the action
-    if (direction === 'superlike') {
-      runOnJS(Haptics.notificationAsync)(
-        Haptics.NotificationFeedbackType.Success
-      );
-    } else {
-      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
-    }
+    runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
 
     if (direction === 'left') {
-      translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 250 }, () => {
+      translateX.value = withTiming(-SCREEN_WIDTH * 1.4, { duration: 250 }, () => {
         runOnJS(handleSwipeComplete)('left');
       });
-    } else if (direction === 'right') {
-      translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 250 }, () => {
-        runOnJS(handleSwipeComplete)('right');
-      });
     } else {
-      translateY.value = withTiming(-SCREEN_HEIGHT * 1.2, { duration: 280 }, () => {
-        runOnJS(handleSwipeComplete)('superlike');
+      translateX.value = withTiming(SCREEN_WIDTH * 1.4, { duration: 250 }, () => {
+        runOnJS(handleSwipeComplete)('right');
       });
     }
   };
 
   const panGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-15, 15])
     .onUpdate((event) => {
       translateX.value = event.translationX;
-      translateY.value = event.translationY * 0.6; // subtle vertical drag
+      translateY.value = event.translationY * 0.15;
     })
     .onEnd((event) => {
       if (event.translationX > SWIPE_THRESHOLD) {
         triggerSwipe('right');
       } else if (event.translationX < -SWIPE_THRESHOLD) {
         triggerSwipe('left');
-      } else if (event.translationY < -150) {
-        triggerSwipe('superlike');
       } else {
         translateX.value = withSpring(0, { damping: 15 });
         translateY.value = withSpring(0, { damping: 15 });
@@ -200,7 +211,7 @@ export default function DiscoverScreen() {
     const rotate = interpolate(
       translateX.value,
       [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-      [-10, 0, 10]
+      [-8, 0, 8]
     );
 
     return {
@@ -220,41 +231,59 @@ export default function DiscoverScreen() {
     opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, -20], [1, 0]),
   }));
 
+  const getInterestIcon = (name: string): keyof typeof Ionicons.glyphMap => {
+    const lower = name.toLowerCase();
+    if (lower.includes('health') || lower.includes('sehat')) return 'heart-outline';
+    if (lower.includes('travel') || lower.includes('jalan')) return 'airplane-outline';
+    if (lower.includes('music') || lower.includes('musik')) return 'musical-notes-outline';
+    if (lower.includes('food') || lower.includes('kuliner')) return 'restaurant-outline';
+    if (lower.includes('coffee') || lower.includes('kopi')) return 'cafe-outline';
+    if (lower.includes('outdoor')) return 'compass-outline';
+    return 'sparkles-outline';
+  };
+
+  const getSportIcon = (name: string): keyof typeof Ionicons.glyphMap => {
+    const lower = name.toLowerCase();
+    if (lower.includes('run') || lower.includes('lari')) return 'walk-outline';
+    if (lower.includes('gym') || lower.includes('fit')) return 'barbell-outline';
+    if (lower.includes('cycle') || lower.includes('sepeda')) return 'bicycle-outline';
+    if (lower.includes('badminton') || lower.includes('tennis')) return 'tennisball-outline';
+    return 'fitness-outline';
+  };
+
   return (
     <GestureHandlerRootView style={styles.rootContainer}>
       <View style={[styles.container, { paddingTop: insets.top }]}>
         
-        {/* Transparent Header */}
-        <View style={styles.discoverHeader}>
-          <Image
-            source={require('../../assets/images/logo.png')}
-            style={styles.discoverLogo}
-            resizeMode="contain"
-          />
+        {/* Header with Centered "manuver" Wordmark */}
+        <View style={styles.header}>
+          <View style={styles.headerSpacer} />
+          <Text style={styles.headerBrandText}>manuver</Text>
           <TouchableOpacity
             style={styles.filterBtn}
             onPress={() => router.push('/settings/filters')}
+            activeOpacity={0.7}
           >
             <Ionicons name="options-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
-        {/* Content Body */}
+        {/* Body */}
         {loading ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={Colors.primary} />
           </View>
         ) : !currentProfile ? (
-          /* Empty State */
+          /* Empty Deck State */
           <View style={styles.emptyContainer}>
             <View style={styles.glowingRingsOuter}>
               <View style={styles.glowingRingsInner}>
                 <Ionicons name="flame" size={56} color={Colors.primary} />
               </View>
             </View>
-            <Text style={styles.emptyTitle}>Area Clear!</Text>
+            <Text style={styles.emptyTitle}>Area Selesai Dijelajahi!</Text>
             <Text style={styles.emptySubtitle}>
-              Coba perluas radius atau rentang umur di pengaturan untuk menemukan partner baru.
+              Coba perluas radius atau rentang umur di filter untuk menemukan partner olahraga lainnya.
             </Text>
             <TouchableOpacity
               style={styles.emptyFilterBtn}
@@ -268,71 +297,195 @@ export default function DiscoverScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          /* Swiper Area */
+          /* Deck Container */
           <View style={styles.deckContainer}>
+            
             {/* Background Card Preview */}
             {nextProfile && (
               <View style={[styles.card, styles.nextCard]}>
                 <Image
                   source={{ uri: nextProfile.foto_url }}
-                  style={styles.cardImage}
+                  style={styles.nextHeroPhoto}
                   resizeMode="cover"
                 />
               </View>
             )}
 
-            {/* Active Swiping Card */}
+            {/* Active Card with Vertical Scroll */}
             <GestureDetector gesture={panGesture}>
               <Animated.View style={[styles.card, animatedCardStyle]}>
-                <MultiPhotoCard
-                  photos={[currentProfile.foto_url, currentProfile.foto_url]}
-                  name={currentProfile.nama}
-                  age={currentProfile.umur || 24}
-                  location={currentProfile.alamat || 'Jakarta'}
-                  distance={currentProfile.jarak || '3 km away'}
-                  sports={currentProfile.hobi || ['Badminton', 'Gym']}
-                  bio={currentProfile.bio}
-                />
-
-                {/* LIKE / PASS Visual Feedback Stamps */}
+                
+                {/* LIKE / PASS Visual Stamps */}
                 <Animated.View style={[styles.stampBadge, styles.likeBadge, likeStampStyle]} pointerEvents="none">
-                  <Text style={styles.likeBadgeText}>LIKE</Text>
+                  <Text style={styles.likeBadgeText}>INTERESTED</Text>
                 </Animated.View>
                 <Animated.View style={[styles.stampBadge, styles.passBadge, passStampStyle]} pointerEvents="none">
                   <Text style={styles.passBadgeText}>PASS</Text>
                 </Animated.View>
+
+                {/* Vertically Scrollable Profile Body */}
+                <ScrollView
+                  ref={scrollRef}
+                  style={styles.profileScrollView}
+                  contentContainerStyle={styles.scrollContentContainer}
+                  showsVerticalScrollIndicator={false}
+                  bounces={true}
+                >
+                  {/* Hero Photo - Natural Full Photo */}
+                  <View style={styles.heroPhotoWrapper}>
+                    <Image
+                      source={{ uri: currentProfile.foto_url }}
+                      style={styles.heroPhoto}
+                      resizeMode="cover"
+                    />
+                    {/* Seamless Bottom-Edge Fade into Card Background */}
+                    <LinearGradient
+                      colors={['transparent', 'rgba(15, 17, 23, 0.55)', '#0F1117']}
+                      locations={[0, 0.6, 1]}
+                      style={styles.photoGradient}
+                    />
+                  </View>
+
+                  {/* Profile Details Content */}
+                  <View style={styles.profileDetailsBody}>
+                    
+                    {/* Name, Age & Verified Checkmark */}
+                    <View style={styles.nameRow}>
+                      <Text style={styles.profileName}>
+                        {currentProfile.nama}, {currentProfile.umur}
+                      </Text>
+                      <View style={styles.verifiedCheck}>
+                        <Ionicons name="checkmark-sharp" size={13} color="#FFFFFF" />
+                      </View>
+                    </View>
+
+                    {/* Quick Sport Chips */}
+                    {currentProfile.hobi && currentProfile.hobi.length > 0 && (
+                      <View style={styles.quickSportsRow}>
+                        {currentProfile.hobi.map((item, idx) => (
+                          <View key={idx} style={styles.quickSportChip}>
+                            <Ionicons name={getSportIcon(item)} size={13} color="#FF5A1F" />
+                            <Text style={styles.quickSportText}>{item}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Venue & Distance */}
+                    <View style={styles.locationRow}>
+                      <Ionicons name="location-sharp" size={14} color="#FF5A1F" />
+                      <Text style={styles.locationText}>
+                        {currentProfile.alamat || 'GBK Senayan'} • {currentProfile.jarak || '2 km'}
+                      </Text>
+                    </View>
+
+                    {/* About Me */}
+                    {currentProfile.bio ? (
+                      <View style={styles.sectionBlock}>
+                        <Text style={styles.sectionHeading}>About Me</Text>
+                        <Text style={styles.aboutMeText}>{currentProfile.bio}</Text>
+                      </View>
+                    ) : null}
+
+                    {/* Sports I Play */}
+                    <View style={styles.sectionBlock}>
+                      <Text style={styles.sectionHeading}>Sports I Play</Text>
+                      <View style={styles.pillsRow}>
+                        {(currentProfile.hobi || ['Running', 'Gym', 'Cycling']).map((sport, idx) => (
+                          <View key={idx} style={styles.detailPill}>
+                            <Ionicons name={getSportIcon(sport)} size={14} color="#FF5A1F" />
+                            <Text style={styles.detailPillText}>{sport}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Skill Level */}
+                    <View style={styles.sectionBlock}>
+                      <Text style={styles.sectionHeading}>Skill Level</Text>
+                      <View style={styles.pillsRow}>
+                        <View style={styles.detailPill}>
+                          <Text style={styles.detailPillText}>{currentProfile.skill_level || 'Intermediate'}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Availability */}
+                    <View style={styles.sectionBlock}>
+                      <Text style={styles.sectionHeading}>Availability</Text>
+                      <View style={styles.pillsRow}>
+                        {(currentProfile.availability || ['Pagi', 'Sore', 'Akhir Pekan']).map((time, idx) => (
+                          <View key={idx} style={styles.detailPill}>
+                            <Text style={styles.detailPillText}>{time}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Distance Preference */}
+                    <View style={styles.sectionBlock}>
+                      <Text style={styles.sectionHeading}>Distance Preference</Text>
+                      <View style={styles.pillsRow}>
+                        <View style={styles.detailPill}>
+                          <Text style={styles.detailPillText}>{currentProfile.distance_pref || '≤ 10 km'}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Interests */}
+                    <View style={styles.sectionBlock}>
+                      <Text style={styles.sectionHeading}>Interests</Text>
+                      <View style={styles.pillsRow}>
+                        {(currentProfile.interests || ['Health', 'Travel', 'Music', 'Food']).map((interest, idx) => (
+                          <View key={idx} style={styles.interestPill}>
+                            <Ionicons name={getInterestIcon(interest)} size={15} color="#9EA3B0" />
+                            <Text style={styles.interestPillText}>{interest}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+
+                  </View>
+                </ScrollView>
               </Animated.View>
             </GestureDetector>
 
-            {/* Bottom Action Buttons (Pass, Superlike, Like) */}
-            <View style={styles.actionRow}>
-              {/* Pass Button */}
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.btnPass]}
-                onPress={() => triggerSwipe('left')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="close" size={30} color={Colors.danger} />
-              </TouchableOpacity>
+            {/* Sticky Bottom Action Buttons */}
+            <View style={[styles.bottomActionContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+              <LinearGradient
+                colors={['transparent', 'rgba(9, 10, 13, 0.85)', '#090A0D']}
+                locations={[0, 0.35, 1]}
+                style={StyleSheet.absoluteFill}
+                pointerEvents="none"
+              />
 
-              {/* Superlike / Star Button */}
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.btnStar]}
-                onPress={() => triggerSwipe('superlike')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="star" size={24} color={Colors.white} />
-              </TouchableOpacity>
+              <View style={styles.actionRow}>
+                {/* PASS */}
+                <View style={styles.actionCol}>
+                  <TouchableOpacity
+                    style={[styles.actionCircle, styles.btnPass]}
+                    onPress={() => triggerSwipe('left')}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="close" size={28} color="#FFFFFF" />
+                  </TouchableOpacity>
+                  <Text style={styles.actionLabel}>Pass</Text>
+                </View>
 
-              {/* Like / Heart Button */}
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.btnLike]}
-                onPress={() => triggerSwipe('right')}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="heart" size={28} color={Colors.white} />
-              </TouchableOpacity>
+                {/* INTERESTED */}
+                <View style={styles.actionCol}>
+                  <TouchableOpacity
+                    style={[styles.actionCircle, styles.btnInterested]}
+                    onPress={() => triggerSwipe('right')}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="walk" size={28} color="#FFFFFF" />
+                  </TouchableOpacity>
+                  <Text style={styles.actionLabel}>Interested</Text>
+                </View>
+              </View>
             </View>
+
           </View>
         )}
       </View>
@@ -349,24 +502,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  discoverHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    height: 52,
-    zIndex: 10,
+    paddingVertical: Spacing.xs,
+    height: 48,
+    zIndex: 20,
   },
-  discoverLogo: {
-    width: 110,
-    height: 32,
+  headerSpacer: {
+    width: 38,
+  },
+  headerBrandText: {
+    fontFamily: Typography.fontHeading,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FF572F', // Brand orange
+    letterSpacing: -0.5,
+    textTransform: 'lowercase',
   },
   filterBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1A1D24',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#171A21',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -379,120 +539,170 @@ const styles = StyleSheet.create({
   },
   deckContainer: {
     flex: 1,
+    position: 'relative',
     alignItems: 'center',
+    paddingBottom: 8,
   },
   card: {
     width: SCREEN_WIDTH - 20,
-    height: CARD_HEIGHT,
-    borderRadius: BorderRadius.lg,
+    borderRadius: 24,
+    backgroundColor: '#0F1117',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
     position: 'absolute',
-    top: 8,
+    top: 0,
+    bottom: 8,
   },
   nextCard: {
-    transform: [{ scale: 0.95 }],
-    opacity: 0.7,
+    transform: [{ scale: 0.96 }],
+    opacity: 0.5,
   },
-  cardImage: {
+  nextHeroPhoto: {
+    width: '100%',
+    height: HERO_PHOTO_HEIGHT,
+  },
+  profileScrollView: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    // Generous bottom clearance ensuring the last section scrolls well above the action buttons
+    paddingBottom: 200,
+  },
+  heroPhotoWrapper: {
+    width: '100%',
+    height: HERO_PHOTO_HEIGHT,
+    position: 'relative',
+    backgroundColor: '#171A21',
+  },
+  heroPhoto: {
     width: '100%',
     height: '100%',
   },
-  cardGradient: {
+  photoGradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: '50%',
-    justifyContent: 'flex-end',
-    paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.xl,
+    height: 110,
   },
-  cardInfo: {
-    gap: 6,
+  profileDetailsBody: {
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
+    backgroundColor: '#0F1117',
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 8,
   },
   profileName: {
     fontFamily: Typography.fontHeading,
-    fontSize: 28,
-    color: Colors.textPrimary,
+    fontSize: 24,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   verifiedCheck: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: Colors.primary,
+    backgroundColor: '#00C48C',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  quickSportsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
+  },
+  quickSportChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 90, 31, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 90, 31, 0.4)',
+  },
+  quickSportText: {
+    fontFamily: Typography.fontMedium,
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
+    gap: 5,
+    marginBottom: 18,
   },
   locationText: {
     fontFamily: Typography.fontRegular,
     fontSize: 13,
     color: '#B7BCCB',
   },
-  bioText: {
+  sectionBlock: {
+    marginBottom: 16,
+  },
+  sectionHeading: {
+    fontFamily: Typography.fontSemiBold,
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  aboutMeText: {
     fontFamily: Typography.fontRegular,
     fontSize: 13,
-    color: Colors.textPrimary,
-    lineHeight: 18,
-    marginTop: 4,
+    color: '#B7BCCB',
+    lineHeight: 20,
   },
-  sportTagsRow: {
+  pillsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
+  },
+  detailPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 6,
-    marginTop: 8,
-    marginBottom: 6,
-  },
-  sportTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 90, 31, 0.2)',
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 90, 31, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  sportTagText: {
+  detailPillText: {
+    fontFamily: Typography.fontMedium,
     fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  venuePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 5,
-    marginTop: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    overflow: 'hidden',
-  },
-  venuePillText: {
-    fontSize: 12,
-    color: '#FFFFFF',
+    color: '#E1E4EA',
     fontWeight: '500',
-    maxWidth: SCREEN_WIDTH - 120,
+  },
+  interestPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  interestPillText: {
+    fontFamily: Typography.fontMedium,
+    fontSize: 12,
+    color: '#E1E4EA',
+    fontWeight: '500',
   },
   stampBadge: {
     position: 'absolute',
-    top: 40,
+    top: 50,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: BorderRadius.sm,
@@ -500,64 +710,72 @@ const styles = StyleSheet.create({
     zIndex: 99,
   },
   likeBadge: {
-    left: 30,
-    borderColor: Colors.success,
-    transform: [{ rotate: '-18deg' }],
+    left: 24,
+    borderColor: '#00C48C',
+    transform: [{ rotate: '-14deg' }],
   },
   likeBadgeText: {
     fontFamily: Typography.fontHeading,
-    color: Colors.success,
-    fontSize: 28,
+    color: '#00C48C',
+    fontSize: 24,
     letterSpacing: 2,
+    fontWeight: '800',
   },
   passBadge: {
-    right: 30,
-    borderColor: Colors.danger,
-    transform: [{ rotate: '18deg' }],
+    right: 24,
+    borderColor: '#FF3B30',
+    transform: [{ rotate: '14deg' }],
   },
   passBadgeText: {
     fontFamily: Typography.fontHeading,
-    color: Colors.danger,
-    fontSize: 28,
+    color: '#FF3B30',
+    fontSize: 24,
     letterSpacing: 2,
+    fontWeight: '800',
+  },
+  bottomActionContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 24,
+    zIndex: 30,
   },
   actionRow: {
-    position: 'absolute',
-    bottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 20,
-    width: '100%',
+    gap: 48,
   },
-  actionBtn: {
+  actionCol: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  actionCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 5,
-    shadowColor: Colors.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
   },
   btnPass: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: '#1A1D24',
-    borderWidth: 1.5,
-    borderColor: '#2A2E38',
+    backgroundColor: '#1E222B',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
-  btnStar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  btnInterested: {
     backgroundColor: Colors.primary,
   },
-  btnLike: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.primary,
+  actionLabel: {
+    fontFamily: Typography.fontMedium,
+    fontSize: 12,
+    color: '#8E95A5',
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,

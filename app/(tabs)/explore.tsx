@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,18 +10,19 @@ import {
   Modal,
   Dimensions,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
+import { Colors, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - Spacing.base * 2;
-const CARD_HEIGHT = 160;
+const CARD_WIDTH = Math.min(SCREEN_WIDTH - Spacing.base * 2, 440);
+const CARD_HEIGHT = 170;
 
 const ACTIVITY_CATEGORIES = [
   'Semua',
@@ -136,38 +137,93 @@ export default function ExploreScreen() {
     return item.aktivitas.toLowerCase() === selectedCategory.toLowerCase();
   });
 
+  const renderCard = ({ item }: { item: ExploreCardItem }) => (
+    <TouchableOpacity
+      style={styles.cardContainer}
+      activeOpacity={0.9}
+      onPress={() => router.push(`/user/${item.id}`)}
+    >
+      <Image source={{ uri: item.foto_url }} style={styles.cardImage} resizeMode="cover" />
+
+      {/* Dark gradient overlay */}
+      <LinearGradient
+        colors={['transparent', 'rgba(9, 10, 13, 0.45)', 'rgba(9, 10, 13, 0.95)']}
+        locations={[0, 0.5, 1]}
+        style={styles.cardGradient}
+      >
+        <View style={styles.cardTopRow}>
+          <View style={styles.activityBadge}>
+            <Ionicons name="fitness-outline" size={12} color={Colors.primary} />
+            <Text style={styles.activityBadgeText}>{item.aktivitas}</Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.likeButton, item.isLiked && styles.likeButtonActive]}
+            onPress={() => toggleLike(item.id)}
+            activeOpacity={0.7}
+            accessibilityLabel="Sukai Profil"
+          >
+            <Ionicons
+              name={item.isLiked ? 'heart' : 'heart-outline'}
+              size={18}
+              color={item.isLiked ? Colors.primary : Colors.white}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.cardBottomRow}>
+          <View>
+            <Text style={styles.userNameText}>
+              {item.nama}, {item.umur}
+            </Text>
+            <View style={styles.distanceRow}>
+              <Ionicons name="location-sharp" size={12} color={Colors.textSecondary} />
+              <Text style={styles.distanceText}>{item.jarak} dari lokasimu</Text>
+            </View>
+          </View>
+        </View>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" backgroundColor="#090A0D" />
+
+      {/* Header Bar */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Explore</Text>
+        <View>
+          <Text style={styles.headerTitle}>Explore</Text>
+          <Text style={styles.headerSubtitle}>Temukan partner olahraga di dekatmu</Text>
+        </View>
         <TouchableOpacity
           style={styles.filterIconButton}
           onPress={() => setFilterModalVisible(true)}
           activeOpacity={0.7}
+          accessibilityLabel="Buka Filter"
         >
-          <Ionicons name="options-outline" size={22} color={Colors.textPrimary} />
+          <Ionicons name="filter-outline" size={20} color={Colors.white} />
         </TouchableOpacity>
       </View>
 
-      {/* Activity Filter Pills (Horizontal Scroll) */}
-      <View style={styles.categoryScrollWrap}>
+      {/* Category Pills Bar */}
+      <View style={styles.categoryScrollWrapper}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.categoryList}
         >
           {ACTIVITY_CATEGORIES.map((cat) => {
-            const isActive = selectedCategory === cat;
+            const isSelected = selectedCategory === cat;
             return (
               <TouchableOpacity
                 key={cat}
-                style={[styles.categoryPill, isActive && styles.categoryPillActive]}
+                style={[styles.categoryPill, isSelected && styles.categoryPillActive]}
                 onPress={() => setSelectedCategory(cat)}
-                activeOpacity={0.8}
+                activeOpacity={0.7}
               >
                 <Text
-                  style={[styles.categoryPillText, isActive && styles.categoryPillTextActive]}
+                  style={[styles.categoryPillText, isSelected && styles.categoryPillTextActive]}
                 >
                   {cat}
                 </Text>
@@ -177,7 +233,7 @@ export default function ExploreScreen() {
         </ScrollView>
       </View>
 
-      {/* Profiles Cards List */}
+      {/* Profile Cards Feed */}
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.primary} />
@@ -186,165 +242,81 @@ export default function ExploreScreen() {
         <FlatList
           data={filteredItems}
           keyExtractor={(item) => item.id}
+          renderItem={renderCard}
+          contentContainerStyle={[styles.feedContent, { paddingBottom: insets.bottom + 80 }]}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.exploreCard}
-              activeOpacity={0.9}
-              onPress={() =>
-                router.push({
-                  pathname: '/chat/[id]',
-                  params: { id: item.id, name: item.nama, avatar: item.foto_url },
-                })
-              }
-            >
-              <Image source={{ uri: item.foto_url }} style={styles.cardImage} />
-
-              {/* Gradient Dark Overlay */}
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(9,10,13,0.92)']}
-                locations={[0.2, 0.6, 1.0]}
-                style={styles.cardGradient}
-              >
-                <View style={styles.cardBottomRow}>
-                  {/* Name, Verified, and Details */}
-                  <View style={styles.cardInfo}>
-                    <View style={styles.nameRow}>
-                      <Text style={styles.cardName}>{item.nama}, {item.umur}</Text>
-                      <View style={styles.verifiedBadge}>
-                        <Ionicons name="checkmark-sharp" size={10} color={Colors.white} />
-                      </View>
-                    </View>
-                    <Text style={styles.cardSubtitle}>
-                      {item.aktivitas} • {item.jarak}
-                    </Text>
-                  </View>
-
-                  {/* Heart Like Circle */}
-                  <TouchableOpacity
-                    style={[styles.heartBtn, item.isLiked && styles.heartBtnActive]}
-                    onPress={() => toggleLike(item.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons
-                      name={item.isLiked ? 'heart' : 'heart-outline'}
-                      size={20}
-                      color={item.isLiked ? Colors.white : Colors.primary}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search-outline" size={40} color={Colors.textSecondary} />
+              <Text style={styles.emptyTitle}>Tidak ada partner ditemukan</Text>
+              <Text style={styles.emptySubtitle}>
+                Coba pilih cabang olahraga lain atau perbarui filter pencarianmu.
+              </Text>
+            </View>
+          }
         />
       )}
 
-      {/* Bottom Filter Sheet Modal */}
+      {/* Filter Bottom Sheet Modal */}
       <Modal
         visible={filterModalVisible}
-        animationType="slide"
         transparent
+        animationType="slide"
         onRequestClose={() => setFilterModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-            {/* Modal Header */}
+          <View style={[styles.modalSheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+            <View style={styles.modalDragHandle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filter</Text>
-              <TouchableOpacity
-                onPress={() => setFilterModalVisible(false)}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="close" size={24} color={Colors.textPrimary} />
+              <Text style={styles.modalTitle}>Filter Partner</Text>
+              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
+                <Ionicons name="close" size={22} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            {/* Modal Body */}
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
-              {/* Filter Aktivitas */}
-              <Text style={styles.modalSectionLabel}>Aktivitas</Text>
-              <View style={styles.modalPillsWrap}>
-                {['Semua', 'Running', 'Gym', 'Badminton', 'Basket', 'Yoga'].map((item) => {
-                  const active = modalCategory === item;
-                  return (
-                    <TouchableOpacity
-                      key={item}
-                      style={[styles.filterChip, active && styles.filterChipActive]}
-                      onPress={() => setModalCategory(item)}
-                    >
-                      <Text
-                        style={[styles.filterChipText, active && styles.filterChipTextActive]}
-                      >
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Filter Jarak */}
-              <View style={styles.rangeRow}>
-                <Text style={styles.modalSectionLabel}>Jarak</Text>
-                <Text style={styles.rangeValue}>0 - 10 km</Text>
-              </View>
-              <View style={styles.dummyTrack}>
-                <View style={[styles.dummyFill, { width: '60%' }]} />
-              </View>
-
-              {/* Filter Usia */}
-              <View style={styles.rangeRow}>
-                <Text style={styles.modalSectionLabel}>Usia</Text>
-                <Text style={styles.rangeValue}>18 - 35 tahun</Text>
-              </View>
-              <View style={styles.dummyTrack}>
-                <View style={[styles.dummyFill, { width: '75%' }]} />
-              </View>
-
-              {/* Filter Gender */}
-              <Text style={styles.modalSectionLabel}>Gender</Text>
-              <View style={styles.genderRow}>
-                {['Semua', 'Pria', 'Wanita'].map((g) => {
-                  const active = modalGender === g;
-                  return (
-                    <TouchableOpacity
-                      key={g}
-                      style={[styles.genderBtn, active && styles.genderBtnActive]}
-                      onPress={() => setModalGender(g)}
-                    >
-                      <Text
-                        style={[styles.genderBtnText, active && styles.genderBtnTextActive]}
-                      >
-                        {g}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </ScrollView>
-
-            {/* Modal Action Buttons */}
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.applyBtn}
-                onPress={() => {
-                  setSelectedCategory(modalCategory);
-                  setFilterModalVisible(false);
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.applyBtnText}>Terapkan</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.resetBtn}
-                onPress={() => {
-                  setModalCategory('Semua');
-                  setModalGender('Semua');
-                }}
-              >
-                <Text style={styles.resetBtnText}>Reset</Text>
-              </TouchableOpacity>
+            {/* Kategori Olahraga */}
+            <Text style={styles.modalSectionLabel}>Cabang Olahraga</Text>
+            <View style={styles.modalGrid}>
+              {ACTIVITY_CATEGORIES.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.modalChip, modalCategory === cat && styles.modalChipActive]}
+                  onPress={() => setModalCategory(cat)}
+                >
+                  <Text style={[styles.modalChipText, modalCategory === cat && styles.modalChipTextActive]}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
+
+            {/* Preferensi Gender */}
+            <Text style={styles.modalSectionLabel}>Gender</Text>
+            <View style={styles.modalGrid}>
+              {['Semua', 'Pria', 'Wanita'].map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  style={[styles.modalChip, modalGender === g && styles.modalChipActive]}
+                  onPress={() => setModalGender(g)}
+                >
+                  <Text style={[styles.modalChipText, modalGender === g && styles.modalChipTextActive]}>
+                    {g}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Terapkan CTA */}
+            <TouchableOpacity
+              style={styles.modalApplyButton}
+              onPress={() => {
+                setSelectedCategory(modalCategory);
+                setFilterModalVisible(false);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalApplyButtonText}>Terapkan Filter</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -357,33 +329,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
-    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.base,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
   },
   headerTitle: {
-    fontFamily: Typography.fontHeading,
-    fontSize: 22,
-    color: Colors.textPrimary,
-    letterSpacing: 0.3,
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.white,
+    letterSpacing: -0.4,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   filterIconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.round,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
-  categoryScrollWrap: {
-    paddingVertical: 12,
+  categoryScrollWrapper: {
+    paddingVertical: Spacing.sm,
   },
   categoryList: {
     paddingHorizontal: Spacing.base,
@@ -398,231 +379,189 @@ const styles = StyleSheet.create({
     borderColor: Colors.surfaceBorder,
   },
   categoryPillActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.primaryMuted,
     borderColor: Colors.primary,
   },
   categoryPillText: {
-    fontFamily: Typography.fontMedium,
     fontSize: 13,
+    fontWeight: '500',
     color: Colors.textSecondary,
   },
   categoryPillTextActive: {
-    color: Colors.white,
-    fontFamily: Typography.fontSemiBold,
+    color: Colors.primary,
+    fontWeight: '600',
   },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  listContent: {
+  feedContent: {
     paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.xxl + 20,
-    gap: 16,
+    paddingTop: Spacing.xs,
+    gap: Spacing.md,
   },
-  exploreCard: {
+  cardContainer: {
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     overflow: 'hidden',
     backgroundColor: Colors.surface,
-    position: 'relative',
+    alignSelf: 'center',
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
   cardImage: {
-    width: '100%',
-    height: '100%',
+    ...StyleSheet.absoluteFillObject,
   },
   cardGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: '70%',
-    justifyContent: 'flex-end',
-    paddingHorizontal: Spacing.base,
-    paddingBottom: 14,
+    ...StyleSheet.absoluteFillObject,
+    padding: Spacing.base,
+    justifyContent: 'space-between',
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  activityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(9, 10, 13, 0.75)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.round,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  activityBadgeText: {
+    color: Colors.white,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  likeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(9, 10, 13, 0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  likeButtonActive: {
+    backgroundColor: 'rgba(255, 87, 47, 0.25)',
   },
   cardBottomRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'flex-end',
   },
-  cardInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  cardName: {
-    fontFamily: Typography.fontHeading,
+  userNameText: {
     fontSize: 18,
-    color: Colors.textPrimary,
-  },
-  verifiedBadge: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardSubtitle: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  heartBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  heartBtnActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalSheet: {
-    backgroundColor: '#12141A',
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    paddingTop: Spacing.base,
-    paddingHorizontal: Spacing.base,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: Spacing.base,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
-  },
-  modalTitle: {
-    fontFamily: Typography.fontHeading,
-    fontSize: 18,
-    color: Colors.textPrimary,
-  },
-  modalBody: {
-    paddingVertical: Spacing.base,
-  },
-  modalSectionLabel: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 14,
-    color: Colors.textPrimary,
-    marginBottom: 10,
-    marginTop: 8,
-  },
-  modalPillsWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-  },
-  filterChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  filterChipText: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  filterChipTextActive: {
+    fontWeight: '700',
     color: Colors.white,
-    fontFamily: Typography.fontSemiBold,
+    marginBottom: 4,
   },
-  rangeRow: {
+  distanceRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 4,
   },
-  rangeValue: {
-    fontFamily: Typography.fontRegular,
+  distanceText: {
     fontSize: 12,
     color: Colors.textSecondary,
   },
-  dummyTrack: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.surfaceBorder,
-    marginVertical: 12,
-  },
-  dummyFill: {
-    height: '100%',
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
-  },
-  genderRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 20,
-  },
-  genderBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.surface,
+  emptyContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: Spacing.xl,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.white,
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.base,
+    paddingTop: 12,
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
-  genderBtnActive: {
-    backgroundColor: Colors.primary,
+  modalDragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  modalSectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginBottom: 8,
+    marginTop: 6,
+  },
+  modalGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: Spacing.base,
+  },
+  modalChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.elevatedSurface,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+  },
+  modalChipActive: {
+    backgroundColor: Colors.primaryMuted,
     borderColor: Colors.primary,
   },
-  genderBtnText: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 13,
+  modalChipText: {
+    fontSize: 12,
     color: Colors.textSecondary,
   },
-  genderBtnTextActive: {
-    color: Colors.white,
-    fontFamily: Typography.fontSemiBold,
+  modalChipTextActive: {
+    color: Colors.primary,
+    fontWeight: '600',
   },
-  modalActions: {
-    gap: 10,
-    paddingTop: 10,
-  },
-  applyBtn: {
+  modalApplyButton: {
     backgroundColor: Colors.primary,
-    paddingVertical: 14,
-    borderRadius: BorderRadius.round,
+    height: 48,
+    borderRadius: BorderRadius.sm,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
   },
-  applyBtnText: {
-    fontFamily: Typography.fontHeading,
-    fontSize: 15,
+  modalApplyButtonText: {
     color: Colors.white,
-  },
-  resetBtn: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  resetBtnText: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 13,
-    color: Colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

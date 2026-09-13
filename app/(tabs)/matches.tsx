@@ -9,21 +9,21 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
-import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
+import { Colors, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
-import MatchExpiryAvatar from '../../components/MatchExpiryAvatar';
 
 interface MatchUser {
   id: string;
   name: string;
   avatar: string;
   isNew?: boolean;
-  hoursRemaining?: number;
 }
 
 interface ConversationItem {
@@ -36,18 +36,17 @@ interface ConversationItem {
   unreadCount?: number;
 }
 
-// Fallback high-quality mock data matching the reference image
 const DEMO_NEW_MATCHES: MatchUser[] = [
   {
     id: 'user-1',
-    name: 'Rina',
+    name: 'Sarah',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
     isNew: true,
   },
   {
     id: 'user-2',
-    name: 'Dinda',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
+    name: 'Dimas',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
     isNew: true,
   },
   {
@@ -56,30 +55,24 @@ const DEMO_NEW_MATCHES: MatchUser[] = [
     avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
     isNew: false,
   },
-  {
-    id: 'user-4',
-    name: 'Maya',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
-    isNew: true,
-  },
 ];
 
 const DEMO_CONVERSATIONS: ConversationItem[] = [
   {
     id: 'chat-1',
     partnerId: 'user-1',
-    name: 'Rina',
+    name: 'Sarah',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    lastMessage: 'Yuk! Aku free sabtu. Kamu?',
-    timestamp: '19:48',
+    lastMessage: 'Ajak main tenis di Senayan Sabtu ini yuk?',
+    timestamp: '10:42',
     unreadCount: 1,
   },
   {
     id: 'chat-2',
     partnerId: 'user-2',
-    name: 'Dinda',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
-    lastMessage: 'Keren! Aku juga sering di GBK.',
+    name: 'Dimas',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
+    lastMessage: 'Oke mantap, jam 7 malam ya!',
     timestamp: 'Kemarin',
   },
   {
@@ -139,16 +132,11 @@ export default function MatchesScreen() {
         const partner = m.user_a_id === currentUserId ? m.user_b : m.user_a;
         if (!partner) continue;
 
-        const matchDate = new Date(m.created_at);
-        const diffHours = Math.floor((Date.now() - matchDate.getTime()) / (1000 * 60 * 60));
-        const hoursRemaining = Math.max(0, 48 - diffHours);
-
         parsedMatches.push({
           id: partner.id,
           name: partner.nama || 'Partner',
           avatar: partner.foto_url || DEMO_NEW_MATCHES[0].avatar,
           isNew: true,
-          hoursRemaining,
         });
 
         parsedConversations.push({
@@ -190,9 +178,11 @@ export default function MatchesScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" backgroundColor="#090A0D" />
+
+      {/* Screen Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Matches</Text>
+        <Text style={styles.headerTitle}>Matches & Chat</Text>
       </View>
 
       {loading ? (
@@ -203,94 +193,109 @@ export default function MatchesScreen() {
         /* Empty State */
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIconCircle}>
-            <Ionicons name="heart-outline" size={48} color={Colors.textSecondary} />
+            <Ionicons name="chatbubbles-outline" size={40} color={Colors.textSecondary} />
           </View>
-          <Text style={styles.emptyTitle}>Belum ada match</Text>
+          <Text style={styles.emptyTitle}>Belum Ada Match</Text>
           <Text style={styles.emptySubtitle}>
-            Terus swipe di Discover untuk menemukan partner olahraga sefrekuensi!
+            Terus swipe di menu Discover untuk menemukan partner olahraga yang sefrekuensi.
           </Text>
-          <TouchableOpacity
-            style={styles.exploreBtn}
-            onPress={() => router.push('/(tabs)/')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.exploreBtnText}>Mulai Swipe</Text>
-          </TouchableOpacity>
         </View>
       ) : (
         <ScrollView
-          style={styles.scrollArea}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
               tintColor={Colors.primary}
+              colors={[Colors.primary]}
             />
           }
+          contentContainerStyle={{ paddingBottom: insets.bottom + 84 }}
         >
-          {/* Section: New Matches Horizontal Row */}
+          {/* Section: New Matches with 48h Urgent Expiry */}
           {newMatches.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                New Matches <Text style={styles.badgeCount}>({newMatches.length})</Text>
-              </Text>
+            <View style={styles.sectionContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Match Baru</Text>
+                <View style={styles.expiryHint}>
+                  <Ionicons name="time-outline" size={12} color={Colors.primary} />
+                  <Text style={styles.expiryHintText}>Ajak main dlm 48 jam</Text>
+                </View>
+              </View>
+
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.newMatchesList}
+                contentContainerStyle={styles.matchesScroll}
               >
                 {newMatches.map((item) => (
-                  <MatchExpiryAvatar
+                  <TouchableOpacity
                     key={item.id}
-                    avatarUrl={item.avatar}
-                    name={item.name}
-                    hoursRemaining={item.hoursRemaining || 47}
+                    style={styles.newMatchItem}
+                    activeOpacity={0.8}
                     onPress={() => openChat(item.id, item.name, item.avatar)}
-                  />
+                  >
+                    {/* Urgency Countdown Gradient Ring */}
+                    <LinearGradient
+                      colors={[Colors.primary, '#FF3B30']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.avatarGradientRing}
+                    >
+                      <Image source={{ uri: item.avatar }} style={styles.newMatchAvatar} />
+                    </LinearGradient>
+
+                    {/* Expiry Pill Badge */}
+                    <View style={styles.expiryBadge}>
+                      <Text style={styles.expiryBadgeText}>47h</Text>
+                    </View>
+
+                    <Text style={styles.newMatchName} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                  </TouchableOpacity>
                 ))}
               </ScrollView>
             </View>
           )}
 
-          {/* Section: Messages List */}
-          <View style={styles.messagesSection}>
-            <Text style={styles.sectionTitle}>Messages</Text>
-            {conversations.map((item, index) => (
-              <React.Fragment key={item.id}>
-                <TouchableOpacity
-                  style={styles.conversationItem}
-                  onPress={() => openChat(item.id, item.name, item.avatar)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.conversationAvatarWrap}>
-                    <Image source={{ uri: item.avatar }} style={styles.conversationAvatar} />
-                    <View style={styles.onlineBadge} />
-                  </View>
+          {/* Section: Active Conversations */}
+          <View style={styles.sectionContainer}>
+            <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.base, marginBottom: Spacing.sm }]}>
+              Pesan
+            </Text>
 
-                  <View style={styles.conversationDetails}>
-                    <View style={styles.conversationHeader}>
-                      <Text style={styles.conversationName} numberOfLines={1}>
-                        {item.name}
-                      </Text>
-                      <Text style={styles.timestamp}>{item.timestamp}</Text>
+            <FlatList
+              data={conversations}
+              keyExtractor={(item) => item.id}
+              scrollEnabled={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.chatRow}
+                  activeOpacity={0.7}
+                  onPress={() => openChat(item.id, item.name, item.avatar)}
+                >
+                  <Image source={{ uri: item.avatar }} style={styles.chatAvatar} />
+                  <View style={styles.chatContent}>
+                    <View style={styles.chatTopLine}>
+                      <Text style={styles.chatPartnerName}>{item.name}</Text>
+                      <Text style={styles.chatTimestamp}>{item.timestamp}</Text>
                     </View>
-                    <View style={styles.messagePreviewRow}>
-                      <Text style={styles.lastMessage} numberOfLines={1}>
+                    <View style={styles.chatBottomLine}>
+                      <Text style={styles.chatLastMessage} numberOfLines={1}>
                         {item.lastMessage}
                       </Text>
                       {item.unreadCount ? (
-                        <View style={styles.unreadCounter}>
-                          <Text style={styles.unreadCounterText}>{item.unreadCount}</Text>
+                        <View style={styles.unreadBadge}>
+                          <Text style={styles.unreadBadgeText}>{item.unreadCount}</Text>
                         </View>
                       ) : null}
                     </View>
                   </View>
                 </TouchableOpacity>
-
-                {index < conversations.length - 1 && <View style={styles.divider} />}
-              </React.Fragment>
-            ))}
+              )}
+            />
           </View>
         </ScrollView>
       )}
@@ -303,207 +308,177 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    height: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceBorder,
-    paddingHorizontal: Spacing.base,
-  },
-  headerTitle: {
-    fontFamily: Typography.fontHeading,
-    fontSize: 20,
-    color: Colors.textPrimary,
-    letterSpacing: 0.3,
-  },
   centered: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  scrollArea: {
-    flex: 1,
+  header: {
+    paddingHorizontal: Spacing.base,
+    paddingTop: Spacing.sm,
+    paddingBottom: Spacing.xs,
   },
-  section: {
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.sm,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.white,
+    letterSpacing: -0.4,
+  },
+  sectionContainer: {
+    marginTop: Spacing.md,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.base,
+    marginBottom: Spacing.sm,
   },
   sectionTitle: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 14,
-    color: Colors.textSecondary,
-    paddingHorizontal: Spacing.base,
-    marginBottom: Spacing.md,
-    letterSpacing: 0.5,
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.white,
   },
-  badgeCount: {
+  expiryHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  expiryHintText: {
+    fontSize: 11,
     color: Colors.primary,
-    fontFamily: Typography.fontHeading,
+    fontWeight: '500',
   },
-  newMatchesList: {
+  matchesScroll: {
     paddingHorizontal: Spacing.base,
     gap: 16,
+    paddingVertical: 4,
   },
-  avatarCard: {
+  newMatchItem: {
     alignItems: 'center',
     width: 68,
   },
-  avatarRing: {
+  avatarGradientRing: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    padding: 2,
-    position: 'relative',
-    backgroundColor: Colors.surface,
+    padding: 2.5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   newMatchAvatar: {
     width: '100%',
     height: '100%',
     borderRadius: 32,
-  },
-  unreadDot: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: Colors.primary,
     borderWidth: 2,
     borderColor: Colors.background,
   },
+  expiryBadge: {
+    position: 'absolute',
+    bottom: 22,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: BorderRadius.xs,
+    borderWidth: 1.5,
+    borderColor: Colors.background,
+  },
+  expiryBadgeText: {
+    color: Colors.white,
+    fontSize: 9,
+    fontWeight: '800',
+  },
   newMatchName: {
-    fontFamily: Typography.fontRegular,
+    marginTop: 8,
     fontSize: 12,
-    color: Colors.textPrimary,
-    marginTop: 6,
+    color: Colors.white,
+    fontWeight: '600',
     textAlign: 'center',
   },
-  messagesSection: {
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-  },
-  conversationItem: {
+  chatRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.base,
-    paddingVertical: 12,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceBorder,
   },
-  conversationAvatarWrap: {
-    position: 'relative',
+  chatAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginRight: 14,
   },
-  conversationAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: Colors.surface,
-  },
-  onlineBadge: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.success,
-    borderWidth: 2,
-    borderColor: Colors.background,
-  },
-  conversationDetails: {
+  chatContent: {
     flex: 1,
-    marginLeft: 14,
-    justifyContent: 'center',
   },
-  conversationHeader: {
+  chatTopLine: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
   },
-  conversationName: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 16,
-    color: Colors.textPrimary,
+  chatPartnerName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.white,
   },
-  timestamp: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 12,
+  chatTimestamp: {
+    fontSize: 11,
     color: Colors.textSecondary,
   },
-  messagePreviewRow: {
+  chatBottomLine: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  lastMessage: {
-    flex: 1,
-    fontFamily: Typography.fontRegular,
+  chatLastMessage: {
     fontSize: 13,
     color: Colors.textSecondary,
-    marginRight: 8,
+    flex: 1,
+    marginRight: 10,
   },
-  unreadCounter: {
+  unreadBadge: {
     backgroundColor: Colors.primary,
+    borderRadius: 10,
     minWidth: 18,
     height: 18,
-    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 5,
   },
-  unreadCounterText: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 10,
+  unreadBadgeText: {
     color: Colors.white,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#1E2128',
-    marginLeft: 84,
+    fontSize: 10,
+    fontWeight: '700',
   },
   emptyContainer: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
+    paddingVertical: 80,
+    paddingHorizontal: Spacing.xxl,
   },
   emptyIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
-    marginBottom: Spacing.lg,
   },
   emptyTitle: {
-    fontFamily: Typography.fontHeading,
     fontSize: 18,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.xs,
+    fontWeight: '700',
+    color: Colors.white,
+    marginBottom: 6,
   },
   emptySubtitle: {
-    fontFamily: Typography.fontRegular,
     fontSize: 13,
     color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 18,
-    marginBottom: Spacing.xl,
-  },
-  exploreBtn: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: BorderRadius.round,
-  },
-  exploreBtnText: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 14,
-    color: Colors.white,
   },
 });

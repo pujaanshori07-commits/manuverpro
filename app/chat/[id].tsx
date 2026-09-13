@@ -9,7 +9,7 @@ import {
   Platform,
   FlatList,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,19 +28,18 @@ interface Message {
   created_at: string;
 }
 
-import { AjakMainTrigger, AjakMainModal, SparingTicketBubble } from '../../components/AjakMainWidget';
+import AjakMainSheet from '../../components/AjakMainSheet';
+import SparingInviteCard from '../../components/SparingInviteCard';
 
-// Dummy list of positive chemistry snippets to rotate
 const CHEMISTRY_MESSAGES = [
   "Kalian berdua suka Badminton & Running 🏸🏃",
   "Partner ini juga suka latihan pagi hari — cocok nih! ☀️",
   "Kalian sama-sama ingin olahraga lebih konsisten 💪",
   "Partner ini juga sering main di Jakarta Selatan 📍",
-  "Kalian sama-sama mencari partner yang suportif 🙌"
+  "Kalian sama-sama mencari partner yang suportif 🙌",
 ];
 
 const ChemistrySnippet = ({ partnerName }: { partnerName: string }) => {
-  // Select a random message on mount
   const [msg] = useState(() => CHEMISTRY_MESSAGES[Math.floor(Math.random() * CHEMISTRY_MESSAGES.length)]);
   
   return (
@@ -59,115 +58,119 @@ export default function ChatScreen() {
   const { id, name, avatar } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [showAjakSheet, setShowAjakSheet] = useState(false);
+  const [isSheetVisible, setIsSheetVisible] = useState(false);
+  
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    let subscription: any;
-    
-    const initChat = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setCurrentUserId(user.id);
-      
-      try {
-        const { data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${id}),and(sender_id.eq.${id},receiver_id.eq.${user.id})`)
-          .order('created_at', { ascending: true });
-          
-        if (data) {
-          setMessages(data);
-        }
-      } catch (err) {
-        console.log('Using mock messages');
-      } finally {
-        setLoading(false);
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        setCurrentUserId(data.user.id);
       }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchMessages = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('match_id', id)
+        .order('created_at', { ascending: true });
+
+      if (!error && data) {
+        setMessages(data);
+      } else {
+        setMessages([
+          {
+            id: 'm-1',
+            sender_id: 'partner',
+            content: `Halo! Siap buat sparing bareng?`,
+            created_at: new Date(Date.now() - 3600000).toISOString(),
+          },
+        ]);
+      }
+      setLoading(false);
     };
 
-    initChat();
-    return () => {};
+    fetchMessages();
+
+    const channel = supabase
+      .channel(`chat:${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${id}` },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as Message]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [id]);
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !currentUserId) return;
-    
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    
-    const tempMsg: Message = {
-      id: Date.now().toString(),
+  const handleSendMessage = async (textToSend?: string) => {
+    const text = textToSend || inputText;
+    if (!text.trim() || !id || !currentUserId) return;
+
+    if (!textToSend) setInputText('');
+
+    const newMsg: Message = {
+      id: Math.random().toString(),
       sender_id: currentUserId,
-      content: newMessage.trim(),
-      type: 'text',
-      created_at: new Date().toISOString()
+      content: text.trim(),
+      created_at: new Date().toISOString(),
     };
-    
-    setMessages(prev => [...prev, tempMsg]);
-    setNewMessage('');
-    
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+
+    setMessages((prev) => [...prev, newMsg]);
+
+    try {
+      await supabase.from('messages').insert({
+        match_id: id,
+        sender_id: currentUserId,
+        content: text.trim(),
+      });
+    } catch {
+      // offline handling
+    }
   };
 
-  const handleSendSparingInvite = async (inviteData: { sport: string; venue: string; dateTime: string }) => {
-    if (!currentUserId) return;
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    // Create a temporary message reflecting the invite
-    const tempMsg: Message = {
-      id: Date.now().toString(),
-      sender_id: currentUserId,
-      content: 'Ajak Sparing',
-      type: 'sparing_invite',
-      metadata: {
-        invite_id: 'temp-' + Date.now(), // Will be real UUID after db insert
-        sport: inviteData.sport,
-        venue_name: inviteData.venue,
-        scheduled_at: inviteData.dateTime,
-        status: 'pending'
-      },
-      created_at: new Date().toISOString()
-    };
-    
-    setMessages(prev => [...prev, tempMsg]);
-    
-    setTimeout(() => {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }, 100);
-
-    // TODO: Write to sparing_invites table and messages table in Supabase
+  // Navigate to full profile when tapping avatar or name
+  const handleOpenProfile = () => {
+    Haptics.selectionAsync();
+    router.push({
+      pathname: '/user/[id]',
+      params: { id: id as string, name: name as string, avatar: avatar as string },
+    });
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
+  const renderItem = ({ item }: { item: Message }) => {
     const isMe = item.sender_id === currentUserId;
-    
-    if (item.type === 'sparing_invite' && item.metadata) {
+
+    if (item.type === 'sparing_invite') {
       return (
-        <View style={[styles.messageBubbleContainer, isMe ? styles.myMessageContainer : styles.theirMessageContainer]}>
-          <SparingTicketBubble
-            sport={item.metadata.sport}
-            venue={item.metadata.venue_name}
-            dateTime={item.metadata.scheduled_at}
-            status={item.metadata.status}
-            isSender={isMe}
-            onAccept={() => console.log('Accept invite')}
-            onDecline={() => console.log('Decline invite')}
-          />
-        </View>
+        <SparingInviteCard
+          invite={item.metadata}
+          isSender={isMe}
+          onStatusChange={() => {}}
+        />
       );
     }
 
     return (
-      <View style={[styles.messageBubbleContainer, isMe ? styles.myMessageContainer : styles.theirMessageContainer]}>
-        <View style={[styles.messageBubble, isMe ? styles.myMessage : styles.theirMessage]}>
-          <Text style={[styles.messageText, isMe ? styles.myMessageText : styles.theirMessageText]}>
+      <View style={[styles.bubbleContainer, isMe ? styles.bubbleRight : styles.bubbleLeft]}>
+        <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
+          <Text style={[styles.messageText, isMe ? styles.textMe : styles.textThem]}>
             {item.content}
           </Text>
         </View>
@@ -182,24 +185,36 @@ export default function ChatScreen() {
     >
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <LinearGradient
-          colors={['rgba(9,10,13,0.95)', 'rgba(9,10,13,0.8)']}
+          colors={['rgba(9,10,13,0.98)', 'rgba(9,10,13,0.9)']}
           style={StyleSheet.absoluteFillObject}
         />
         <TouchableOpacity 
           style={styles.backBtn}
           onPress={() => router.back()}
-          hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={28} color={Colors.white} />
+          <Ionicons name="chevron-back" size={26} color={Colors.white} />
         </TouchableOpacity>
         
-        <View style={styles.headerProfile}>
+        {/* Clickable Header Profile -> Opens Sarah's Full Profile */}
+        <TouchableOpacity
+          style={styles.headerProfile}
+          onPress={handleOpenProfile}
+          activeOpacity={0.7}
+          accessibilityLabel={`Buka profil ${name}`}
+        >
           <Image source={{ uri: avatar as string }} style={styles.headerAvatar} />
-          <Text style={styles.headerName}>{name}</Text>
-        </View>
+          <View>
+            <View style={styles.headerNameRow}>
+              <Text style={styles.headerName}>{name}</Text>
+              <Ionicons name="chevron-forward" size={14} color={Colors.textSecondary} />
+            </View>
+            <Text style={styles.headerStatus}>Lihat profil lengkap</Text>
+          </View>
+        </TouchableOpacity>
         
-        <TouchableOpacity style={styles.optionsBtn}>
-          <Ionicons name="ellipsis-vertical" size={24} color={Colors.white} />
+        <TouchableOpacity style={styles.optionsBtn} onPress={handleOpenProfile}>
+          <Ionicons name="person-circle-outline" size={24} color={Colors.white} />
         </TouchableOpacity>
       </View>
 
@@ -210,43 +225,62 @@ export default function ChatScreen() {
       ) : (
         <FlatList
           ref={flatListRef}
-          data={messages.length ? messages : [{ id: '1', sender_id: id as string, content: 'Hai! Udah nemu partner olahraga?', created_at: new Date().toISOString() }]}
-          keyExtractor={item => item.id}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messageList}
-          onContentSizeChange={() => flatListRef.current?.scrollToEnd()}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           ListHeaderComponent={<ChemistrySnippet partnerName={name as string} />}
         />
       )}
 
-      <AjakMainTrigger onPress={() => setShowAjakSheet(true)} />
-      <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <TouchableOpacity style={styles.attachBtn}>
-          <Ionicons name="add" size={24} color={Colors.textSecondary} />
+      {/* Sparing Floating Action Widget */}
+      <View style={styles.ajakContainer}>
+        <TouchableOpacity 
+          style={styles.ajakButton} 
+          activeOpacity={0.8}
+          onPress={() => setIsSheetVisible(true)}
+        >
+          <LinearGradient
+            colors={[Colors.primary, '#E04720']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.ajakGradient}
+          >
+            <Ionicons name="flash" size={16} color={Colors.white} />
+            <Text style={styles.ajakText}>Ajak Sparing</Text>
+          </LinearGradient>
         </TouchableOpacity>
-        
+      </View>
+
+      {/* Input Bar */}
+      <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <TextInput
-          style={styles.input}
-          placeholder="Kirim pesan..."
+          style={styles.textInput}
+          placeholder="Ketik pesan..."
           placeholderTextColor={Colors.textMuted}
-          value={newMessage}
-          onChangeText={setNewMessage}
+          value={inputText}
+          onChangeText={setInputText}
           multiline
         />
-        
         <TouchableOpacity 
-          style={[styles.sendBtn, !newMessage.trim() && styles.sendBtnDisabled]}
-          onPress={sendMessage}
-          disabled={!newMessage.trim()}
+          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]} 
+          onPress={() => handleSendMessage()}
+          disabled={!inputText.trim()}
         >
           <Ionicons name="send" size={18} color={Colors.white} />
         </TouchableOpacity>
       </View>
 
-      <AjakMainModal 
-        visible={showAjakSheet} 
-        onClose={() => setShowAjakSheet(false)} 
-        onSubmit={handleSendSparingInvite}
+      <AjakMainSheet
+        visible={isSheetVisible}
+        onClose={() => setIsSheetVisible(false)}
+        matchId={id as string}
+        partnerName={name as string}
+        onInviteSent={() => {
+          setIsSheetVisible(false);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }}
       />
     </KeyboardAvoidingView>
   );
@@ -254,30 +288,156 @@ export default function ChatScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.base, paddingBottom: Spacing.sm, borderBottomWidth: 1, borderBottomColor: Colors.surfaceBorder, zIndex: 10 },
-  backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerProfile: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
-  headerAvatar: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: Colors.surfaceBorder },
-  headerName: { fontFamily: Typography.fontSemiBold, fontSize: 16, color: Colors.white },
-  optionsBtn: { width: 40, height: 40, alignItems: 'flex-end', justifyContent: 'center' },
-  messageList: { padding: Spacing.base, gap: 12, paddingBottom: 20 },
-  chemistryContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 90, 31, 0.08)', paddingVertical: 10, paddingHorizontal: 14, borderRadius: 12, marginBottom: 16, alignSelf: 'center', borderWidth: 1, borderColor: 'rgba(255, 90, 31, 0.15)' },
-  chemistryIconBox: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(255, 90, 31, 0.15)', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  chemistryText: { fontFamily: Typography.fontMedium, fontSize: 13, color: Colors.primary, flexShrink: 1 },
-  messageBubbleContainer: { width: '100%', flexDirection: 'row' },
-  myMessageContainer: { justifyContent: 'flex-end' },
-  theirMessageContainer: { justifyContent: 'flex-start' },
-  messageBubble: { maxWidth: '80%', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20 },
-  myMessage: { backgroundColor: Colors.primary, borderBottomRightRadius: 4 },
-  theirMessage: { backgroundColor: Colors.surfaceInput, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: Colors.surfaceBorder },
-  messageText: { fontFamily: Typography.fontRegular, fontSize: 15, lineHeight: 22 },
-  myMessageText: { color: Colors.white },
-  theirMessageText: { color: Colors.textPrimary },
-  inputContainer: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: Spacing.base, paddingTop: 12, backgroundColor: Colors.surface, borderTopWidth: 1, borderTopColor: Colors.surfaceBorder },
-  attachBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.surfaceInput, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  ajakMainBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255, 90, 31, 0.1)', borderWidth: 1, borderColor: 'rgba(255, 90, 31, 0.2)', alignItems: 'center', justifyContent: 'center', marginBottom: 4, marginLeft: 6 },
-  input: { flex: 1, minHeight: 40, maxHeight: 120, backgroundColor: Colors.surfaceInput, borderRadius: 20, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 10, marginHorizontal: 10, color: Colors.textPrimary, fontFamily: Typography.fontRegular, fontSize: 15, marginBottom: 4, borderWidth: 1, borderColor: Colors.surfaceBorder },
-  sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  sendBtnDisabled: { backgroundColor: Colors.surfaceBorder },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' }
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.base,
+    paddingBottom: 10,
+    zIndex: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.surfaceBorder,
+  },
+  backBtn: { width: 36, height: 36, justifyContent: 'center' },
+  headerProfile: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  headerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  headerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  headerStatus: {
+    fontSize: 10,
+    color: Colors.textSecondary,
+  },
+  optionsBtn: { width: 36, height: 36, alignItems: 'flex-end', justifyContent: 'center' },
+  listContent: { padding: Spacing.base, paddingBottom: 80 },
+  chemistryContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+  },
+  chemistryIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.primaryMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.sm,
+  },
+  chemistryText: {
+    flex: 1,
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 16,
+  },
+  bubbleContainer: { marginBottom: 12, width: '100%' },
+  bubbleRight: { alignItems: 'flex-end' },
+  bubbleLeft: { alignItems: 'flex-start' },
+  bubble: {
+    maxWidth: '78%',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.md,
+  },
+  bubbleMe: {
+    backgroundColor: Colors.primary,
+    borderBottomRightRadius: 2,
+  },
+  bubbleThem: {
+    backgroundColor: Colors.surface,
+    borderBottomLeftRadius: 2,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+  },
+  messageText: { fontSize: 14, lineHeight: 20 },
+  textMe: { color: Colors.white },
+  textThem: { color: Colors.white },
+  ajakContainer: {
+    position: 'absolute',
+    bottom: 74,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  ajakButton: {
+    borderRadius: BorderRadius.round,
+    overflow: 'hidden',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  ajakGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  ajakText: {
+    color: Colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.base,
+    paddingTop: 8,
+    backgroundColor: Colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: Colors.surfaceBorder,
+  },
+  textInput: {
+    flex: 1,
+    backgroundColor: Colors.surfaceInput,
+    borderRadius: BorderRadius.round,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: 9,
+    color: Colors.white,
+    maxHeight: 100,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    fontSize: 14,
+  },
+  sendButton: {
+    marginLeft: Spacing.sm,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: Colors.elevatedSurface,
+    opacity: 0.5,
+  },
 });
