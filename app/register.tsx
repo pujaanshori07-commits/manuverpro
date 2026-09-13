@@ -197,13 +197,13 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    fontFamily: 'Poppins_800ExtraBold',
+    fontFamily: 'Lato_900Black',
     fontSize: 32,
     color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: 'Lato_400Regular',
     fontSize: 16,
     color: '#A0A0A0',
   },
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   errorText: {
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: 'Lato_400Regular',
     color: '#FF5252',
     fontSize: 14,
     flex: 1,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontFamily: 'Poppins_500Medium',
+    fontFamily: 'Lato_400Regular',
     fontSize: 16,
     color: '#FFFFFF',
     height: '100%',
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   primaryBtnText: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: 'Lato_700Bold',
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: 1,
@@ -277,12 +277,12 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   footerText: {
-    fontFamily: 'Poppins_400Regular',
+    fontFamily: 'Lato_400Regular',
     fontSize: 14,
     color: '#888',
   },
   footerLink: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: 'Lato_700Bold',
     fontSize: 14,
     color: COLORS.primary,
   }

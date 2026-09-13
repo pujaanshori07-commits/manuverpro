@@ -6,6 +6,7 @@ import * as Linking from 'expo-linking';
 import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './_layout';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/DesignSystem';
 import { Image } from 'react-native';
@@ -28,6 +29,7 @@ function parseParamsFromUrl(url: string) {
 
 export default function LoginScreen() {
   const { session } = useAuth();
+  const router = useRouter();
   const [step, setStep] = useState<'landing' | 'options' | 'email_input' | 'check_email'>('landing');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -147,7 +149,7 @@ export default function LoginScreen() {
           <View style={styles.content}>
             <View style={styles.centerSection}>{renderLogo()}</View>
             <View style={styles.bottomSection}>
-              <TouchableOpacity style={styles.primaryButton} onPress={() => setStep('options')} activeOpacity={0.8}>
+              <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/register')} activeOpacity={0.8}>
                 <Text style={styles.primaryButtonText}>Create an account</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep('options')} activeOpacity={0.6}>
