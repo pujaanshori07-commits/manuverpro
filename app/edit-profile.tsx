@@ -34,9 +34,9 @@ type Sport = {
 };
 
 const COUNTRIES = [
-  'Indonesia', 'Malaysia', 'Singapura', 'Thailand', 'Filipina', 'Vietnam',
-  'Brunei', 'Kamboja', 'Laos', 'Myanmar', 'India', 'Jepang',
-  'Korea Selatan', 'Tiongkok', 'Taiwan', 'Hong Kong',
+  'Indonesia', 'Malaysia', 'Singapura', 'Thailand', 'Filipina', 'Jepang',
+  'Korea Selatan', 'Tiongkok', 'India', 'Australia', 'Amerika Serikat', 
+  'Inggris', 'Jerman', 'Prancis', 'Kanada', 'Brasil', 'Lainnya'
 ];
 
 const JENJANG_PENDIDIKAN = ['D3', 'S1', 'S2', 'S3', 'Lainnya'];

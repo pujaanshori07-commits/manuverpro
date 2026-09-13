@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withRepeat, 
+  withTiming, 
+  withSequence,
+  Easing,
+  FadeInDown,
+  FadeIn
+} from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
@@ -12,35 +23,78 @@ export default function WelcomeScreen() {
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'dark'];
 
+  // Floating Logo Animation
+  const floatY = useSharedValue(0);
+
+  useEffect(() => {
+    floatY.value = withRepeat(
+      withSequence(
+        withTiming(-12, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, []);
+
+  const floatingStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatY.value }],
+  }));
+
   return (
     <View style={styles.container}>
+        {/* Glowing Mesh Background */}
+        <Animated.View style={[styles.glowOrb, { top: -100, left: -100 }]} entering={FadeIn.duration(1500)}>
+          <LinearGradient
+            colors={['rgba(255, 90, 42, 0.25)', 'transparent']}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </Animated.View>
+        <Animated.View style={[styles.glowOrb, { bottom: -100, right: -100 }]} entering={FadeIn.duration(1500).delay(500)}>
+          <LinearGradient
+            colors={['rgba(255, 90, 42, 0.15)', 'transparent']}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </Animated.View>
+
         <SafeAreaView style={styles.content}>
           <View style={styles.brandContainer}>
-            <Image 
-              source={require('../assets/images/logo.png')} 
-              style={styles.logoImage} 
-              resizeMode="contain" 
-            />
+            <Animated.View style={floatingStyle}>
+              <Image 
+                source={require('../assets/images/logo.png')} 
+                style={styles.logoImage} 
+                resizeMode="contain" 
+              />
+            </Animated.View>
           </View>
           
-          
           <View style={styles.bottomSection}>
-            <Text style={styles.headline}>Find your sports{'\n'}buddies nearby.</Text>
-            <Text style={styles.subhead}>Connect, train, and dominate together.</Text>
+            <Animated.Text entering={FadeInDown.duration(800).delay(300).springify()} style={styles.headline}>
+              Find your sports{'\n'}buddies nearby.
+            </Animated.Text>
+            <Animated.Text entering={FadeInDown.duration(800).delay(500).springify()} style={styles.subhead}>
+              Connect, train, and dominate together.
+            </Animated.Text>
             
-            <TouchableOpacity 
-              style={[styles.primaryBtn, { backgroundColor: themeColors.primary }]}
-              onPress={() => router.push('/register')}
-            >
-              <Text style={styles.primaryBtnText}>GET STARTED</Text>
-            </TouchableOpacity>
+            <Animated.View entering={FadeInDown.duration(800).delay(700).springify()}>
+              <TouchableOpacity 
+                style={[styles.primaryBtn, { backgroundColor: themeColors.primary }]}
+                onPress={() => router.push('/register')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.primaryBtnText}>GET STARTED</Text>
+              </TouchableOpacity>
+            </Animated.View>
             
-            <TouchableOpacity 
-              style={styles.secondaryBtn}
-              onPress={() => router.push('/login')}
-            >
-              <Text style={styles.secondaryBtnText}>I ALREADY HAVE AN ACCOUNT</Text>
-            </TouchableOpacity>
+            <Animated.View entering={FadeInDown.duration(800).delay(900).springify()}>
+              <TouchableOpacity 
+                style={styles.secondaryBtn}
+                onPress={() => router.push('/login')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.secondaryBtnText}>I ALREADY HAVE AN ACCOUNT</Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </SafeAreaView>
     </View>
@@ -51,12 +105,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0B0D12',
+    overflow: 'hidden',
+  },
+  glowOrb: {
+    position: 'absolute',
+    width: width * 1.5,
+    height: width * 1.5,
+    borderRadius: width,
+    zIndex: 0,
   },
   content: {
     flex: 1,
     justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingBottom: 40,
+    zIndex: 1,
   },
   brandContainer: {
     flex: 1,
