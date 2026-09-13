@@ -33,8 +33,14 @@ import { supabase } from '../../lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
-// Fixed portrait height for consistent photo presentation
-const HERO_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.22);
+const HERO_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.25);
+
+// Spring physics config with a playful, natural bounce
+const SPRING_CONFIG = {
+  damping: 13,
+  stiffness: 115,
+  mass: 0.85,
+};
 
 interface Profile {
   id: string;
@@ -60,7 +66,7 @@ const DEMO_PROFILES: Profile[] = [
     alamat: 'GBK Senayan',
     jarak: '2 km',
     hobi: ['Gym', 'Running'],
-    bio: 'Senang olahraga bersama. Mencari partner latihan rutin di sekitarku dan ikut event lari bersama.',
+    bio: 'Senang olahraga bersama. Mencari partner latihan rutin di sekitarku dan ikut event lari bareng.',
     skill_level: 'Intermediate',
     availability: ['Pagi', 'Sore', 'Akhir Pekan'],
     distance_pref: '≤ 10 km',
@@ -150,6 +156,18 @@ export default function DiscoverScreen() {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
+  // Micro-interaction button scales
+  const passScale = useSharedValue(1);
+  const interestedScale = useSharedValue(1);
+
+  const passBtnAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: passScale.value }],
+  }));
+
+  const interestedBtnAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: interestedScale.value }],
+  }));
+
   const resetScrollPosition = () => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   };
@@ -179,11 +197,11 @@ export default function DiscoverScreen() {
     runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
 
     if (direction === 'left') {
-      translateX.value = withTiming(-SCREEN_WIDTH * 1.4, { duration: 250 }, () => {
+      translateX.value = withTiming(-SCREEN_WIDTH * 1.35, { duration: 240 }, () => {
         runOnJS(handleSwipeComplete)('left');
       });
     } else {
-      translateX.value = withTiming(SCREEN_WIDTH * 1.4, { duration: 250 }, () => {
+      translateX.value = withTiming(SCREEN_WIDTH * 1.35, { duration: 240 }, () => {
         runOnJS(handleSwipeComplete)('right');
       });
     }
@@ -194,7 +212,7 @@ export default function DiscoverScreen() {
     .failOffsetY([-15, 15])
     .onUpdate((event) => {
       translateX.value = event.translationX;
-      translateY.value = event.translationY * 0.15;
+      translateY.value = event.translationY * 0.12;
     })
     .onEnd((event) => {
       if (event.translationX > SWIPE_THRESHOLD) {
@@ -202,8 +220,8 @@ export default function DiscoverScreen() {
       } else if (event.translationX < -SWIPE_THRESHOLD) {
         triggerSwipe('left');
       } else {
-        translateX.value = withSpring(0, { damping: 15 });
-        translateY.value = withSpring(0, { damping: 15 });
+        translateX.value = withSpring(0, SPRING_CONFIG);
+        translateY.value = withSpring(0, SPRING_CONFIG);
       }
     });
 
@@ -211,7 +229,7 @@ export default function DiscoverScreen() {
     const rotate = interpolate(
       translateX.value,
       [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-      [-8, 0, 8]
+      [-7, 0, 7]
     );
 
     return {
@@ -233,7 +251,7 @@ export default function DiscoverScreen() {
 
   const getInterestIcon = (name: string): keyof typeof Ionicons.glyphMap => {
     const lower = name.toLowerCase();
-    if (lower.includes('health') || lower.includes('sehat')) return 'heart-outline';
+    if (lower.includes('health') || lower.includes('sehat')) return 'heart-circle-outline';
     if (lower.includes('travel') || lower.includes('jalan')) return 'airplane-outline';
     if (lower.includes('music') || lower.includes('musik')) return 'musical-notes-outline';
     if (lower.includes('food') || lower.includes('kuliner')) return 'restaurant-outline';
@@ -244,18 +262,18 @@ export default function DiscoverScreen() {
 
   const getSportIcon = (name: string): keyof typeof Ionicons.glyphMap => {
     const lower = name.toLowerCase();
-    if (lower.includes('run') || lower.includes('lari')) return 'walk-outline';
-    if (lower.includes('gym') || lower.includes('fit')) return 'barbell-outline';
-    if (lower.includes('cycle') || lower.includes('sepeda')) return 'bicycle-outline';
-    if (lower.includes('badminton') || lower.includes('tennis')) return 'tennisball-outline';
-    return 'fitness-outline';
+    if (lower.includes('run') || lower.includes('lari')) return 'walk';
+    if (lower.includes('gym') || lower.includes('fit')) return 'barbell';
+    if (lower.includes('cycle') || lower.includes('sepeda')) return 'bicycle';
+    if (lower.includes('badminton') || lower.includes('tennis')) return 'tennisball';
+    return 'fitness';
   };
 
   return (
     <GestureHandlerRootView style={styles.rootContainer}>
       <View style={[styles.container, { paddingTop: insets.top }]}>
         
-        {/* Header with Centered "manuver" Wordmark */}
+        {/* Friendly Header with Centered Wordmark */}
         <View style={styles.header}>
           <View style={styles.headerSpacer} />
           <Text style={styles.headerBrandText}>manuver</Text>
@@ -264,11 +282,11 @@ export default function DiscoverScreen() {
             onPress={() => router.push('/settings/filters')}
             activeOpacity={0.7}
           >
-            <Ionicons name="options-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="options-outline" size={20} color={Colors.white} />
           </TouchableOpacity>
         </View>
 
-        {/* Body */}
+        {/* Content Body */}
         {loading ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={Colors.primary} />
@@ -278,7 +296,7 @@ export default function DiscoverScreen() {
           <View style={styles.emptyContainer}>
             <View style={styles.glowingRingsOuter}>
               <View style={styles.glowingRingsInner}>
-                <Ionicons name="flame" size={56} color={Colors.primary} />
+                <Ionicons name="flame" size={54} color={Colors.primary} />
               </View>
             </View>
             <Text style={styles.emptyTitle}>Area Selesai Dijelajahi!</Text>
@@ -297,10 +315,10 @@ export default function DiscoverScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          /* Deck Container */
+          /* Swiper & Scrollable Profile Deck */
           <View style={styles.deckContainer}>
             
-            {/* Background Card Preview */}
+            {/* Soft Background Card Preview */}
             {nextProfile && (
               <View style={[styles.card, styles.nextCard]}>
                 <Image
@@ -311,11 +329,11 @@ export default function DiscoverScreen() {
               </View>
             )}
 
-            {/* Active Card with Vertical Scroll */}
+            {/* Active Bumble-style Card with Vertical Scroll */}
             <GestureDetector gesture={panGesture}>
               <Animated.View style={[styles.card, animatedCardStyle]}>
                 
-                {/* LIKE / PASS Visual Stamps */}
+                {/* Visual Feedback Stamps on Swipe */}
                 <Animated.View style={[styles.stampBadge, styles.likeBadge, likeStampStyle]} pointerEvents="none">
                   <Text style={styles.likeBadgeText}>INTERESTED</Text>
                 </Animated.View>
@@ -338,10 +356,10 @@ export default function DiscoverScreen() {
                       style={styles.heroPhoto}
                       resizeMode="cover"
                     />
-                    {/* Seamless Bottom-Edge Fade into Card Background */}
+                    {/* Seamless Bottom-Edge Fade into Card Surface */}
                     <LinearGradient
-                      colors={['transparent', 'rgba(15, 17, 23, 0.55)', '#0F1117']}
-                      locations={[0, 0.6, 1]}
+                      colors={['transparent', 'rgba(17, 20, 28, 0.45)', '#11141C']}
+                      locations={[0, 0.55, 1]}
                       style={styles.photoGradient}
                     />
                   </View>
@@ -349,7 +367,7 @@ export default function DiscoverScreen() {
                   {/* Profile Details Content */}
                   <View style={styles.profileDetailsBody}>
                     
-                    {/* Name, Age & Verified Checkmark */}
+                    {/* Name, Age & Verified Badge */}
                     <View style={styles.nameRow}>
                       <Text style={styles.profileName}>
                         {currentProfile.nama}, {currentProfile.umur}
@@ -359,12 +377,12 @@ export default function DiscoverScreen() {
                       </View>
                     </View>
 
-                    {/* Quick Sport Chips */}
+                    {/* Quick Sport Chips immediately under identity */}
                     {currentProfile.hobi && currentProfile.hobi.length > 0 && (
                       <View style={styles.quickSportsRow}>
                         {currentProfile.hobi.map((item, idx) => (
                           <View key={idx} style={styles.quickSportChip}>
-                            <Ionicons name={getSportIcon(item)} size={13} color="#FF5A1F" />
+                            <Ionicons name={getSportIcon(item)} size={13} color={Colors.primary} />
                             <Text style={styles.quickSportText}>{item}</Text>
                           </View>
                         ))}
@@ -373,13 +391,13 @@ export default function DiscoverScreen() {
 
                     {/* Venue & Distance */}
                     <View style={styles.locationRow}>
-                      <Ionicons name="location-sharp" size={14} color="#FF5A1F" />
+                      <Ionicons name="location-sharp" size={14} color={Colors.primary} />
                       <Text style={styles.locationText}>
                         {currentProfile.alamat || 'GBK Senayan'} • {currentProfile.jarak || '2 km'}
                       </Text>
                     </View>
 
-                    {/* About Me */}
+                    {/* Section 1: About Me */}
                     {currentProfile.bio ? (
                       <View style={styles.sectionBlock}>
                         <Text style={styles.sectionHeading}>About Me</Text>
@@ -387,20 +405,20 @@ export default function DiscoverScreen() {
                       </View>
                     ) : null}
 
-                    {/* Sports I Play */}
+                    {/* Section 2: Sports I Play */}
                     <View style={styles.sectionBlock}>
                       <Text style={styles.sectionHeading}>Sports I Play</Text>
                       <View style={styles.pillsRow}>
                         {(currentProfile.hobi || ['Running', 'Gym', 'Cycling']).map((sport, idx) => (
                           <View key={idx} style={styles.detailPill}>
-                            <Ionicons name={getSportIcon(sport)} size={14} color="#FF5A1F" />
+                            <Ionicons name={getSportIcon(sport)} size={14} color={Colors.primary} />
                             <Text style={styles.detailPillText}>{sport}</Text>
                           </View>
                         ))}
                       </View>
                     </View>
 
-                    {/* Skill Level */}
+                    {/* Section 3: Skill Level */}
                     <View style={styles.sectionBlock}>
                       <Text style={styles.sectionHeading}>Skill Level</Text>
                       <View style={styles.pillsRow}>
@@ -410,7 +428,7 @@ export default function DiscoverScreen() {
                       </View>
                     </View>
 
-                    {/* Availability */}
+                    {/* Section 4: Availability */}
                     <View style={styles.sectionBlock}>
                       <Text style={styles.sectionHeading}>Availability</Text>
                       <View style={styles.pillsRow}>
@@ -422,7 +440,7 @@ export default function DiscoverScreen() {
                       </View>
                     </View>
 
-                    {/* Distance Preference */}
+                    {/* Section 5: Distance Preference */}
                     <View style={styles.sectionBlock}>
                       <Text style={styles.sectionHeading}>Distance Preference</Text>
                       <View style={styles.pillsRow}>
@@ -432,13 +450,13 @@ export default function DiscoverScreen() {
                       </View>
                     </View>
 
-                    {/* Interests */}
+                    {/* Section 6: Interests */}
                     <View style={styles.sectionBlock}>
                       <Text style={styles.sectionHeading}>Interests</Text>
                       <View style={styles.pillsRow}>
                         {(currentProfile.interests || ['Health', 'Travel', 'Music', 'Food']).map((interest, idx) => (
                           <View key={idx} style={styles.interestPill}>
-                            <Ionicons name={getInterestIcon(interest)} size={15} color="#9EA3B0" />
+                            <Ionicons name={getInterestIcon(interest)} size={15} color="#A2A7B8" />
                             <Text style={styles.interestPillText}>{interest}</Text>
                           </View>
                         ))}
@@ -450,37 +468,53 @@ export default function DiscoverScreen() {
               </Animated.View>
             </GestureDetector>
 
-            {/* Sticky Bottom Action Buttons */}
+            {/* Sticky Floating Bottom Action Buttons */}
             <View style={[styles.bottomActionContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
               <LinearGradient
-                colors={['transparent', 'rgba(9, 10, 13, 0.85)', '#090A0D']}
+                colors={['transparent', 'rgba(11, 13, 19, 0.88)', '#0B0D13']}
                 locations={[0, 0.35, 1]}
                 style={StyleSheet.absoluteFill}
                 pointerEvents="none"
               />
 
               <View style={styles.actionRow}>
-                {/* PASS */}
+                {/* PASS Action */}
                 <View style={styles.actionCol}>
-                  <TouchableOpacity
-                    style={[styles.actionCircle, styles.btnPass]}
-                    onPress={() => triggerSwipe('left')}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="close" size={28} color="#FFFFFF" />
-                  </TouchableOpacity>
+                  <Animated.View style={passBtnAnimStyle}>
+                    <TouchableOpacity
+                      style={[styles.actionCircle, styles.btnPass]}
+                      onPress={() => triggerSwipe('left')}
+                      onPressIn={() => {
+                        passScale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
+                      }}
+                      onPressOut={() => {
+                        passScale.value = withSpring(1, { damping: 15, stiffness: 300 });
+                      }}
+                      activeOpacity={0.9}
+                    >
+                      <Ionicons name="close" size={28} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </Animated.View>
                   <Text style={styles.actionLabel}>Pass</Text>
                 </View>
 
-                {/* INTERESTED */}
+                {/* INTERESTED Action */}
                 <View style={styles.actionCol}>
-                  <TouchableOpacity
-                    style={[styles.actionCircle, styles.btnInterested]}
-                    onPress={() => triggerSwipe('right')}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="walk" size={28} color="#FFFFFF" />
-                  </TouchableOpacity>
+                  <Animated.View style={interestedBtnAnimStyle}>
+                    <TouchableOpacity
+                      style={[styles.actionCircle, styles.btnInterested]}
+                      onPress={() => triggerSwipe('right')}
+                      onPressIn={() => {
+                        interestedScale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
+                      }}
+                      onPressOut={() => {
+                        interestedScale.value = withSpring(1, { damping: 15, stiffness: 300 });
+                      }}
+                      activeOpacity={0.9}
+                    >
+                      <Ionicons name="walk" size={28} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </Animated.View>
                   <Text style={styles.actionLabel}>Interested</Text>
                 </View>
               </View>
@@ -518,19 +552,19 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontHeading,
     fontSize: 22,
     fontWeight: '800',
-    color: '#FF572F', // Brand orange
+    color: Colors.primary,
     letterSpacing: -0.5,
     textTransform: 'lowercase',
   },
   filterBtn: {
     width: 38,
     height: 38,
-    borderRadius: 19,
-    backgroundColor: '#171A21',
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: Colors.surfaceBorder,
   },
   centered: {
     flex: 1,
@@ -545,18 +579,23 @@ const styles = StyleSheet.create({
   },
   card: {
     width: SCREEN_WIDTH - 20,
-    borderRadius: 24,
-    backgroundColor: '#0F1117',
+    borderRadius: BorderRadius.card,
+    backgroundColor: Colors.surfaceCard,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: Colors.surfaceBorder,
     overflow: 'hidden',
     position: 'absolute',
     top: 0,
     bottom: 8,
+    shadowColor: Colors.black,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 8,
   },
   nextCard: {
-    transform: [{ scale: 0.96 }],
-    opacity: 0.5,
+    transform: [{ scale: 0.95 }],
+    opacity: 0.45,
   },
   nextHeroPhoto: {
     width: '100%',
@@ -566,14 +605,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContentContainer: {
-    // Generous bottom clearance ensuring the last section scrolls well above the action buttons
-    paddingBottom: 200,
+    paddingBottom: 210, // Clears the floating action buttons cleanly
   },
   heroPhotoWrapper: {
     width: '100%',
     height: HERO_PHOTO_HEIGHT,
     position: 'relative',
-    backgroundColor: '#171A21',
+    backgroundColor: Colors.surface,
   },
   heroPhoto: {
     width: '100%',
@@ -584,12 +622,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 110,
+    height: 120,
   },
   profileDetailsBody: {
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.sm,
-    backgroundColor: '#0F1117',
+    backgroundColor: Colors.surfaceCard,
   },
   nameRow: {
     flexDirection: 'row',
@@ -599,15 +637,15 @@ const styles = StyleSheet.create({
   },
   profileName: {
     fontFamily: Typography.fontHeading,
-    fontSize: 24,
-    color: '#FFFFFF',
+    fontSize: 25,
+    color: Colors.white,
     fontWeight: '700',
   },
   verifiedCheck: {
     width: 20,
     height: 20,
-    borderRadius: 10,
-    backgroundColor: '#00C48C',
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.success,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -620,46 +658,45 @@ const styles = StyleSheet.create({
   quickSportChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 90, 31, 0.12)',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.pillBgActive,
     borderWidth: 1,
-    borderColor: 'rgba(255, 90, 31, 0.4)',
+    borderColor: Colors.pillBorderActive,
   },
   quickSportText: {
-    fontFamily: Typography.fontMedium,
+    fontFamily: Typography.fontSemiBold,
     fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: Colors.white,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    marginBottom: 18,
+    marginBottom: 20,
   },
   locationText: {
     fontFamily: Typography.fontRegular,
     fontSize: 13,
-    color: '#B7BCCB',
+    color: Colors.textSecondary,
   },
   sectionBlock: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   sectionHeading: {
     fontFamily: Typography.fontSemiBold,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: Colors.white,
     fontWeight: '600',
     marginBottom: 8,
   },
   aboutMeText: {
     fontFamily: Typography.fontRegular,
-    fontSize: 13,
-    color: '#B7BCCB',
-    lineHeight: 20,
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 22,
   },
   pillsRow: {
     flexDirection: 'row',
@@ -670,35 +707,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.pillBg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: Colors.pillBorder,
   },
   detailPillText: {
     fontFamily: Typography.fontMedium,
-    fontSize: 12,
-    color: '#E1E4EA',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#E3E7F0',
   },
   interestPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 16,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.pillBg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: Colors.pillBorder,
   },
   interestPillText: {
     fontFamily: Typography.fontMedium,
-    fontSize: 12,
-    color: '#E1E4EA',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#E3E7F0',
   },
   stampBadge: {
     position: 'absolute',
@@ -711,24 +746,24 @@ const styles = StyleSheet.create({
   },
   likeBadge: {
     left: 24,
-    borderColor: '#00C48C',
+    borderColor: Colors.success,
     transform: [{ rotate: '-14deg' }],
   },
   likeBadgeText: {
     fontFamily: Typography.fontHeading,
-    color: '#00C48C',
+    color: Colors.success,
     fontSize: 24,
     letterSpacing: 2,
     fontWeight: '800',
   },
   passBadge: {
     right: 24,
-    borderColor: '#FF3B30',
+    borderColor: Colors.danger,
     transform: [{ rotate: '14deg' }],
   },
   passBadgeText: {
     fontFamily: Typography.fontHeading,
-    color: '#FF3B30',
+    color: Colors.danger,
     fontSize: 24,
     letterSpacing: 2,
     fontWeight: '800',
@@ -752,30 +787,34 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 62,
+    height: 62,
+    borderRadius: BorderRadius.round,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
+  },
+  btnPass: {
+    backgroundColor: '#1B1F2A',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
-    elevation: 6,
-  },
-  btnPass: {
-    backgroundColor: '#1E222B',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    elevation: 4,
   },
   btnInterested: {
     backgroundColor: Colors.primary,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 8,
   },
   actionLabel: {
-    fontFamily: Typography.fontMedium,
+    fontFamily: Typography.fontSemiBold,
     fontSize: 12,
-    color: '#8E95A5',
-    fontWeight: '600',
+    color: Colors.textSecondary,
   },
   emptyContainer: {
     flex: 1,
@@ -786,8 +825,8 @@ const styles = StyleSheet.create({
   glowingRingsOuter: {
     width: 140,
     height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(255, 87, 47, 0.08)',
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.primaryMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xl,
@@ -795,8 +834,8 @@ const styles = StyleSheet.create({
   glowingRingsInner: {
     width: 96,
     height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(255, 87, 47, 0.18)',
+    borderRadius: BorderRadius.round,
+    backgroundColor: 'rgba(255, 87, 47, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -811,7 +850,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: Spacing.xl,
   },
   emptyFilterBtn: {

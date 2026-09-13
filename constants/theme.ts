@@ -1,44 +1,47 @@
 import { StyleSheet, TextStyle } from 'react-native';
 
 export const Colors = {
-  // Surfaces & Backgrounds
-  background: '#090A0D',
-  surface: '#171A21',
-  elevatedSurface: '#1D2028',
-  surfaceBorder: 'rgba(255, 255, 255, 0.08)',
-  surfaceBorderHover: 'rgba(255, 255, 255, 0.16)',
-  surfaceInput: '#161920',
-  tabBarBg: '#0F1115',
+  // Rich deep surfaces (warm charcoal black, no muddy grays)
+  background: '#0B0D13',
+  surface: '#151821',
+  elevatedSurface: '#1C202C',
+  surfaceCard: '#11141C',
+  surfaceBorder: 'rgba(255, 255, 255, 0.07)',
+  surfaceBorderHover: 'rgba(255, 255, 255, 0.14)',
+  surfaceInput: '#181C26',
+  tabBarBg: '#0D0F16',
 
-  // Primary Accent (Manuver Orange)
+  // Primary Accent (Signature Manuver Energy Orange)
   primary: '#FF572F',
   primaryDark: '#E04720',
   primaryLight: '#FF7347',
-  primaryMuted: 'rgba(255, 87, 47, 0.15)',
-  primaryGlow: 'rgba(255, 87, 47, 0.35)',
+  primaryMuted: 'rgba(255, 87, 47, 0.14)',
+  primaryGlow: 'rgba(255, 87, 47, 0.38)',
   primaryGradientStart: '#FF7347',
   primaryGradientEnd: '#E6441D',
 
-  // Semantic Status
-  success: '#34C759',
-  successMuted: 'rgba(52, 199, 89, 0.15)',
-  danger: '#FF3B30',
-  dangerMuted: 'rgba(255, 59, 48, 0.15)',
-  warning: '#FF9500',
+  // Status & Accents
+  success: '#00C48C',
+  successMuted: 'rgba(0, 196, 140, 0.14)',
+  danger: '#FF4757',
+  dangerMuted: 'rgba(255, 71, 87, 0.14)',
+  warning: '#FFA502',
   star: '#FFB800',
 
-  // Overlays
-  overlayDark: 'rgba(9, 10, 13, 0.85)',
-  overlayGradientMid: 'rgba(9, 10, 13, 0.65)',
-  pillBg: 'rgba(255, 255, 255, 0.07)',
-  pillBgActive: 'rgba(255, 87, 47, 0.15)',
+  // Overlays & Pills
+  overlayDark: 'rgba(11, 13, 19, 0.88)',
+  overlayGradientMid: 'rgba(11, 13, 19, 0.55)',
+  pillBg: 'rgba(255, 255, 255, 0.06)',
+  pillBgActive: 'rgba(255, 87, 47, 0.14)',
+  pillBorder: 'rgba(255, 255, 255, 0.08)',
+  pillBorderActive: 'rgba(255, 87, 47, 0.38)',
 
-  // Typography Colors
+  // Typography
   white: '#FFFFFF',
   black: '#000000',
   textPrimary: '#FFFFFF',
-  textSecondary: '#8F94A6',
-  textMuted: '#585C6B',
+  textSecondary: '#9AA0B2',
+  textMuted: '#676D80',
 } as const;
 
 export const Spacing = {
@@ -56,8 +59,10 @@ export const BorderRadius = {
   xs: 6,
   sm: 10,
   md: 16,
-  lg: 20,
+  lg: 22,
   xl: 28,
+  card: 28,
+  pill: 9999,
   round: 9999,
 } as const;
 
@@ -80,52 +85,47 @@ export const TypographyStyles = StyleSheet.create({
     fontFamily: Typography.fontHeading,
     fontSize: 28,
     color: Colors.textPrimary,
-    lineHeight: 34,
-    fontWeight: '700',
+    lineHeight: 36,
   } as TextStyle,
   h2: {
     fontFamily: Typography.fontHeading,
     fontSize: 22,
     color: Colors.textPrimary,
-    lineHeight: 28,
-    fontWeight: '700',
+    lineHeight: 30,
   } as TextStyle,
   h3: {
     fontFamily: Typography.fontSemiBold,
-    fontSize: 18,
+    fontSize: 17,
     color: Colors.textPrimary,
     lineHeight: 24,
-    fontWeight: '600',
   } as TextStyle,
   subtitle: {
     fontFamily: Typography.fontRegular,
     fontSize: 14,
     color: Colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 22,
   } as TextStyle,
   labelBold: {
     fontFamily: Typography.fontSemiBold,
     fontSize: 14,
     color: Colors.textPrimary,
-    fontWeight: '600',
   } as TextStyle,
   labelSecondary: {
     fontFamily: Typography.fontMedium,
     fontSize: 13,
     color: Colors.textSecondary,
-    fontWeight: '500',
   } as TextStyle,
   body: {
     fontFamily: Typography.fontRegular,
     fontSize: 14,
     color: Colors.textPrimary,
-    lineHeight: 20,
+    lineHeight: 22,
   } as TextStyle,
   bodySecondary: {
     fontFamily: Typography.fontRegular,
     fontSize: 13,
     color: Colors.textSecondary,
-    lineHeight: 18,
+    lineHeight: 20,
   } as TextStyle,
   caption: {
     fontFamily: Typography.fontRegular,
@@ -136,6 +136,5 @@ export const TypographyStyles = StyleSheet.create({
     fontFamily: Typography.fontMedium,
     fontSize: 12,
     color: Colors.textPrimary,
-    fontWeight: '500',
   } as TextStyle,
 });

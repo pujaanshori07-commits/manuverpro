@@ -14,10 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, BorderRadius, Spacing } from '../../constants/theme';
+import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const HERO_PHOTO_HEIGHT = 440;
+const HERO_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.25);
 
 const DEMO_USER_DETAILS = {
   id: 'dinda-detail',
@@ -45,7 +45,7 @@ export default function UserDetailScreen() {
   const router = useRouter();
   const { name, avatar } = useLocalSearchParams();
 
-  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+  const [activePhotoIdx] = useState(0);
 
   const user = {
     ...DEMO_USER_DETAILS,
@@ -65,19 +65,27 @@ export default function UserDetailScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {/* Floating Top Back & Report Buttons */}
-      <View style={[styles.floatingNav, { top: insets.top + 6 }]}>
-        <TouchableOpacity style={styles.circleIconBtn} onPress={() => router.back()}>
+      {/* Floating Top Back & Report Controls */}
+      <View style={[styles.floatingNav, { top: insets.top + 8 }]}>
+        <TouchableOpacity
+          style={styles.circleIconBtn}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
           <Ionicons name="chevron-back" size={24} color={Colors.white} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.circleIconBtn} onPress={handleReport}>
+        <TouchableOpacity
+          style={styles.circleIconBtn}
+          onPress={handleReport}
+          activeOpacity={0.8}
+        >
           <Ionicons name="ellipsis-horizontal" size={20} color={Colors.white} />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 90 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
       >
         {/* Main Hero Photo */}
         <View style={styles.heroContainer}>
@@ -87,8 +95,8 @@ export default function UserDetailScreen() {
             resizeMode="cover"
           />
           <LinearGradient
-            colors={['rgba(9, 10, 13, 0.4)', 'transparent', 'rgba(9, 10, 13, 0.95)']}
-            locations={[0, 0.5, 1]}
+            colors={['rgba(11, 13, 19, 0.4)', 'transparent', 'rgba(11, 13, 19, 0.95)', '#0B0D13']}
+            locations={[0, 0.45, 0.85, 1]}
             style={StyleSheet.absoluteFillObject}
           />
           <View style={styles.heroInfo}>
@@ -96,7 +104,9 @@ export default function UserDetailScreen() {
               <Text style={styles.heroNameText}>
                 {user.nama}, {user.umur}
               </Text>
-              <Ionicons name="checkmark-circle" size={22} color="#00C48C" />
+              <View style={styles.verifiedCheck}>
+                <Ionicons name="checkmark-sharp" size={13} color="#FFFFFF" />
+              </View>
             </View>
             <View style={styles.locationRow}>
               <Ionicons name="location-sharp" size={14} color={Colors.primary} />
@@ -107,7 +117,7 @@ export default function UserDetailScreen() {
           </View>
         </View>
 
-        {/* Bio & Personality */}
+        {/* Bio & About Me */}
         <View style={styles.bodySection}>
           <Text style={styles.sectionHeading}>TENTANG SAYA</Text>
           <Text style={styles.bioBody}>{user.bio}</Text>
@@ -120,11 +130,17 @@ export default function UserDetailScreen() {
             {user.sports.map((sp, idx) => (
               <View key={idx} style={styles.sportCard}>
                 <View style={styles.sportCardTop}>
-                  <Ionicons name="fitness-outline" size={18} color={Colors.primary} />
+                  <View style={styles.sportIconWrap}>
+                    <Ionicons name="fitness" size={16} color={Colors.primary} />
+                  </View>
                   <Text style={styles.sportCardTitle}>{sp.name}</Text>
                 </View>
-                <Text style={styles.sportCardLevel}>Level: {sp.level}</Text>
-                <Text style={styles.sportCardExp}>Pengalaman: {sp.experience}</Text>
+                <View style={styles.sportBadgeRow}>
+                  <View style={styles.levelBadge}>
+                    <Text style={styles.levelBadgeText}>Level: {sp.level}</Text>
+                  </View>
+                  <Text style={styles.sportCardExp}>{sp.experience}</Text>
+                </View>
               </View>
             ))}
           </View>
@@ -135,7 +151,9 @@ export default function UserDetailScreen() {
           <Text style={styles.sectionHeading}>RUTINITAS & LOKASI FAVORIT</Text>
           
           <View style={styles.routineRow}>
-            <Ionicons name="time-outline" size={18} color={Colors.primary} />
+            <View style={styles.routineIconWrap}>
+              <Ionicons name="time-outline" size={18} color={Colors.primary} />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.routineTitle}>Jadwal Aktif</Text>
               <Text style={styles.routineSub}>{user.preferred_time}</Text>
@@ -143,7 +161,9 @@ export default function UserDetailScreen() {
           </View>
 
           <View style={styles.routineRow}>
-            <Ionicons name="navigate-outline" size={18} color={Colors.primary} />
+            <View style={styles.routineIconWrap}>
+              <Ionicons name="navigate-outline" size={18} color={Colors.primary} />
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.routineTitle}>Venue Sering Dikunjungi</Text>
               <Text style={styles.routineSub}>{user.favorite_venue}</Text>
@@ -155,23 +175,30 @@ export default function UserDetailScreen() {
         {user.photos.length > 1 && (
           <View style={styles.bodySection}>
             <Text style={styles.sectionHeading}>GALERI AKTIVITAS</Text>
-            <Image
-              source={{ uri: user.photos[1] }}
-              style={styles.secondaryStoryPhoto}
-              resizeMode="cover"
-            />
+            <View style={styles.storyPhotoCard}>
+              <Image
+                source={{ uri: user.photos[1] }}
+                style={styles.secondaryStoryPhoto}
+                resizeMode="cover"
+              />
+            </View>
           </View>
         )}
       </ScrollView>
 
-      {/* Floating Bottom CTA */}
+      {/* Floating Bottom CTA with Orange Glow */}
       <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+        <LinearGradient
+          colors={['transparent', 'rgba(11, 13, 19, 0.95)', '#0B0D13']}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
         <TouchableOpacity
           style={styles.chatActionBtn}
           onPress={() => router.back()}
-          activeOpacity={0.85}
+          activeOpacity={0.88}
         >
-          <Ionicons name="chatbubbles-outline" size={18} color={Colors.white} />
+          <Ionicons name="chatbubbles" size={19} color={Colors.white} />
           <Text style={styles.chatActionBtnText}>Kirim Pesan & Sparing</Text>
         </TouchableOpacity>
       </View>
@@ -193,14 +220,14 @@ const styles = StyleSheet.create({
     zIndex: 50,
   },
   circleIconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(9, 10, 13, 0.65)',
+    width: 42,
+    height: 42,
+    borderRadius: BorderRadius.round,
+    backgroundColor: 'rgba(11, 13, 19, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   heroContainer: {
     width: SCREEN_WIDTH,
@@ -223,102 +250,147 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   heroNameText: {
-    fontSize: 26,
-    fontWeight: '800',
+    fontFamily: Typography.fontHeading,
+    fontSize: 27,
+    fontWeight: '700',
     color: Colors.white,
+  },
+  verifiedCheck: {
+    width: 20,
+    height: 20,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   locationText: {
+    fontFamily: Typography.fontRegular,
     fontSize: 13,
     color: Colors.textSecondary,
   },
   bodySection: {
     paddingHorizontal: Spacing.base,
-    marginTop: Spacing.lg,
+    marginTop: Spacing.xl,
   },
   sectionHeading: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontFamily: Typography.fontSemiBold,
+    fontSize: 12,
+    fontWeight: '600',
     color: Colors.textMuted,
     letterSpacing: 0.8,
     marginBottom: 10,
   },
   bioBody: {
+    fontFamily: Typography.fontRegular,
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    lineHeight: 22,
+    color: '#E1E4F0',
+    lineHeight: 23,
   },
   sportsGrid: {
-    gap: 8,
+    gap: 10,
   },
   sportCard: {
     backgroundColor: Colors.surface,
-    padding: 14,
-    borderRadius: BorderRadius.md,
+    padding: 16,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
   sportCardTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
+    gap: 10,
+    marginBottom: 8,
+  },
+  sportIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.pillBgActive,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sportCardTitle: {
+    fontFamily: Typography.fontSemiBold,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
     color: Colors.white,
   },
-  sportCardLevel: {
+  sportBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  levelBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: BorderRadius.round,
+    backgroundColor: Colors.pillBgActive,
+  },
+  levelBadgeText: {
+    fontFamily: Typography.fontMedium,
     fontSize: 12,
     color: Colors.primary,
-    fontWeight: '500',
   },
   sportCardExp: {
+    fontFamily: Typography.fontRegular,
     fontSize: 12,
     color: Colors.textSecondary,
-    marginTop: 2,
   },
   routineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     backgroundColor: Colors.surface,
-    padding: 14,
-    borderRadius: BorderRadius.md,
-    marginBottom: 8,
+    padding: 16,
+    borderRadius: BorderRadius.lg,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
+  routineIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.round,
+    backgroundColor: 'rgba(255, 87, 47, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   routineTitle: {
+    fontFamily: Typography.fontSemiBold,
     fontSize: 13,
     fontWeight: '600',
     color: Colors.white,
   },
   routineSub: {
+    fontFamily: Typography.fontRegular,
     fontSize: 12,
     color: Colors.textSecondary,
     marginTop: 2,
   },
+  storyPhotoCard: {
+    borderRadius: BorderRadius.card,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+  },
   secondaryStoryPhoto: {
     width: '100%',
     height: 240,
-    borderRadius: BorderRadius.md,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(9, 10, 13, 0.95)',
     paddingHorizontal: Spacing.base,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
+    paddingTop: 16,
+    zIndex: 40,
   },
   chatActionBtn: {
     flexDirection: 'row',
@@ -326,12 +398,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: Colors.primary,
-    height: 48,
-    borderRadius: BorderRadius.sm,
+    height: 52,
+    borderRadius: BorderRadius.round,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.42,
+    shadowRadius: 14,
+    elevation: 8,
   },
   chatActionBtnText: {
+    fontFamily: Typography.fontSemiBold,
     color: Colors.white,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
 });
