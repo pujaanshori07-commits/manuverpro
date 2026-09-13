@@ -240,22 +240,6 @@ export default function DiscoverScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   };
 
-  const handleScroll = (event: any) => {
-    const y = event.nativeEvent.contentOffset.y;
-    let newIdx = 0;
-    if (y > 350) {
-      newIdx = 2;
-    } else if (y > 150) {
-      newIdx = 1;
-    }
-    const maxIdx = (currentProfile?.photos?.length || 1) - 1;
-    newIdx = Math.min(newIdx, maxIdx);
-    if (newIdx !== activePhotoIdx) {
-      setActivePhotoIdx(newIdx);
-      Haptics.selectionAsync().catch(() => {});
-    }
-  };
-
   const handleSwipeComplete = (direction: 'left' | 'right') => {
     const swipedProfile = currentProfile;
     const swipedId = swipedProfile?.id;
@@ -479,32 +463,33 @@ export default function DiscoverScreen() {
                   <Text style={styles.passBadgeText}>PASS</Text>
                 </Animated.View>
 
-                {/* BACKGROUND HERO PHOTO */}
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.surface }]}>
-                  <Image
-                    source={{ uri: currentProfile.photos[activePhotoIdx] || currentProfile.photos[0] }}
-                    style={{ width: '100%', height: '100%' }}
-                    resizeMode="cover"
-                  />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(11, 13, 19, 0.4)', 'rgba(11, 13, 19, 0.95)']}
-                    locations={[0, 0.5, 1]}
-                    style={StyleSheet.absoluteFillObject}
-                  />
-                </View>
-
-                {/* Vertically Scrollable Content */}
+                {/* Vertically Scrollable Interleaved Story */}
                 <ScrollView
                   ref={scrollRef}
                   style={styles.profileScrollView}
                   contentContainerStyle={styles.scrollContentContainer}
                   showsVerticalScrollIndicator={false}
                   bounces={true}
-                  onScroll={handleScroll}
-                  scrollEventThrottle={16}
                 >
-                  {/* BLOCK 1: Spacing & Identity Overlay */}
-                  <View style={{ paddingTop: HERO_PHOTO_HEIGHT - 180 }}>
+                  {/* BLOCK 1: Hero Photo + Stories Carousel + Identity Overlay */}
+                  <View style={styles.heroPhotoWrapper}>
+                    <Image
+                      source={{ uri: currentProfile.photos[activePhotoIdx] || currentProfile.photos[0] }}
+                      style={styles.heroPhoto}
+                      resizeMode="cover"
+                    />
+
+                    {/* Removed Segmented Progress Bar and Tap Zones since profile is scrollable */}
+
+                    {/* Smooth Bottom Gradient Fade */}
+                    <LinearGradient
+                      colors={['transparent', 'rgba(17, 20, 28, 0.45)', '#11141C']}
+                      locations={[0, 0.6, 1]}
+                      style={styles.photoGradient}
+                      pointerEvents="none"
+                    />
+
+                    {/* Identity Overlay over Hero Photo */}
                     <View style={styles.heroIdentityOverlay} pointerEvents="none">
                       <View style={styles.nameRow}>
                         <Text style={styles.profileName}>
@@ -539,7 +524,7 @@ export default function DiscoverScreen() {
 
                   {/* BLOCK 2: Authentic Sports-Specific Prompt Card */}
                   {currentProfile.sports_prompt && (
-                    <View style={[styles.promptCard, { backgroundColor: 'rgba(20, 23, 32, 0.75)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                    <View style={styles.promptCard}>
                       <View style={styles.promptHeaderRow}>
                         <Ionicons name="flame" size={16} color={Colors.primary} />
                         <Text style={styles.promptQuestion}>
@@ -552,8 +537,25 @@ export default function DiscoverScreen() {
                     </View>
                   )}
 
+                  {/* BLOCK 3: In-Action Sport Shot (Photo 2) */}
+                  {currentProfile.photos[1] && (
+                    <View style={styles.storyPhotoWrapper}>
+                      <Image
+                        source={{ uri: currentProfile.photos[1] }}
+                        style={styles.storyPhoto}
+                        resizeMode="cover"
+                      />
+                      <LinearGradient
+                        colors={['transparent', 'rgba(17, 20, 28, 0.7)']}
+                        style={styles.storyPhotoCaptionGradient}
+                      >
+                        <Text style={styles.storyPhotoCaption}>In Training • Sesi Rutin</Text>
+                      </LinearGradient>
+                    </View>
+                  )}
+
                   {/* BLOCK 4: Skill Level & Availability Matrix Card */}
-                  <View style={[styles.matrixCard, { backgroundColor: 'rgba(20, 23, 32, 0.75)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                  <View style={styles.matrixCard}>
                     <Text style={styles.sectionHeading}>CABANG & JADWAL SPAR</Text>
                     
                     {/* Sports Played Pills */}
@@ -584,8 +586,25 @@ export default function DiscoverScreen() {
                     </View>
                   </View>
 
+                  {/* BLOCK 5: Lifestyle / Approachable Shot (Photo 3) */}
+                  {currentProfile.photos[2] && (
+                    <View style={styles.storyPhotoWrapper}>
+                      <Image
+                        source={{ uri: currentProfile.photos[2] }}
+                        style={styles.storyPhoto}
+                        resizeMode="cover"
+                      />
+                      <LinearGradient
+                        colors={['transparent', 'rgba(17, 20, 28, 0.7)']}
+                        style={styles.storyPhotoCaptionGradient}
+                      >
+                        <Text style={styles.storyPhotoCaption}>Off the court • Rehat & Kopi</Text>
+                      </LinearGradient>
+                    </View>
+                  )}
+
                   {/* BLOCK 6: About Me & Preferences Card */}
-                  <View style={[styles.aboutCard, { backgroundColor: 'rgba(20, 23, 32, 0.75)', borderColor: 'rgba(255,255,255,0.1)' }]}>
+                  <View style={styles.aboutCard}>
                     <Text style={styles.sectionHeading}>TENTANG SAYA</Text>
                     <Text style={styles.aboutMeText}>{currentProfile.bio}</Text>
 
@@ -749,9 +768,15 @@ const styles = StyleSheet.create({
   scrollContentContainer: {
     paddingBottom: 220, // generous bottom padding to float above sticky action buttons
   },
-  heroIdentityOverlay: {
-    paddingHorizontal: 20,
-    paddingBottom: 24,
+  heroPhotoWrapper: {
+    width: '100%',
+    height: HERO_PHOTO_HEIGHT,
+    position: 'relative',
+    backgroundColor: Colors.surface,
+  },
+  heroPhoto: {
+    width: '100%',
+    height: '100%',
   },
   storySegmentContainer: {
     position: 'absolute',
