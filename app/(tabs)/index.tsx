@@ -479,30 +479,7 @@ export default function DiscoverScreen() {
                       resizeMode="cover"
                     />
 
-                    {/* Top Segmented Instagram/Bumble Progress Bar */}
-                    <View style={styles.storySegmentContainer}>
-                      {currentProfile.photos.map((_, idx) => (
-                        <View
-                          key={idx}
-                          style={[
-                            styles.storySegmentBar,
-                            idx === activePhotoIdx && styles.storySegmentBarActive,
-                          ]}
-                        />
-                      ))}
-                    </View>
-
-                    {/* Left & Right Tap Zones for Instant Photo Flipping */}
-                    <View style={styles.touchZonesOverlay}>
-                      <Pressable
-                        style={styles.leftTouchZone}
-                        onPress={handlePrevPhoto}
-                      />
-                      <Pressable
-                        style={styles.rightTouchZone}
-                        onPress={handleNextPhoto}
-                      />
-                    </View>
+                    {/* Removed Segmented Progress Bar and Tap Zones since profile is scrollable */}
 
                     {/* Smooth Bottom Gradient Fade */}
                     <LinearGradient
