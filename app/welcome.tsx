@@ -16,6 +16,8 @@ import Animated, {
   FadeIn
 } from 'react-native-reanimated';
 
+import { Typography } from '../constants/theme';
+
 const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
@@ -23,22 +25,30 @@ export default function WelcomeScreen() {
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'dark'];
 
-  // Floating Logo Animation
-  const floatY = useSharedValue(0);
+  // Hologram Glow Animation
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0);
 
   useEffect(() => {
-    floatY.value = withRepeat(
-      withSequence(
-        withTiming(-12, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) })
-      ),
+    pulseScale.value = withRepeat(
+      withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+    pulseOpacity.value = withRepeat(
+      withTiming(0.6, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
       -1,
       true
     );
   }, []);
 
-  const floatingStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: floatY.value }],
+  const hologramStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    shadowColor: themeColors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: pulseOpacity.value,
+    shadowRadius: 20,
+    elevation: 10,
   }));
 
   return (
@@ -59,7 +69,7 @@ export default function WelcomeScreen() {
 
         <SafeAreaView style={styles.content}>
           <View style={styles.brandContainer}>
-            <Animated.View style={floatingStyle}>
+            <Animated.View style={[hologramStyle, styles.logoWrapper]}>
               <Image 
                 source={require('../assets/images/logo.png')} 
                 style={styles.logoImage} 
@@ -126,25 +136,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  logoWrapper: {
+    borderRadius: width * 0.35,
+    backgroundColor: 'transparent',
+  },
   logoImage: {
-    width: width * 0.7,
-    height: width * 0.7,
+    width: width * 0.65,
+    height: width * 0.65,
   },
   bottomSection: {
     width: '100%',
   },
   headline: {
-    fontFamily: 'Poppins_800ExtraBold',
-    fontSize: 40,
+    fontFamily: Typography.fontHeading,
+    fontSize: 36,
     color: '#FFFFFF',
-    lineHeight: 48,
+    lineHeight: 46,
     marginBottom: 12,
   },
   subhead: {
-    fontFamily: 'Poppins_400Regular',
-    fontSize: 16,
-    color: '#E0E0E0',
+    fontFamily: Typography.fontRegular,
+    fontSize: 15,
+    color: '#D0D0D0',
     marginBottom: 40,
+    lineHeight: 22,
   },
   primaryBtn: {
     width: '100%',
@@ -155,7 +170,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   primaryBtnText: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: Typography.fontHeading,
     fontSize: 16,
     color: '#FFFFFF',
     letterSpacing: 1,
@@ -170,7 +185,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   secondaryBtnText: {
-    fontFamily: 'Poppins_700Bold',
+    fontFamily: Typography.fontHeading,
     fontSize: 14,
     color: '#FFFFFF',
     letterSpacing: 1,
