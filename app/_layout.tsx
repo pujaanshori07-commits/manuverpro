@@ -7,11 +7,11 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { Montserrat_800ExtraBold_Italic } from '@expo-google-fonts/montserrat';
 import {
-  Poppins_400Regular,
-  Poppins_500Medium,
-  Poppins_600SemiBold,
-  Poppins_700Bold,
-} from '@expo-google-fonts/poppins';
+  Lato_300Light,
+  Lato_400Regular,
+  Lato_700Bold,
+  Lato_900Black,
+} from '@expo-google-fonts/lato';
 import { supabase } from '../lib/supabase';
 
 SplashScreen.preventAutoHideAsync();
@@ -121,10 +121,10 @@ export default function RootLayout() {
   // Load fonts dari Lovable theme
   const [fontsLoaded, fontError] = useFonts({
     Montserrat_800ExtraBold_Italic,
-    Poppins_400Regular,
-    Poppins_500Medium,
-    Poppins_600SemiBold,
-    Poppins_700Bold,
+    Lato_300Light,
+    Lato_400Regular,
+    Lato_700Bold,
+    Lato_900Black,
   });
 
   useEffect(() => {

@@ -67,11 +67,11 @@ export const BorderRadius = {
 } as const;
 
 export const Typography = {
-  fontDisplay: 'Montserrat_800ExtraBold_Italic',
-  fontHeading: 'Poppins_700Bold',
-  fontSemiBold: 'Poppins_600SemiBold',
-  fontMedium: 'Poppins_500Medium',
-  fontRegular: 'Poppins_400Regular',
+  fontDisplay: 'Lato_900Black',
+  fontHeading: 'Lato_900Black',
+  fontSemiBold: 'Lato_700Bold',
+  fontMedium: 'Lato_700Bold',
+  fontRegular: 'Lato_400Regular',
 } as const;
 
 export const TypographyStyles = StyleSheet.create({
