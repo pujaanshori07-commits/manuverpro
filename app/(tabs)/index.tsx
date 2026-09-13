@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-  Pressable,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,181 +26,148 @@ import Animated, {
   withTiming,
   runOnJS,
   interpolate,
-  withRepeat,
-  Easing,
 } from 'react-native-reanimated';
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
-import { useAuth } from '../_layout';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
-const HERO_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.28);
-const STORY_PHOTO_HEIGHT = 320;
-
-// Natural physics spring config for swipe resets
-const SPRING_CONFIG = {
-  damping: 14,
-  stiffness: 120,
-  mass: 0.85,
-};
+// Hero photo height matches 1.25x width for consistent mobile portrait presentation
+const HERO_PHOTO_HEIGHT = Math.round((SCREEN_WIDTH - 20) * 1.25);
+const SECOND_PHOTO_HEIGHT = Math.round((SCREEN_WIDTH - 20) * 1.15);
 
 interface Profile {
   id: string;
   nama: string;
   umur?: number;
+  foto_url: string;
   photos: string[];
   alamat?: string;
   jarak?: string;
   hobi?: string[];
   bio?: string;
+  prompt_question?: string;
+  prompt_answer?: string;
   skill_level?: string;
   availability?: string[];
   distance_pref?: string;
   interests?: string[];
-  sports_prompt?: {
-    question: string;
-    answer: string;
-  };
 }
 
 const DEMO_PROFILES: Profile[] = [
   {
     id: 'demo-1',
-    nama: 'Dinda',
+    nama: 'Pengguna Baru',
     umur: 24,
+    foto_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80',
     photos: [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=1000&q=80',
     ],
     alamat: 'GBK Senayan',
     jarak: '2 km away',
-    hobi: ['Gym', 'Running', 'Badminton'],
-    bio: 'Senang olahraga bareng. Biasanya lari pagi di Sudirman atau gym malam sehabis kerja. Let’s stay active together! 🏸💪',
-    skill_level: 'Intermediate (1–3 tahun)',
-    availability: ['Pagi (06:00)', 'Malam (19:00)', 'Akhir Pekan'],
+    hobi: ['Gym & Fitness', 'Running', 'Badminton'],
+    prompt_question: 'Target olahraga bulan ini',
+    prompt_answer: 'Rutinitas lari 5K sub-28 menit & konsisten gym 3x seminggu. Butuh partner yang gak gampang cancel!',
+    bio: 'Senang olahraga bareng. Mencari partner latihan rutin di sekitarku dan ikut event lari bersama.',
+    skill_level: 'Intermediate',
+    availability: ['Pagi', 'Sore', 'Akhir Pekan'],
     distance_pref: '≤ 10 km',
-    interests: ['Health & Fitness', 'Travel', 'Coffee', 'Music'],
-    sports_prompt: {
-      question: 'Target olahraga & sparring gue',
-      answer: 'Cari teman latihan yang konsisten. Gak harus pro, yang penting hadir tepat waktu dan gak mager!',
-    },
+    interests: ['Health', 'Travel', 'Music', 'Food'],
   },
   {
     id: 'demo-2',
-    nama: 'Reza',
-    umur: 26,
+    nama: 'Dinda',
+    umur: 25,
+    foto_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=80',
     photos: [
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1000&q=80',
     ],
-    alamat: 'Cilandak Sport Center',
-    jarak: '4 km away',
-    hobi: ['Gym', 'Basket', 'Running'],
-    bio: 'Gym 4x seminggu, sabtu main basket santai. Looking for a disciplined gym bro & regular running buddy.',
-    skill_level: 'Advanced (> 3 tahun)',
-    availability: ['Sore (17:00)', 'Akhir Pekan'],
-    distance_pref: '≤ 15 km',
-    interests: ['Strength Training', 'Nutrition', 'Sneakers', 'Outdoor'],
-    sports_prompt: {
-      question: 'Rutinitas minggu pagi gue',
-      answer: 'Lari 5K–10K santai di car-free day terus sarapan lontong sayur atau ngopi bareng.',
-    },
+    alamat: 'Senayan',
+    jarak: '3 km away',
+    hobi: ['Badminton', 'Running', 'Yoga'],
+    prompt_question: 'Partner sparing ideal buatku',
+    prompt_answer: 'Yang mainnya seru, bisa rally panjang badminton, dan setelahnya ngopi bareng santai.',
+    bio: 'Cari partner badminton santai atau sparring lari pagi di GBK. Let’s stay active together! 💪🏸',
+    skill_level: 'Advanced',
+    availability: ['Pagi', 'Akhir Pekan'],
+    distance_pref: '≤ 5 km',
+    interests: ['Health', 'Outdoor', 'Coffee'],
   },
   {
     id: 'demo-3',
-    nama: 'Nadia',
-    umur: 25,
+    nama: 'Reza',
+    umur: 27,
+    foto_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=80',
     photos: [
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1000&q=85',
-      'https://images.unsplash.com/photo-1502685104226-ee32379fefbe?auto=format&fit=crop&w=1000&q=85',
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1000&q=80',
+      'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1000&q=80',
     ],
-    alamat: 'Kuningan',
-    jarak: '3 km away',
-    hobi: ['Tennis', 'Pilates', 'Running'],
-    bio: 'Weekend tennis drill & pilates morning. Mencari partner rally santai yang asik diajak ngobrol!',
-    skill_level: 'Beginner - Intermediate',
-    availability: ['Pagi (07:00)', 'Sabtu - Minggu'],
-    distance_pref: '≤ 8 km',
-    interests: ['Pilates', 'Matcha', 'Wellness', 'Tennis'],
-    sports_prompt: {
-      question: 'Latihan paling ideal versi gue',
-      answer: 'Satu jam rally tennis intens, lanjut cooling down sambil ngobrol santai.',
-    },
+    alamat: 'Cilandak',
+    jarak: '4 km away',
+    hobi: ['Gym & Fitness', 'Basketball', 'Running'],
+    prompt_question: 'Gaya latihan favorit',
+    prompt_answer: 'Push-Pull-Legs di gym, lanjut pickup game basket Sabtu sore. Disiplin tapi tetap enjoy!',
+    bio: 'Gym 4x seminggu & main basket santai akhir pekan. Looking for a disciplined gym bro.',
+    skill_level: 'Intermediate',
+    availability: ['Malam', 'Akhir Pekan'],
+    distance_pref: '≤ 15 km',
+    interests: ['Fitness', 'Nutrition', 'Music'],
   },
 ];
 
 export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { profile: myProfile } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
 
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setProfiles(DEMO_PROFILES);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch IDs that the current user has already swiped on
-      const { data: swipedData } = await supabase
-        .from('swipes')
-        .select('swipee_id')
-        .eq('swiper_id', user.id);
-        
-      const swipedIds = swipedData ? swipedData.map(s => s.swipee_id) : [];
-      
-      // Exclude self and already swiped profiles
-      const excludedIds = [user.id, ...swipedIds];
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .not('id', 'in', `(${excludedIds.join(',')})`)
         .limit(20);
 
       if (error || !data || data.length === 0) {
         setProfiles(DEMO_PROFILES);
       } else {
         const formatted: Profile[] = data.map((item: any, idx: number) => {
-          const fallback = DEMO_PROFILES[idx % DEMO_PROFILES.length];
-          const photoArray = Array.isArray(item.photos) && item.photos.length > 0
+          const fallbackDemo = DEMO_PROFILES[idx % DEMO_PROFILES.length];
+          const rawPhotos = Array.isArray(item.photos) && item.photos.length > 0
             ? item.photos
             : item.foto_url
-              ? [item.foto_url, fallback.photos[1], fallback.photos[2]]
-              : fallback.photos;
+            ? [item.foto_url]
+            : fallbackDemo.photos;
 
           return {
             id: item.id,
-            nama: item.nama || fallback.nama,
-            umur: item.umur || fallback.umur,
-            photos: photoArray,
-            alamat: item.alamat || fallback.alamat,
-            jarak: item.jarak || fallback.jarak,
+            nama: item.nama || fallbackDemo.nama,
+            umur: item.umur || fallbackDemo.umur,
+            foto_url: rawPhotos[0] || fallbackDemo.foto_url,
+            photos: rawPhotos,
+            alamat: item.alamat || fallbackDemo.alamat,
+            jarak: item.jarak || fallbackDemo.jarak,
             hobi: Array.isArray(item.hobi)
               ? item.hobi
               : item.hobi
-                ? item.hobi.split(',').map((s: string) => s.trim())
-                : fallback.hobi,
-            bio: item.bio || fallback.bio,
-            skill_level: item.skill_level || fallback.skill_level,
-            availability: item.availability || fallback.availability,
-            distance_pref: item.distance_pref || fallback.distance_pref,
-            interests: item.interests || fallback.interests,
-            sports_prompt: fallback.sports_prompt,
+              ? item.hobi.split(',').map((s: string) => s.trim())
+              : fallbackDemo.hobi,
+            bio: item.bio || fallbackDemo.bio,
+            prompt_question: item.prompt_question || fallbackDemo.prompt_question,
+            prompt_answer: item.prompt_answer || fallbackDemo.prompt_answer,
+            skill_level: item.skill_level || fallbackDemo.skill_level,
+            availability: item.availability || fallbackDemo.availability,
+            distance_pref: item.distance_pref || fallbackDemo.distance_pref,
+            interests: item.interests || fallbackDemo.interests,
           };
         });
         setProfiles(formatted);
@@ -223,30 +189,16 @@ export default function DiscoverScreen() {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
-  // Micro-interaction button scales
-  const passScale = useSharedValue(1);
-  const interestedScale = useSharedValue(1);
-
-  const passBtnAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: passScale.value }],
-  }));
-
-  const interestedBtnAnimStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: interestedScale.value }],
-  }));
-
-  const resetCardState = () => {
-    setActivePhotoIdx(0);
+  const resetScrollPosition = () => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   };
 
   const handleSwipeComplete = (direction: 'left' | 'right') => {
-    const swipedProfile = currentProfile;
-    const swipedId = swipedProfile?.id;
+    const swipedId = currentProfile?.id;
     setCurrentIndex((prev) => prev + 1);
     translateX.value = 0;
     translateY.value = 0;
-    resetCardState();
+    resetScrollPosition();
 
     if (swipedId) {
       supabase.auth.getUser().then(({ data }) => {
@@ -258,22 +210,6 @@ export default function DiscoverScreen() {
           });
         }
       });
-      
-      // Simulate Mutual Match for Demo
-      if (direction === 'right' && swipedProfile) {
-        setTimeout(() => {
-          router.push({
-            pathname: '/match-celebration',
-            params: {
-              matchId: swipedId,
-              matchName: swipedProfile.nama,
-              matchPhotoUrl: swipedProfile.photos?.[0] || '',
-              currentUserPhotoUrl: myProfile?.photos?.[0] || myProfile?.foto_url || '',
-              sportName: swipedProfile.hobi?.[0] || 'Olahraga',
-            },
-          });
-        }, 150);
-      }
     }
   };
 
@@ -282,38 +218,23 @@ export default function DiscoverScreen() {
     runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
 
     if (direction === 'left') {
-      translateX.value = withTiming(-SCREEN_WIDTH * 1.35, { duration: 240 }, () => {
+      translateX.value = withTiming(-SCREEN_WIDTH * 1.4, { duration: 250 }, () => {
         runOnJS(handleSwipeComplete)('left');
       });
     } else {
-      translateX.value = withTiming(SCREEN_WIDTH * 1.35, { duration: 240 }, () => {
+      translateX.value = withTiming(SCREEN_WIDTH * 1.4, { duration: 250 }, () => {
         runOnJS(handleSwipeComplete)('right');
       });
     }
   };
 
-  // Carousel navigation handlers
-  const handlePrevPhoto = () => {
-    if (activePhotoIdx > 0) {
-      Haptics.selectionAsync();
-      setActivePhotoIdx((prev) => prev - 1);
-    }
-  };
-
-  const handleNextPhoto = () => {
-    const maxIdx = (currentProfile?.photos?.length || 1) - 1;
-    if (activePhotoIdx < maxIdx) {
-      Haptics.selectionAsync();
-      setActivePhotoIdx((prev) => prev + 1);
-    }
-  };
-
+  // Horizontal pan gesture with vertical scroll allowance
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-22, 22])
+    .activeOffsetX([-20, 20])
     .failOffsetY([-15, 15])
     .onUpdate((event) => {
       translateX.value = event.translationX;
-      translateY.value = event.translationY * 0.12;
+      translateY.value = event.translationY * 0.15;
     })
     .onEnd((event) => {
       if (event.translationX > SWIPE_THRESHOLD) {
@@ -321,8 +242,8 @@ export default function DiscoverScreen() {
       } else if (event.translationX < -SWIPE_THRESHOLD) {
         triggerSwipe('left');
       } else {
-        translateX.value = withSpring(0, SPRING_CONFIG);
-        translateY.value = withSpring(0, SPRING_CONFIG);
+        translateX.value = withSpring(0, { damping: 15 });
+        translateY.value = withSpring(0, { damping: 15 });
       }
     });
 
@@ -330,7 +251,7 @@ export default function DiscoverScreen() {
     const rotate = interpolate(
       translateX.value,
       [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-      [-7, 0, 7]
+      [-8, 0, 8]
     );
 
     return {
@@ -352,63 +273,44 @@ export default function DiscoverScreen() {
 
   const getInterestIcon = (name: string): keyof typeof Ionicons.glyphMap => {
     const lower = name.toLowerCase();
-    if (lower.includes('health') || lower.includes('fitness')) return 'heart-circle-outline';
+    if (lower.includes('health') || lower.includes('sehat')) return 'heart-outline';
     if (lower.includes('travel') || lower.includes('jalan')) return 'airplane-outline';
     if (lower.includes('music') || lower.includes('musik')) return 'musical-notes-outline';
     if (lower.includes('food') || lower.includes('kuliner')) return 'restaurant-outline';
-    if (lower.includes('coffee') || lower.includes('ngopi')) return 'cafe-outline';
+    if (lower.includes('coffee') || lower.includes('kopi')) return 'cafe-outline';
     if (lower.includes('outdoor')) return 'compass-outline';
     return 'sparkles-outline';
   };
 
   const getSportIcon = (name: string): keyof typeof Ionicons.glyphMap => {
     const lower = name.toLowerCase();
-    if (lower.includes('run') || lower.includes('lari')) return 'walk';
-    if (lower.includes('gym') || lower.includes('fit')) return 'barbell';
-    if (lower.includes('cycle') || lower.includes('sepeda')) return 'bicycle';
-    if (lower.includes('badminton') || lower.includes('tennis')) return 'tennisball';
-    return 'fitness';
+    if (lower.includes('run') || lower.includes('lari')) return 'walk-outline';
+    if (lower.includes('gym') || lower.includes('fit') || lower.includes('barbell')) return 'barbell-outline';
+    if (lower.includes('cycle') || lower.includes('sepeda')) return 'bicycle-outline';
+    if (lower.includes('badminton') || lower.includes('tennis')) return 'tennisball-outline';
+    if (lower.includes('basket')) return 'basketball-outline';
+    if (lower.includes('futsal') || lower.includes('football')) return 'football-outline';
+    return 'fitness-outline';
   };
-
-  const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.4);
-
-  useEffect(() => {
-    pulseScale.value = withRepeat(
-      withTiming(1.1, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true
-    );
-    pulseOpacity.value = withRepeat(
-      withTiming(0.85, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true
-    );
-  }, []);
-
-  const hologramAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    shadowOpacity: pulseOpacity.value,
-  }));
 
   return (
     <GestureHandlerRootView style={styles.rootContainer}>
       <View style={[styles.container, { paddingTop: insets.top }]}>
         
-        {/* Friendly Header with Centered Wordmark */}
+        {/* Header with Centered "manuver" Wordmark */}
         <View style={styles.header}>
           <View style={styles.headerSpacer} />
           <Text style={styles.headerBrandText}>manuver</Text>
           <TouchableOpacity
             style={styles.filterBtn}
             onPress={() => router.push('/settings/filters')}
-            activeOpacity={0.75}
+            activeOpacity={0.7}
           >
-            <Ionicons name="options-outline" size={20} color={Colors.white} />
+            <Ionicons name="options-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
-        {/* Content Body */}
+        {/* Body */}
         {loading ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color={Colors.primary} />
@@ -416,11 +318,11 @@ export default function DiscoverScreen() {
         ) : !currentProfile ? (
           /* Empty Deck State */
           <View style={styles.emptyContainer}>
-            <Animated.View style={[styles.glowingRingsOuter, hologramAnimatedStyle]}>
+            <View style={styles.glowingRingsOuter}>
               <View style={styles.glowingRingsInner}>
-                <Ionicons name="flame" size={54} color={Colors.primary} />
+                <Ionicons name="flame" size={56} color={Colors.primary} />
               </View>
-            </Animated.View>
+            </View>
             <Text style={styles.emptyTitle}>Area Selesai Dijelajahi!</Text>
             <Text style={styles.emptySubtitle}>
               Coba perluas radius atau rentang umur di filter untuk menemukan partner olahraga lainnya.
@@ -437,25 +339,25 @@ export default function DiscoverScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          /* Swiper & Interleaved Story Deck */
+          /* Deck Container */
           <View style={styles.deckContainer}>
             
             {/* Background Card Preview */}
             {nextProfile && (
               <View style={[styles.card, styles.nextCard]}>
                 <Image
-                  source={{ uri: nextProfile.photos[0] }}
+                  source={{ uri: nextProfile.photos?.[0] || nextProfile.foto_url }}
                   style={styles.nextHeroPhoto}
                   resizeMode="cover"
                 />
               </View>
             )}
 
-            {/* Active Card with Gesture and Scroll Container */}
+            {/* Active Card with Pan Gesture & Bumble Vertical Scroll */}
             <GestureDetector gesture={panGesture}>
               <Animated.View style={[styles.card, animatedCardStyle]}>
                 
-                {/* LIKE / PASS Visual Feedback Stamps */}
+                {/* LIKE / PASS Visual Stamps */}
                 <Animated.View style={[styles.stampBadge, styles.likeBadge, likeStampStyle]} pointerEvents="none">
                   <Text style={styles.likeBadgeText}>INTERESTED</Text>
                 </Animated.View>
@@ -463,7 +365,7 @@ export default function DiscoverScreen() {
                   <Text style={styles.passBadgeText}>PASS</Text>
                 </Animated.View>
 
-                {/* Vertically Scrollable Interleaved Story */}
+                {/* Vertically Scrollable Bumble-Style Profile Rhythm */}
                 <ScrollView
                   ref={scrollRef}
                   style={styles.profileScrollView}
@@ -471,212 +373,226 @@ export default function DiscoverScreen() {
                   showsVerticalScrollIndicator={false}
                   bounces={true}
                 >
-                  {/* BLOCK 1: Hero Photo + Stories Carousel + Identity Overlay */}
+                  {/* ========================================================= */}
+                  {/* BLOCK 1 (Hero Photo + Bottom-Left Overlay Name & Badges)  */}
+                  {/* ========================================================= */}
                   <View style={styles.heroPhotoWrapper}>
                     <Image
-                      source={{ uri: currentProfile.photos[activePhotoIdx] || currentProfile.photos[0] }}
+                      source={{ uri: currentProfile.photos?.[0] || currentProfile.foto_url }}
                       style={styles.heroPhoto}
                       resizeMode="cover"
                     />
 
-                    {/* Removed Segmented Progress Bar and Tap Zones since profile is scrollable */}
+                    {/* Top Left Category Pill */}
+                    <View style={styles.categoryBadgeWrapper}>
+                      <View style={styles.categoryBadge}>
+                        <Text style={styles.categoryBadgeText}>SPORTS BUDDY</Text>
+                      </View>
+                    </View>
 
-                    {/* Smooth Bottom Gradient Fade */}
+                    {/* Bottom Gradient Fade with Overlaid Name & Verified Badge */}
                     <LinearGradient
-                      colors={['transparent', 'rgba(17, 20, 28, 0.45)', '#11141C']}
-                      locations={[0, 0.6, 1]}
-                      style={styles.photoGradient}
-                      pointerEvents="none"
-                    />
+                      colors={['transparent', 'rgba(15, 17, 23, 0.4)', 'rgba(15, 17, 23, 0.95)', '#0F1117']}
+                      locations={[0, 0.45, 0.85, 1]}
+                      style={styles.heroOverlayGradient}
+                    >
+                      {/* Photo Verified Pill */}
+                      <View style={styles.photoVerifiedPill}>
+                        <Ionicons name="checkmark-circle" size={14} color="#00C48C" />
+                        <Text style={styles.photoVerifiedText}>Photo verified</Text>
+                      </View>
 
-                    {/* Identity Overlay over Hero Photo */}
-                    <View style={styles.heroIdentityOverlay} pointerEvents="none">
-                      <View style={styles.nameRow}>
-                        <Text style={styles.profileName}>
+                      {/* Name, Age & Verified Checkmark */}
+                      <View style={styles.heroNameRow}>
+                        <Text style={styles.heroProfileName}>
                           {currentProfile.nama}, {currentProfile.umur}
                         </Text>
                         <View style={styles.verifiedCheck}>
                           <Ionicons name="checkmark-sharp" size={13} color="#FFFFFF" />
                         </View>
                       </View>
-
-                      {/* Quick Sport Chips */}
-                      {currentProfile.hobi && currentProfile.hobi.length > 0 && (
-                        <View style={styles.quickSportsRow}>
-                          {currentProfile.hobi.map((item, idx) => (
-                            <View key={idx} style={styles.quickSportChip}>
-                              <Ionicons name={getSportIcon(item)} size={13} color={Colors.primary} />
-                              <Text style={styles.quickSportText}>{item}</Text>
-                            </View>
-                          ))}
-                        </View>
-                      )}
-
-                      {/* Venue & Distance */}
-                      <View style={styles.locationRow}>
-                        <Ionicons name="location-sharp" size={14} color={Colors.primary} />
-                        <Text style={styles.locationText}>
-                          {currentProfile.alamat || 'GBK Senayan'} • {currentProfile.jarak || '2 km away'}
-                        </Text>
-                      </View>
-                    </View>
+                    </LinearGradient>
                   </View>
 
-                  {/* BLOCK 2: Authentic Sports-Specific Prompt Card */}
-                  {currentProfile.sports_prompt && (
-                    <View style={styles.promptCard}>
-                      <View style={styles.promptHeaderRow}>
-                        <Ionicons name="flame" size={16} color={Colors.primary} />
-                        <Text style={styles.promptQuestion}>
-                          {currentProfile.sports_prompt.question}
-                        </Text>
-                      </View>
-                      <Text style={styles.promptAnswer}>
-                        "{currentProfile.sports_prompt.answer}"
-                      </Text>
-                    </View>
-                  )}
-
-                  {/* BLOCK 3: In-Action Sport Shot (Photo 2) */}
-                  {currentProfile.photos[1] && (
-                    <View style={styles.storyPhotoWrapper}>
-                      <Image
-                        source={{ uri: currentProfile.photos[1] }}
-                        style={styles.storyPhoto}
-                        resizeMode="cover"
-                      />
-                      <LinearGradient
-                        colors={['transparent', 'rgba(17, 20, 28, 0.7)']}
-                        style={styles.storyPhotoCaptionGradient}
-                      >
-                        <Text style={styles.storyPhotoCaption}>In Training • Sesi Rutin</Text>
-                      </LinearGradient>
-                    </View>
-                  )}
-
-                  {/* BLOCK 4: Skill Level & Availability Matrix Card */}
-                  <View style={styles.matrixCard}>
-                    <Text style={styles.sectionHeading}>CABANG & JADWAL SPAR</Text>
+                  {/* Profile Body Blocks */}
+                  <View style={styles.profileDetailsBody}>
                     
-                    {/* Sports Played Pills */}
-                    <View style={styles.pillsRow}>
-                      {(currentProfile.hobi || ['Running', 'Gym']).map((sport, idx) => (
-                        <View key={idx} style={styles.detailPill}>
-                          <Ionicons name={getSportIcon(sport)} size={14} color={Colors.primary} />
-                          <Text style={styles.detailPillText}>{sport}</Text>
+                    {/* ========================================================= */}
+                    {/* BLOCK 2: Basic Info & Location (Card with Location & Pills)*/}
+                    {/* ========================================================= */}
+                    <View style={styles.bumbleCardBlock}>
+                      <Text style={styles.bumbleCardLabel}>Lokasi & Olahraga Utama</Text>
+                      
+                      <View style={styles.locationLeadRow}>
+                        <View style={styles.locationIconCircle}>
+                          <Ionicons name="location-sharp" size={18} color="#FF5A1F" />
                         </View>
-                      ))}
-                    </View>
-
-                    {/* Skill Level & Preferred Time */}
-                    <View style={styles.matrixDetailsGroup}>
-                      <View style={styles.matrixRow}>
-                        <Ionicons name="medal-outline" size={16} color={Colors.primary} />
-                        <Text style={styles.matrixLabel}>Level:</Text>
-                        <Text style={styles.matrixValue}>{currentProfile.skill_level || 'Intermediate'}</Text>
+                        <View style={styles.locationTextCol}>
+                          <Text style={styles.locationPrimaryText}>
+                            {currentProfile.alamat || 'GBK Senayan'}
+                          </Text>
+                          <Text style={styles.locationSecondaryText}>
+                            ~{currentProfile.jarak || '2 km away'}
+                          </Text>
+                        </View>
                       </View>
 
-                      <View style={styles.matrixRow}>
-                        <Ionicons name="time-outline" size={16} color={Colors.primary} />
-                        <Text style={styles.matrixLabel}>Waktu:</Text>
-                        <Text style={styles.matrixValue}>
-                          {(currentProfile.availability || ['Pagi', 'Akhir Pekan']).join(' • ')}
-                        </Text>
+                      {/* Top 3 Sport Pills */}
+                      <View style={styles.quickSportsRow}>
+                        {(currentProfile.hobi?.slice(0, 3) || ['Badminton', 'Running']).map((sport, idx) => (
+                          <View key={idx} style={styles.sportBadgePill}>
+                            <Ionicons name={getSportIcon(sport)} size={14} color="#FF5A1F" />
+                            <Text style={styles.sportBadgeText}>{sport}</Text>
+                          </View>
+                        ))}
                       </View>
                     </View>
-                  </View>
 
-                  {/* BLOCK 5: Lifestyle / Approachable Shot (Photo 3) */}
-                  {currentProfile.photos[2] && (
-                    <View style={styles.storyPhotoWrapper}>
-                      <Image
-                        source={{ uri: currentProfile.photos[2] }}
-                        style={styles.storyPhoto}
-                        resizeMode="cover"
-                      />
-                      <LinearGradient
-                        colors={['transparent', 'rgba(17, 20, 28, 0.7)']}
-                        style={styles.storyPhotoCaptionGradient}
-                      >
-                        <Text style={styles.storyPhotoCaption}>Off the court • Rehat & Kopi</Text>
-                      </LinearGradient>
-                    </View>
-                  )}
-
-                  {/* BLOCK 6: About Me & Preferences Card */}
-                  <View style={styles.aboutCard}>
-                    <Text style={styles.sectionHeading}>TENTANG SAYA</Text>
-                    <Text style={styles.aboutMeText}>{currentProfile.bio}</Text>
-
-                    <Text style={[styles.sectionHeading, { marginTop: 18 }]}>MINAT & LIFESTYLE</Text>
-                    <View style={styles.pillsRow}>
-                      {(currentProfile.interests || ['Health', 'Travel', 'Music', 'Food']).map((interest, idx) => (
-                        <View key={idx} style={styles.interestPill}>
-                          <Ionicons name={getInterestIcon(interest)} size={15} color="#A2A7B8" />
-                          <Text style={styles.interestPillText}>{interest}</Text>
-                        </View>
-                      ))}
-                    </View>
-
-                    <View style={styles.distanceMetaRow}>
-                      <Ionicons name="navigate-outline" size={14} color={Colors.textMuted} />
-                      <Text style={styles.distanceMetaText}>
-                        Preferensi radius jarak: {currentProfile.distance_pref || '≤ 10 km'}
+                    {/* ========================================================= */}
+                    {/* BLOCK 3: Sports Prompt / Bio (Clean Frosted Glass Card)   */}
+                    {/* ========================================================= */}
+                    <View style={styles.bumbleCardBlock}>
+                      <Text style={styles.bumbleCardLabel}>
+                        {currentProfile.prompt_question || 'Sports Prompt'}
                       </Text>
-                    </View>
-                  </View>
+                      <Text style={styles.promptAnswerText}>
+                        "{currentProfile.prompt_answer || currentProfile.bio || 'Mencari partner sparring yang sportif dan seru.'}"
+                      </Text>
 
+                      {currentProfile.bio && currentProfile.prompt_answer ? (
+                        <View style={styles.bioSubSection}>
+                          <View style={styles.bioSubDivider} />
+                          <Text style={styles.bioSubHeading}>About me</Text>
+                          <Text style={styles.bioSubText}>{currentProfile.bio}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+
+                    {/* ========================================================= */}
+                    {/* BLOCK 4: Second Photo (Full-Width Card Photo with Caption) */}
+                    {/* ========================================================= */}
+                    {currentProfile.photos && currentProfile.photos[1] && (
+                      <View style={styles.storyPhotoWrapper}>
+                        <Image
+                          source={{ uri: currentProfile.photos[1] }}
+                          style={styles.storyPhotoImage}
+                          resizeMode="cover"
+                        />
+                        <LinearGradient
+                          colors={['transparent', 'rgba(15, 17, 23, 0.85)']}
+                          style={styles.photoCaptionGradient}
+                        >
+                          <Text style={styles.photoCaptionText}>
+                            📍 Sering latihan di: {currentProfile.alamat || 'Senayan'}
+                          </Text>
+                        </LinearGradient>
+                      </View>
+                    )}
+
+                    {/* ========================================================= */}
+                    {/* BLOCK 5: Matrix & Interests (Cabang & Jadwal Spar, Minat)  */}
+                    {/* ========================================================= */}
+                    <View style={styles.bumbleCardBlock}>
+                      <Text style={styles.bumbleCardLabel}>Cabang & Jadwal Spar</Text>
+                      
+                      <View style={styles.matrixRow}>
+                        <View style={styles.matrixColumn}>
+                          <Text style={styles.matrixLabel}>Skill Level</Text>
+                          <View style={styles.matrixBadge}>
+                            <Ionicons name="trophy-outline" size={14} color="#FF5A1F" />
+                            <Text style={styles.matrixBadgeText}>
+                              {currentProfile.skill_level || 'Intermediate'}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.matrixColumn}>
+                          <Text style={styles.matrixLabel}>Maks. Jarak</Text>
+                          <View style={styles.matrixBadge}>
+                            <Ionicons name="navigate-outline" size={14} color="#FF5A1F" />
+                            <Text style={styles.matrixBadgeText}>
+                              {currentProfile.distance_pref || '≤ 10 km'}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Availability */}
+                      <Text style={[styles.matrixLabel, { marginTop: 12, marginBottom: 8 }]}>
+                        Waktu Bermain Tersedia
+                      </Text>
+                      <View style={styles.pillsRow}>
+                        {(currentProfile.availability || ['Pagi', 'Sore', 'Akhir Pekan']).map((time, idx) => (
+                          <View key={idx} style={styles.detailPill}>
+                            <Ionicons name="time-outline" size={13} color="#FF5A1F" />
+                            <Text style={styles.detailPillText}>{time}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Minat & Lifestyle */}
+                    <View style={styles.bumbleCardBlock}>
+                      <Text style={styles.bumbleCardLabel}>Minat & Lifestyle</Text>
+                      <View style={styles.pillsRow}>
+                        {(currentProfile.interests || ['Health', 'Travel', 'Music', 'Food']).map((interest, idx) => (
+                          <View key={idx} style={styles.interestPill}>
+                            <Ionicons name={getInterestIcon(interest)} size={14} color="#9EA3B0" />
+                            <Text style={styles.interestPillText}>{interest}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* ========================================================= */}
+                    {/* BLOCK 6: Third Photo (Optional Full-Width Photo)          */}
+                    {/* ========================================================= */}
+                    {currentProfile.photos && currentProfile.photos[2] && (
+                      <View style={styles.storyPhotoWrapper}>
+                        <Image
+                          source={{ uri: currentProfile.photos[2] }}
+                          style={styles.storyPhotoImage}
+                          resizeMode="cover"
+                        />
+                      </View>
+                    )}
+
+                  </View>
                 </ScrollView>
               </Animated.View>
             </GestureDetector>
 
-            {/* Sticky Floating Bottom Action Buttons (Pass | Interested) */}
+            {/* Sticky Bottom Action Buttons */}
             <View style={[styles.bottomActionContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
               <LinearGradient
-                colors={['transparent', 'rgba(11, 13, 19, 0.95)', '#0B0D13', '#0B0D13']}
-                locations={[0, 0.4, 0.8, 1]}
+                colors={['transparent', 'rgba(9, 10, 13, 0.85)', '#090A0D']}
+                locations={[0, 0.35, 1]}
                 style={StyleSheet.absoluteFill}
                 pointerEvents="none"
               />
 
               <View style={styles.actionRow}>
-                {/* PASS Action */}
+                {/* PASS */}
                 <View style={styles.actionCol}>
-                  <Animated.View style={passBtnAnimStyle}>
-                    <TouchableOpacity
-                      style={[styles.actionCircle, styles.btnPass]}
-                      onPress={() => triggerSwipe('left')}
-                      onPressIn={() => {
-                        passScale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
-                      }}
-                      onPressOut={() => {
-                        passScale.value = withSpring(1, { damping: 15, stiffness: 300 });
-                      }}
-                      activeOpacity={0.9}
-                    >
-                      <Ionicons name="close" size={28} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  </Animated.View>
+                  <TouchableOpacity
+                    style={[styles.actionCircle, styles.btnPass]}
+                    onPress={() => triggerSwipe('left')}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="close" size={28} color="#FFFFFF" />
+                  </TouchableOpacity>
                   <Text style={styles.actionLabel}>Pass</Text>
                 </View>
 
-                {/* INTERESTED Action */}
+                {/* INTERESTED */}
                 <View style={styles.actionCol}>
-                  <Animated.View style={interestedBtnAnimStyle}>
-                    <TouchableOpacity
-                      style={[styles.actionCircle, styles.btnInterested]}
-                      onPress={() => triggerSwipe('right')}
-                      onPressIn={() => {
-                        interestedScale.value = withSpring(0.92, { damping: 15, stiffness: 300 });
-                      }}
-                      onPressOut={() => {
-                        interestedScale.value = withSpring(1, { damping: 15, stiffness: 300 });
-                      }}
-                      activeOpacity={0.9}
-                    >
-                      <Ionicons name="walk" size={28} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  </Animated.View>
+                  <TouchableOpacity
+                    style={[styles.actionCircle, styles.btnInterested]}
+                    onPress={() => triggerSwipe('right')}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="walk" size={28} color="#FFFFFF" />
+                  </TouchableOpacity>
                   <Text style={styles.actionLabel}>Interested</Text>
                 </View>
               </View>
@@ -713,19 +629,20 @@ const styles = StyleSheet.create({
   headerBrandText: {
     fontFamily: Typography.fontHeading,
     fontSize: 22,
-    color: Colors.primary,
+    fontWeight: '800',
+    color: '#FF572F', // Brand orange
     letterSpacing: -0.5,
     textTransform: 'lowercase',
   },
   filterBtn: {
     width: 38,
     height: 38,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.surface,
+    borderRadius: 19,
+    backgroundColor: '#171A21',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   centered: {
     flex: 1,
@@ -740,23 +657,18 @@ const styles = StyleSheet.create({
   },
   card: {
     width: SCREEN_WIDTH - 20,
-    borderRadius: BorderRadius.card,
-    backgroundColor: Colors.surfaceCard,
+    borderRadius: 24,
+    backgroundColor: '#0F1117',
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     overflow: 'hidden',
     position: 'absolute',
     top: 0,
     bottom: 8,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
   },
   nextCard: {
-    transform: [{ scale: 0.95 }],
-    opacity: 0.45,
+    transform: [{ scale: 0.96 }],
+    opacity: 0.5,
   },
   nextHeroPhoto: {
     width: '100%',
@@ -766,192 +678,264 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContentContainer: {
-    paddingBottom: 220, // generous bottom padding to float above sticky action buttons
+    // Generous bottom clearance ensuring the last section scrolls well above the action buttons
+    paddingBottom: 210,
   },
+
+  // Block 1: Hero Photo Wrapper
   heroPhotoWrapper: {
     width: '100%',
     height: HERO_PHOTO_HEIGHT,
     position: 'relative',
-    backgroundColor: Colors.surface,
+    backgroundColor: '#171A21',
   },
   heroPhoto: {
     width: '100%',
     height: '100%',
   },
-  storySegmentContainer: {
+  categoryBadgeWrapper: {
     position: 'absolute',
-    top: 10,
-    left: 12,
-    right: 12,
-    flexDirection: 'row',
-    gap: 5,
+    top: 16,
+    left: 16,
     zIndex: 10,
   },
-  storySegmentBar: {
-    flex: 1,
-    height: 3.5,
-    borderRadius: BorderRadius.round,
-    backgroundColor: 'rgba(255, 255, 255, 0.32)',
+  categoryBadge: {
+    backgroundColor: '#00C48C',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
-  storySegmentBarActive: {
-    backgroundColor: '#FFFFFF',
+  categoryBadgeText: {
+    fontFamily: Typography.fontHeading,
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0B0D13',
+    letterSpacing: 0.5,
   },
-  touchZonesOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: 'row',
-    zIndex: 5,
-  },
-  leftTouchZone: {
-    width: '40%',
-    height: '80%',
-  },
-  rightTouchZone: {
-    width: '60%',
-    height: '80%',
-  },
-  photoGradient: {
+  heroOverlayGradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 140,
-    zIndex: 6,
-  },
-  heroIdentityOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     paddingHorizontal: Spacing.base,
-    paddingBottom: Spacing.sm,
-    zIndex: 8,
+    paddingBottom: 16,
+    paddingTop: 40,
+    justifyContent: 'flex-end',
   },
-  nameRow: {
+  photoVerifiedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(15, 17, 23, 0.75)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    marginBottom: 8,
+  },
+  photoVerifiedText: {
+    fontFamily: Typography.fontMedium,
+    fontSize: 11,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  heroNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
   },
-  profileName: {
+  heroProfileName: {
     fontFamily: Typography.fontHeading,
     fontSize: 26,
-    color: Colors.white,
+    color: '#FFFFFF',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   verifiedCheck: {
     width: 20,
     height: 20,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.success,
+    borderRadius: 10,
+    backgroundColor: '#00C48C',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // Profile Details Body
+  profileDetailsBody: {
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    gap: 12,
+    backgroundColor: '#0F1117',
+  },
+
+  // Bumble Style Separated Card Blocks
+  bumbleCardBlock: {
+    backgroundColor: '#161922',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  bumbleCardLabel: {
+    fontFamily: Typography.fontSemiBold,
+    fontSize: 12,
+    color: '#8E94A4',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+    fontWeight: '700',
+  },
+
+  // Block 2: Location Row & Quick Sport Pills
+  locationLeadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  locationIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 90, 31, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  locationTextCol: {
+    flex: 1,
+  },
+  locationPrimaryText: {
+    fontFamily: Typography.fontSemiBold,
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  locationSecondaryText: {
+    fontFamily: Typography.fontRegular,
+    fontSize: 12,
+    color: '#8A8F9E',
+    marginTop: 2,
   },
   quickSportsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 8,
   },
-  quickSportChip: {
+  sportBadgePill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 5,
+    paddingVertical: 7,
     paddingHorizontal: 12,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.pillBgActive,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 90, 31, 0.14)',
     borderWidth: 1,
-    borderColor: Colors.pillBorderActive,
+    borderColor: 'rgba(255, 90, 31, 0.35)',
   },
-  quickSportText: {
-    fontFamily: Typography.fontSemiBold,
+  sportBadgeText: {
+    fontFamily: Typography.fontMedium,
     fontSize: 12,
-    color: Colors.white,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+
+  // Block 3: Prompt Text
+  promptAnswerText: {
+    fontFamily: Typography.fontHeading,
+    fontSize: 17,
+    lineHeight: 25,
+    color: '#FFFFFF',
+    fontStyle: 'italic',
   },
-  locationText: {
+  bioSubSection: {
+    marginTop: 14,
+  },
+  bioSubDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    marginBottom: 12,
+  },
+  bioSubHeading: {
+    fontFamily: Typography.fontSemiBold,
+    fontSize: 11,
+    color: '#8E94A4',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
+  bioSubText: {
     fontFamily: Typography.fontRegular,
     fontSize: 13,
-    color: Colors.textSecondary,
+    lineHeight: 20,
+    color: '#C2C6D2',
   },
-  promptCard: {
-    marginHorizontal: Spacing.base,
-    marginTop: Spacing.base,
-    padding: Spacing.base,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-    borderLeftWidth: 3.5,
-    borderLeftColor: Colors.primary,
-  },
-  promptHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 6,
-  },
-  promptQuestion: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 12,
-    color: Colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  promptAnswer: {
-    fontFamily: Typography.fontMedium,
-    fontSize: 14,
-    color: Colors.white,
-    lineHeight: 22,
-  },
+
+  // Blocks 4 & 6: Full Width Photos
   storyPhotoWrapper: {
-    marginHorizontal: Spacing.base,
-    marginTop: Spacing.base,
-    height: STORY_PHOTO_HEIGHT,
-    borderRadius: BorderRadius.lg,
+    width: '100%',
+    height: SECOND_PHOTO_HEIGHT,
+    borderRadius: 18,
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
+    position: 'relative',
+    backgroundColor: '#171A21',
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
-  storyPhoto: {
+  storyPhotoImage: {
     width: '100%',
     height: '100%',
   },
-  storyPhotoCaptionGradient: {
+  photoCaptionGradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 48,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.base,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  storyPhotoCaption: {
+  photoCaptionText: {
     fontFamily: Typography.fontMedium,
     fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
-  matrixCard: {
-    marginHorizontal: Spacing.base,
-    marginTop: Spacing.base,
-    padding: Spacing.base,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.surface,
+
+  // Block 5: Matrix Grid
+  matrixRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 6,
+  },
+  matrixColumn: {
+    flex: 1,
+  },
+  matrixLabel: {
+    fontFamily: Typography.fontRegular,
+    fontSize: 11,
+    color: '#8A8F9E',
+    marginBottom: 6,
+  },
+  matrixBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  sectionHeading: {
-    fontFamily: Typography.fontSemiBold,
+  matrixBadgeText: {
+    fontFamily: Typography.fontMedium,
     fontSize: 12,
-    color: Colors.textMuted,
-    letterSpacing: 0.8,
-    marginBottom: 10,
-    textTransform: 'uppercase',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
+
+  // Pills and tags
   pillsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -962,85 +946,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.pillBg,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: Colors.pillBorder,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   detailPillText: {
     fontFamily: Typography.fontMedium,
     fontSize: 12,
-    color: '#E3E7F0',
-  },
-  matrixDetailsGroup: {
-    marginTop: 14,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
-    gap: 8,
-  },
-  matrixRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  matrixLabel: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 13,
-    color: Colors.white,
-  },
-  matrixValue: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 13,
-    color: Colors.textSecondary,
-    flex: 1,
-  },
-  aboutCard: {
-    marginHorizontal: Spacing.base,
-    marginTop: Spacing.base,
-    padding: Spacing.base,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-  },
-  aboutMeText: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 22,
+    color: '#E1E4EA',
+    fontWeight: '500',
   },
   interestPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.pillBg,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: Colors.pillBorder,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   interestPillText: {
     fontFamily: Typography.fontMedium,
     fontSize: 12,
-    color: '#E3E7F0',
+    color: '#E1E4EA',
+    fontWeight: '500',
   },
-  distanceMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
-  },
-  distanceMetaText: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 12,
-    color: Colors.textMuted,
-  },
+
+  // Stamp Badges
   stampBadge: {
     position: 'absolute',
     top: 50,
@@ -1052,32 +988,36 @@ const styles = StyleSheet.create({
   },
   likeBadge: {
     left: 24,
-    borderColor: Colors.success,
+    borderColor: '#00C48C',
     transform: [{ rotate: '-14deg' }],
   },
   likeBadgeText: {
     fontFamily: Typography.fontHeading,
-    color: Colors.success,
+    color: '#00C48C',
     fontSize: 24,
     letterSpacing: 2,
+    fontWeight: '800',
   },
   passBadge: {
     right: 24,
-    borderColor: Colors.danger,
+    borderColor: '#FF3B30',
     transform: [{ rotate: '14deg' }],
   },
   passBadgeText: {
     fontFamily: Typography.fontHeading,
-    color: Colors.danger,
+    color: '#FF3B30',
     fontSize: 24,
     letterSpacing: 2,
+    fontWeight: '800',
   },
+
+  // Bottom Sticky Actions
   bottomActionContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingTop: 60,
+    paddingTop: 24,
     zIndex: 30,
   },
   actionRow: {
@@ -1091,35 +1031,33 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionCircle: {
-    width: 62,
-    height: 62,
-    borderRadius: BorderRadius.round,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  btnPass: {
-    backgroundColor: '#1B1F2A',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    shadowColor: Colors.black,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 6,
+  },
+  btnPass: {
+    backgroundColor: '#1E222B',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   btnInterested: {
     backgroundColor: Colors.primary,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 14,
-    elevation: 8,
   },
   actionLabel: {
-    fontFamily: Typography.fontSemiBold,
+    fontFamily: Typography.fontMedium,
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: '#8E95A5',
+    fontWeight: '600',
   },
+
+  // Empty Deck View
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
@@ -1130,13 +1068,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: 'rgba(255, 90, 42, 0.08)',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 90, 42, 0.4)',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 20,
-    elevation: 12,
+    backgroundColor: 'rgba(255, 87, 47, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xl,
@@ -1144,8 +1076,8 @@ const styles = StyleSheet.create({
   glowingRingsInner: {
     width: 96,
     height: 96,
-    borderRadius: BorderRadius.round,
-    backgroundColor: 'rgba(255, 87, 47, 0.22)',
+    borderRadius: 48,
+    backgroundColor: 'rgba(255, 87, 47, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1160,7 +1092,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
     marginBottom: Spacing.xl,
   },
   emptyFilterBtn: {
