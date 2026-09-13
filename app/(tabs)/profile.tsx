@@ -15,6 +15,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { decode } from 'base64-arraybuffer';
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
@@ -44,6 +46,7 @@ export default function ProfileScreen() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
 
   const fetchProfile = useCallback(async () => {
@@ -138,6 +141,57 @@ export default function ProfileScreen() {
     );
   };
 
+  const uploadAvatar = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 5],
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (result.canceled || !result.assets[0].base64) {
+        return;
+      }
+
+      setUploadingImage(true);
+      const { data: authData } = await supabase.auth.getUser();
+      const userId = authData?.user?.id;
+
+      if (!userId) {
+        Alert.alert('Error', 'Silakan login terlebih dahulu.');
+        return;
+      }
+
+      const base64FileData = result.assets[0].base64;
+      const fileExt = result.assets[0].uri.split('.').pop() || 'jpeg';
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, decode(base64FileData), {
+          contentType: `image/${fileExt}`,
+          upsert: true,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      setProfile((prev) => ({ ...prev, foto_url: publicUrl }));
+      Alert.alert('Sukses', 'Foto berhasil diunggah! Jangan lupa klik Simpan Perubahan.');
+    } catch (error: any) {
+      Alert.alert('Gagal Mengunggah', error.message || 'Terjadi kesalahan');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.keyboardRoot}
@@ -178,11 +232,14 @@ export default function ProfileScreen() {
                 <TouchableOpacity
                   style={styles.cameraBtn}
                   activeOpacity={0.8}
-                  onPress={() =>
-                    Alert.alert('Ubah Foto', 'Pilih foto dari galeri atau kamera.')
-                  }
+                  onPress={uploadAvatar}
+                  disabled={uploadingImage}
                 >
-                  <Ionicons name="camera" size={20} color={Colors.white} />
+                  {uploadingImage ? (
+                    <ActivityIndicator color={Colors.white} size="small" />
+                  ) : (
+                    <Ionicons name="camera" size={20} color={Colors.white} />
+                  )}
                 </TouchableOpacity>
               </View>
               <Text style={styles.photoHint}>Tap untuk mengubah foto</Text>
