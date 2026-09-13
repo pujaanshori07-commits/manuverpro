@@ -148,9 +148,29 @@ export default function DiscoverScreen() {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setProfiles(DEMO_PROFILES);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch IDs that the current user has already swiped on
+      const { data: swipedData } = await supabase
+        .from('swipes')
+        .select('swipee_id')
+        .eq('swiper_id', user.id);
+        
+      const swipedIds = swipedData ? swipedData.map(s => s.swipee_id) : [];
+      
+      // Exclude self and already swiped profiles
+      const excludedIds = [user.id, ...swipedIds];
+      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .not('id', 'in', `(${excludedIds.join(',')})`)
         .limit(20);
 
       if (error || !data || data.length === 0) {
