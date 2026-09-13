@@ -239,7 +239,16 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style="light" />
         <AuthContext.Provider value={{ session, profile, loading, checkingProfile, refreshProfile: fetchProfile }}>
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#090A0D' } }} />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#090A0D' } }}>
+            <Stack.Screen
+              name="match-celebration"
+              options={{
+                presentation: 'transparentModal',
+                animation: 'fade',
+                headerShown: false,
+              }}
+            />
+          </Stack>
           {redirectTo && <Redirect href={redirectTo as any} />}
           
           {/* Loading Overlay to prevent unmounting the Stack context */}

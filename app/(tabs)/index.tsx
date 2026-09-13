@@ -31,6 +31,7 @@ import Animated, {
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../_layout';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
@@ -135,6 +136,7 @@ const DEMO_PROFILES: Profile[] = [
 export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { profile: myProfile } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
@@ -217,7 +219,8 @@ export default function DiscoverScreen() {
   };
 
   const handleSwipeComplete = (direction: 'left' | 'right') => {
-    const swipedId = currentProfile?.id;
+    const swipedProfile = currentProfile;
+    const swipedId = swipedProfile?.id;
     setCurrentIndex((prev) => prev + 1);
     translateX.value = 0;
     translateY.value = 0;
@@ -233,6 +236,22 @@ export default function DiscoverScreen() {
           });
         }
       });
+      
+      // Simulate Mutual Match for Demo
+      if (direction === 'right' && swipedProfile) {
+        setTimeout(() => {
+          router.push({
+            pathname: '/match-celebration',
+            params: {
+              matchId: swipedId,
+              matchName: swipedProfile.nama,
+              matchPhotoUrl: swipedProfile.photos?.[0] || '',
+              currentUserPhotoUrl: myProfile?.photos?.[0] || myProfile?.foto_url || '',
+              sportName: swipedProfile.hobi?.[0] || 'Olahraga',
+            },
+          });
+        }, 150);
+      }
     }
   };
 
