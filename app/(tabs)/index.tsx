@@ -27,6 +27,8 @@ import Animated, {
   withTiming,
   runOnJS,
   interpolate,
+  withRepeat,
+  Easing,
 } from 'react-native-reanimated';
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
@@ -348,6 +350,27 @@ export default function DiscoverScreen() {
     return 'fitness';
   };
 
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0.4);
+
+  useEffect(() => {
+    pulseScale.value = withRepeat(
+      withTiming(1.1, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+    pulseOpacity.value = withRepeat(
+      withTiming(0.85, { duration: 1800, easing: Easing.inOut(Easing.ease) }),
+      -1,
+      true
+    );
+  }, []);
+
+  const hologramAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    shadowOpacity: pulseOpacity.value,
+  }));
+
   return (
     <GestureHandlerRootView style={styles.rootContainer}>
       <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -373,11 +396,11 @@ export default function DiscoverScreen() {
         ) : !currentProfile ? (
           /* Empty Deck State */
           <View style={styles.emptyContainer}>
-            <View style={styles.glowingRingsOuter}>
+            <Animated.View style={[styles.glowingRingsOuter, hologramAnimatedStyle]}>
               <View style={styles.glowingRingsInner}>
                 <Ionicons name="flame" size={54} color={Colors.primary} />
               </View>
-            </View>
+            </Animated.View>
             <Text style={styles.emptyTitle}>Area Selesai Dijelajahi!</Text>
             <Text style={styles.emptySubtitle}>
               Coba perluas radius atau rentang umur di filter untuk menemukan partner olahraga lainnya.
@@ -1109,8 +1132,14 @@ const styles = StyleSheet.create({
   glowingRingsOuter: {
     width: 140,
     height: 140,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.primaryMuted,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255, 90, 42, 0.08)',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 90, 42, 0.4)',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowRadius: 20,
+    elevation: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xl,
