@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, StyleSheet, Platform, Image, ActivityIndicator, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  StyleSheet,
+  Platform,
+  Image,
+  ActivityIndicator,
+  Modal,
+  Dimensions,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -9,17 +22,25 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './_layout';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-type Sport = { id: number; nama: string; icon?: React.ComponentProps<typeof MaterialCommunityIcons>['name'] };
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GRID_PADDING = 20;
+const GRID_GAP = 10;
+const SLOT_SIZE = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * 2) / 3;
+
+type Sport = {
+  id: number;
+  nama: string;
+  icon?: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+};
 
 const COUNTRIES = [
-  'Indonesia', 'Malaysia', 'Singapura', 'Thailand', 'Filipina', 'Vietnam', 
-  'Brunei', 'Kamboja', 'Laos', 'Myanmar', 'India', 'Jepang', 
-  'Korea Selatan', 'Tiongkok', 'Taiwan', 'Hong Kong'
+  'Indonesia', 'Malaysia', 'Singapura', 'Thailand', 'Filipina', 'Vietnam',
+  'Brunei', 'Kamboja', 'Laos', 'Myanmar', 'India', 'Jepang',
+  'Korea Selatan', 'Tiongkok', 'Taiwan', 'Hong Kong',
 ];
 
-const JENJANG_PENDIDIKAN = [
-  'D3', 'S1', 'S2', 'S3', 'Lainnya'
-];
+const JENJANG_PENDIDIKAN = ['D3', 'S1', 'S2', 'S3', 'Lainnya'];
+const MAX_PHOTOS = 6;
 
 export default function EditProfileScreen() {
   const { session, profile, refreshProfile } = useAuth();
@@ -32,7 +53,10 @@ export default function EditProfileScreen() {
   const [hobi, setHobi] = useState('');
   const [pekerjaan, setPekerjaan] = useState('');
   const [bio, setBio] = useState('');
-  const [fotoUrl, setFotoUrl] = useState<string | null>(null);
+
+  // Multi-Photo state (up to 6 photos)
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
 
   // Form Fields
   const [negara, setNegara] = useState('Indonesia');
@@ -51,12 +75,11 @@ export default function EditProfileScreen() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session || !profile) return;
-    
+
     // Load initial profile data
     setNama(profile.nama || '');
     setAlamat(profile.alamat || '');
@@ -64,7 +87,16 @@ export default function EditProfileScreen() {
     setHobi(profile.hobi || '');
     setPekerjaan(profile.pekerjaan || '');
     setBio(profile.bio || '');
-    setFotoUrl(profile.foto_url || null);
+
+    // Initialize photos array (fallback to foto_url if photos column is not populated yet)
+    const rawPhotos = (profile as any)?.photos;
+    if (Array.isArray(rawPhotos) && rawPhotos.length > 0) {
+      setPhotos(rawPhotos.slice(0, MAX_PHOTOS));
+    } else if (profile.foto_url) {
+      setPhotos([profile.foto_url]);
+    } else {
+      setPhotos([]);
+    }
 
     // Parsing pendidikan
     if (profile.pendidikan) {
@@ -100,7 +132,10 @@ export default function EditProfileScreen() {
       setLoading(true);
       try {
         // Fetch all sports
-        const { data: allSports, error: sportsError } = await supabase.from('sports').select('id, nama, icon').order('nama', { ascending: true });
+        const { data: allSports, error: sportsError } = await supabase
+          .from('sports')
+          .select('id, nama, icon')
+          .order('nama', { ascending: true });
         if (sportsError) throw sportsError;
         if (allSports) setSports(allSports as Sport[]);
 
@@ -109,7 +144,7 @@ export default function EditProfileScreen() {
           .from('user_sports')
           .select('sport_id')
           .eq('user_id', session.user.id);
-          
+
         if (userSportsError) throw userSportsError;
 
         if (userSportsData) {
@@ -138,44 +173,54 @@ export default function EditProfileScreen() {
     if (selectedDate) setDate(selectedDate);
   };
 
+  // Pick an image and immediately upload it
   const handlePickImage = async () => {
+    if (photos.length >= MAX_PHOTOS) {
+      Alert.alert('Batas Maksimal', `Kamu dapat mengunggah maksimal ${MAX_PHOTOS} foto.`);
+      return;
+    }
+
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Izin dibutuhkan', 'Maaf, kami membutuhkan akses galeri foto Anda untuk mengunggah foto profil.');
+        Alert.alert(
+          'Izin dibutuhkan',
+          'Maaf, kami membutuhkan akses galeri foto untuk menambahkan foto profil.'
+        );
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
+        aspect: [4, 5],
+        quality: 0.8,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        uploadImage(result.assets[0].uri);
+        const nextIndex = photos.length;
+        uploadImage(result.assets[0].uri, nextIndex);
       }
     } catch (err: any) {
       Alert.alert('Terjadi kesalahan', err.message);
     }
   };
 
-  const uploadImage = async (imageUri: string) => {
+  const uploadImage = async (imageUri: string, targetSlot: number) => {
     if (!session) return;
-    setUploading(true);
+    setUploadingSlot(targetSlot);
     try {
-      // 1. Membaca file sebagai string base64 via expo-file-system
+      // 1. Read base64 via expo-file-system
       const base64 = await FileSystem.readAsStringAsync(imageUri, {
         encoding: 'base64',
       });
 
-      const fileExt = imageUri.split('.').pop() || 'jpg';
-      const fileName = `avatar_${Date.now()}.${fileExt}`;
+      const fileExt = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
+      const fileName = `photo_${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
       const filePath = `${session.user.id}/${fileName}`;
       const contentType = fileExt === 'png' ? 'image/png' : 'image/jpeg';
 
-      // 2. Mengunggah ArrayBuffer yang didekodekan dari base64 ke Supabase Storage
+      // 2. Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
         .upload(filePath, decode(base64), {
@@ -185,21 +230,36 @@ export default function EditProfileScreen() {
 
       if (uploadError) throw uploadError;
 
-      // 3. Ambil URL Publik
+      // 3. Get public URL with timestamp cache-buster
       const { data: { publicUrl } } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(filePath);
 
-      // Gunakan cache-busting timestamp agar gambar baru tidak diblokir oleh cache (layar tidak hitam/stale)
       const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
-      setFotoUrl(cacheBustedUrl);
-      Alert.alert('Sukses', 'Foto profil berhasil diunggah!');
+      setPhotos((prev) => [...prev, cacheBustedUrl]);
     } catch (err: any) {
       console.error('Upload error:', err);
       Alert.alert('Gagal mengunggah foto', err.message);
     } finally {
-      setUploading(false);
+      setUploadingSlot(null);
     }
+  };
+
+  const handleRemovePhoto = (indexToRemove: number) => {
+    Alert.alert(
+      'Hapus Foto',
+      'Apakah kamu yakin ingin menghapus foto ini dari profilmu?',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: () => {
+            setPhotos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+          },
+        },
+      ]
+    );
   };
 
   const handleAddCustomSport = async () => {
@@ -236,7 +296,7 @@ export default function EditProfileScreen() {
         setSports((prev) => [...prev, newSport].sort((a, b) => a.nama.localeCompare(b.nama)));
         setSelectedSports((prev) => [...prev, newSport.id]);
       }
-      
+
       setIsModalVisible(false);
       setCustomSportName('');
     } catch (err: any) {
@@ -257,13 +317,15 @@ export default function EditProfileScreen() {
     try {
       const tanggalLahir = date.toISOString().split('T')[0];
 
-      // Gabungkan Jenjang dan Institusi Pendidikan
       let combinedPendidikan = null;
       if (jenjang || institusi.trim()) {
         combinedPendidikan = [jenjang, institusi.trim()].filter(Boolean).join(' - ');
       }
 
-      // 1. Update profil
+      // Primary avatar is the first photo in the array
+      const primaryAvatar = photos.length > 0 ? photos[0] : null;
+
+      // 1. Update profil with both photos array and legacy foto_url
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -275,7 +337,8 @@ export default function EditProfileScreen() {
           pendidikan: combinedPendidikan,
           pekerjaan: pekerjaan.trim() || null,
           bio: bio.trim() || null,
-          foto_url: fotoUrl,
+          foto_url: primaryAvatar,
+          photos: photos,
         })
         .eq('id', session.user.id);
 
@@ -319,18 +382,9 @@ export default function EditProfileScreen() {
     return (
       <View style={styles.centerContainer}>
         <Text style={{ color: '#FF5A2A', fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Error</Text>
-        <Text style={{ color: '#FFFFFF', textAlign: 'center', paddingHorizontal: 20 }}>{errorMsg}</Text>
-        <TouchableOpacity 
-          style={{ marginTop: 20, padding: 10, backgroundColor: '#1D2028', borderRadius: 8 }} 
-          onPress={() => {
-             setErrorMsg(null);
-             // Let the useEffect run again since it depends on session and profile,
-             // or ideally we could just call loadData. To trigger it we can set loading true, 
-             // but loadData is defined inside useEffect. So we'll just reload the screen.
-             router.replace('/edit-profile');
-          }}
-        >
-          <Text style={{ color: '#FFFFFF' }}>Try Again</Text>
+        <Text style={{ color: '#888A90', textAlign: 'center', marginHorizontal: 20 }}>{errorMsg}</Text>
+        <TouchableOpacity style={styles.saveButton} onPress={() => router.back()}>
+          <Text style={styles.saveButtonText}>Kembali</Text>
         </TouchableOpacity>
       </View>
     );
@@ -347,30 +401,86 @@ export default function EditProfileScreen() {
         <View style={{ width: 28 }} />
       </View>
 
-      {/* Avatar Edit Section */}
-      <View style={styles.avatarSection}>
-        {uploading ? (
-          <View style={styles.avatarPlaceholder}>
-            <ActivityIndicator size="small" color="#FF5A2A" />
-          </View>
-        ) : fotoUrl ? (
-          <Image source={{ uri: fotoUrl }} style={styles.avatar} />
-        ) : (
-          <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarPlaceholderText}>
-              {nama ? nama.substring(0, 2).toUpperCase() : '??'}
-            </Text>
-          </View>
-        )}
-        <TouchableOpacity style={styles.changePhotoButton} onPress={handlePickImage} disabled={uploading}>
-          <Text style={styles.changePhotoText}>{uploading ? 'Mengunggah...' : 'Ubah Foto Profil'}</Text>
-        </TouchableOpacity>
+      {/* Modern 3x2 Photo Grid Section */}
+      <View style={styles.photoGridSection}>
+        <View style={styles.photoGridHeader}>
+          <Text style={styles.photoGridTitle}>FOTO PROFIL & AKTIVITAS</Text>
+          <Text style={styles.photoGridSubtitle}>
+            Unggah hingga 6 foto. Foto pertama adalah foto utama di Discover.
+          </Text>
+        </View>
+
+        <View style={styles.photoGrid}>
+          {Array.from({ length: MAX_PHOTOS }).map((_, index) => {
+            const photoUrl = photos[index];
+            const isUploading = uploadingSlot === index;
+            const isFirstSlot = index === 0;
+
+            if (photoUrl) {
+              return (
+                <View key={index} style={[styles.photoSlot, isFirstSlot && styles.photoSlotPrimary]}>
+                  <Image source={{ uri: photoUrl }} style={styles.slotImage} resizeMode="cover" />
+                  
+                  {/* Primary Hero Label */}
+                  {isFirstSlot && (
+                    <View style={styles.mainBadge}>
+                      <Text style={styles.mainBadgeText}>Utama</Text>
+                    </View>
+                  )}
+
+                  {/* Remove Button */}
+                  <TouchableOpacity
+                    style={styles.deleteBadge}
+                    onPress={() => handleRemovePhoto(index)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="close" size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              );
+            }
+
+            return (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.photoSlot,
+                  styles.emptyPhotoSlot,
+                  isFirstSlot && styles.photoSlotPrimary,
+                ]}
+                onPress={handlePickImage}
+                disabled={uploadingSlot !== null}
+                activeOpacity={0.7}
+              >
+                {isUploading ? (
+                  <ActivityIndicator size="small" color="#FF5A2A" />
+                ) : (
+                  <>
+                    <View style={styles.addIconCircle}>
+                      <Ionicons name="add" size={20} color="#FF5A2A" />
+                    </View>
+                    {isFirstSlot && (
+                      <Text style={styles.addSlotHelperText}>Foto Utama</Text>
+                    )}
+                  </>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
-      {/* Inputs Section */}
+      {/* Form Inputs Section */}
       <View style={styles.inputsSection}>
         <Text style={styles.label}>Nama Lengkap / Panggilan</Text>
-        <TextInput style={styles.input} placeholder="Nama Anda" placeholderTextColor="#666" value={nama} onChangeText={setNama} />
+        <TextInput
+          style={styles.input}
+          placeholder="Nama Anda"
+          placeholderTextColor="#666"
+          value={nama}
+          onChangeText={setNama}
+        />
 
         <Text style={styles.label}>Tanggal Lahir</Text>
         <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
@@ -395,109 +505,177 @@ export default function EditProfileScreen() {
         </TouchableOpacity>
 
         <Text style={styles.label}>Domisili / Kota</Text>
-        <TextInput style={styles.input} placeholder="Kota tempat tinggal Anda" placeholderTextColor="#666" value={alamat} onChangeText={setAlamat} />
-
-        {/* Pendidikan Section - Split */}
-        <Text style={styles.label}>Jenjang Pendidikan (Opsional)</Text>
-        <TouchableOpacity style={styles.dropdownButton} onPress={() => setShowJenjangPicker(true)}>
-          <Text style={styles.dropdownButtonText}>{jenjang || 'Pilih Jenjang'}</Text>
-          <Ionicons name="chevron-down" size={20} color="#888A90" />
-        </TouchableOpacity>
-
-        <Text style={styles.label}>Nama Institusi Pendidikan (Opsional)</Text>
-        <TextInput style={styles.input} placeholder="Contoh: Universitas Padjadjaran, SMAN 1 Bandung" placeholderTextColor="#666" value={institusi} onChangeText={setInstitusi} />
-
-        <Text style={styles.label}>Pekerjaan</Text>
-        <TextInput style={styles.input} placeholder="Contoh: Software Engineer, Mahasiswa" placeholderTextColor="#666" value={pekerjaan} onChangeText={setPekerjaan} />
-
-        <Text style={styles.label}>Bio Singkat (Maks 150 Karakter)</Text>
-        <TextInput 
-          style={[styles.input, styles.textArea]} 
-          placeholder="Ceritakan tentang Anda..." 
-          placeholderTextColor="#666" 
-          value={bio} 
-          onChangeText={setBio} 
-          maxLength={150} 
-          multiline
-          numberOfLines={3}
+        <TextInput
+          style={styles.input}
+          placeholder="Contoh: Jakarta Selatan, Surabaya"
+          placeholderTextColor="#666"
+          value={alamat}
+          onChangeText={setAlamat}
         />
 
-        {/* Sports Chips */}
-        <Text style={styles.label}>Hobi & Olahraga</Text>
-        <View style={styles.sportsWrap}>
+        <Text style={styles.label}>Pendidikan</Text>
+        <View style={styles.educationRow}>
+          <TouchableOpacity
+            style={[styles.dropdownButton, styles.jenjangButton]}
+            onPress={() => setShowJenjangPicker(true)}
+          >
+            <Text style={styles.dropdownButtonText}>{jenjang || 'Jenjang'}</Text>
+            <Ionicons name="chevron-down" size={16} color="#888A90" />
+          </TouchableOpacity>
+          <TextInput
+            style={[styles.input, styles.institusiInput]}
+            placeholder="Universitas / Sekolah"
+            placeholderTextColor="#666"
+            value={institusi}
+            onChangeText={setInstitusi}
+          />
+        </View>
+
+        <Text style={styles.label}>Pekerjaan</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Contoh: Software Engineer, Mahasiswa"
+          placeholderTextColor="#666"
+          value={pekerjaan}
+          onChangeText={setPekerjaan}
+        />
+
+        <Text style={styles.label}>Bio Singkat</Text>
+        <TextInput
+          style={[styles.input, styles.bioInput]}
+          placeholder="Ceritakan sedikit tentang dirimu dan olahraga favoritmu..."
+          placeholderTextColor="#666"
+          multiline
+          numberOfLines={3}
+          value={bio}
+          onChangeText={setBio}
+        />
+
+        <Text style={styles.label}>Hobi & Minat Lainnya</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Contoh: Musik, Fotografi, Ngopi"
+          placeholderTextColor="#666"
+          value={hobi}
+          onChangeText={setHobi}
+        />
+
+        {/* Sports Matrix Section */}
+        <View style={styles.sportsHeaderRow}>
+          <Text style={styles.label}>Cabang Olahraga yang Dimainkan</Text>
+          <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+            <Text style={styles.addSportText}>+ Lainnya</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sportsContainer}>
           {sports.map((sport) => {
-            const active = selectedSports.includes(sport.id);
+            const isSelected = selectedSports.includes(sport.id);
             return (
-              <TouchableOpacity key={sport.id} style={[styles.sportChip, active && styles.sportChipActive]} onPress={() => toggleSport(sport.id)}>
-                <MaterialCommunityIcons name={sport.icon || 'trophy-outline'} size={14} color={active ? '#FFFFFF' : '#888A90'} style={{ marginRight: 4 }} />
-                <Text style={[styles.sportChipText, active && styles.sportChipTextActive]}>{sport.nama}</Text>
+              <TouchableOpacity
+                key={sport.id}
+                style={[styles.sportChip, isSelected && styles.sportChipSelected]}
+                onPress={() => toggleSport(sport.id)}
+                activeOpacity={0.7}
+              >
+                {sport.icon ? (
+                  <MaterialCommunityIcons
+                    name={sport.icon}
+                    size={18}
+                    color={isSelected ? '#FFFFFF' : '#888A90'}
+                    style={{ marginRight: 6 }}
+                  />
+                ) : (
+                  <Ionicons
+                    name="fitness-outline"
+                    size={18}
+                    color={isSelected ? '#FFFFFF' : '#888A90'}
+                    style={{ marginRight: 6 }}
+                  />
+                )}
+                <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
+                  {sport.nama}
+                </Text>
               </TouchableOpacity>
             );
           })}
-          <TouchableOpacity style={[styles.sportChip, styles.addSportChip]} onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.addSportChipText}>+ Tambah lainnya</Text>
-          </TouchableOpacity>
         </View>
         {selectedSports.length === 0 && (
-          <Text style={styles.sportHint}>Pilih minimal satu olahraga agar kamu muncul di Discover.</Text>
+          <Text style={styles.errorHint}>Pilih minimal satu cabang olahraga.</Text>
         )}
 
-        {/* Action Button */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving || uploading}>
-          <Text style={styles.saveButtonText}>{saving ? 'Menyimpan...' : 'Simpan Profil'}</Text>
+        {/* Save Button */}
+        <TouchableOpacity
+          style={[styles.saveButton, (saving || uploadingSlot !== null) && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={saving || uploadingSlot !== null}
+        >
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveButtonText}>Simpan Perubahan</Text>
+          )}
         </TouchableOpacity>
       </View>
 
-      {/* Modal Custom Sport */}
+      {/* Add Custom Sport Modal */}
       <Modal visible={isModalVisible} transparent animationType="fade">
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Tambah Olahraga Lain</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Tambah Olahraga Baru</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Masukkan nama olahraga"
+              placeholder="Nama olahraga (misal: Wall Climbing)"
               placeholderTextColor="#666"
               value={customSportName}
               onChangeText={setCustomSportName}
               autoFocus
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalButton, styles.modalButtonCancel]} onPress={() => {
-                setIsModalVisible(false);
-                setCustomSportName('');
-              }}>
-                <Text style={styles.modalButtonCancelText}>Batal</Text>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => {
+                  setIsModalVisible(false);
+                  setCustomSportName('');
+                }}
+              >
+                <Text style={styles.modalButtonTextCancel}>Batal</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.modalButtonSave]} onPress={handleAddCustomSport}>
-                <Text style={styles.modalButtonSaveText}>Simpan</Text>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonSave]}
+                onPress={handleAddCustomSport}
+              >
+                <Text style={styles.modalButtonTextSave}>Tambah</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Modal Dropdown Negara */}
+      {/* Country Selection Modal */}
       <Modal visible={showNegaraPicker} transparent animationType="slide">
-        <View style={styles.bottomSheetBackground}>
-          <View style={styles.bottomSheetContainer}>
-            <View style={styles.bottomSheetHeader}>
-              <Text style={styles.bottomSheetTitle}>Pilih Negara</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.pickerModalContent}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Pilih Negara</Text>
               <TouchableOpacity onPress={() => setShowNegaraPicker(false)}>
                 <Ionicons name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.bottomSheetList}>
-              {COUNTRIES.map((c) => (
-                <TouchableOpacity 
-                  key={c} 
-                  style={[styles.bottomSheetItem, negara === c && styles.bottomSheetItemActive]} 
+            <ScrollView style={{ maxHeight: 350 }}>
+              {COUNTRIES.map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  style={styles.pickerItem}
                   onPress={() => {
-                    setNegara(c);
+                    setNegara(item);
                     setShowNegaraPicker(false);
                   }}
                 >
-                  <Text style={[styles.bottomSheetItemText, negara === c && styles.bottomSheetItemTextActive]}>{c}</Text>
-                  {negara === c && <Ionicons name="checkmark" size={20} color="#FF5A2A" />}
+                  <Text style={[styles.pickerItemText, negara === item && styles.pickerItemTextSelected]}>
+                    {item}
+                  </Text>
+                  {negara === item && <Ionicons name="checkmark" size={20} color="#FF5A2A" />}
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -505,41 +683,32 @@ export default function EditProfileScreen() {
         </View>
       </Modal>
 
-      {/* Modal Dropdown Jenjang Pendidikan */}
+      {/* Education Level Selection Modal */}
       <Modal visible={showJenjangPicker} transparent animationType="slide">
-        <View style={styles.bottomSheetBackground}>
-          <View style={styles.bottomSheetContainer}>
-            <View style={styles.bottomSheetHeader}>
-              <Text style={styles.bottomSheetTitle}>Pilih Jenjang Pendidikan</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.pickerModalContent}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Pilih Jenjang</Text>
               <TouchableOpacity onPress={() => setShowJenjangPicker(false)}>
                 <Ionicons name="close" size={24} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
-            <ScrollView style={styles.bottomSheetList}>
-              {JENJANG_PENDIDIKAN.map((j) => (
-                <TouchableOpacity 
-                  key={j} 
-                  style={[styles.bottomSheetItem, jenjang === j && styles.bottomSheetItemActive]} 
+            <ScrollView style={{ maxHeight: 300 }}>
+              {JENJANG_PENDIDIKAN.map((item) => (
+                <TouchableOpacity
+                  key={item}
+                  style={styles.pickerItem}
                   onPress={() => {
-                    setJenjang(j);
+                    setJenjang(item);
                     setShowJenjangPicker(false);
                   }}
                 >
-                  <Text style={[styles.bottomSheetItemText, jenjang === j && styles.bottomSheetItemTextActive]}>{j}</Text>
-                  {jenjang === j && <Ionicons name="checkmark" size={20} color="#FF5A2A" />}
+                  <Text style={[styles.pickerItemText, jenjang === item && styles.pickerItemTextSelected]}>
+                    {item}
+                  </Text>
+                  {jenjang === item && <Ionicons name="checkmark" size={20} color="#FF5A2A" />}
                 </TouchableOpacity>
               ))}
-              {jenjang !== '' && (
-                <TouchableOpacity 
-                  style={[styles.bottomSheetItem, { borderTopWidth: 1, borderColor: '#2E323A' }]} 
-                  onPress={() => {
-                    setJenjang('');
-                    setShowJenjangPicker(false);
-                  }}
-                >
-                  <Text style={[styles.bottomSheetItemText, { color: '#F44336' }]}>Hapus Pilihan</Text>
-                </TouchableOpacity>
-              )}
             </ScrollView>
           </View>
         </View>
@@ -564,7 +733,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 60,
+    paddingTop: 56,
     paddingBottom: 16,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
@@ -576,276 +745,330 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
-  avatarSection: {
-    alignItems: 'center',
-    marginTop: 24,
+  photoGridSection: {
+    paddingHorizontal: GRID_PADDING,
+    marginTop: 20,
+    marginBottom: 8,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 2,
-    borderColor: '#FF5A2A',
+  photoGridHeader: {
+    marginBottom: 12,
   },
-  avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#1C1F26',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FF5A2A',
-  },
-  avatarPlaceholderText: {
+  photoGridTitle: {
     color: '#FFFFFF',
-    fontSize: 32,
+    fontSize: 13,
     fontWeight: 'bold',
+    letterSpacing: 0.6,
   },
-  changePhotoButton: {
-    marginTop: 12,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+  photoGridSubtitle: {
+    color: '#888A90',
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
   },
-  changePhotoText: {
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: GRID_GAP,
+  },
+  photoSlot: {
+    width: SLOT_SIZE,
+    height: SLOT_SIZE * 1.25,
+    borderRadius: 14,
+    backgroundColor: '#161920',
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  photoSlotPrimary: {
+    borderColor: 'rgba(255, 90, 42, 0.5)',
+  },
+  slotImage: {
+    width: '100%',
+    height: '100%',
+  },
+  emptyPhotoSlot: {
+    borderStyle: 'dashed',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#12141A',
+  },
+  addIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 90, 42, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addSlotHelperText: {
+    color: '#888A90',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  deleteBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FF3B30',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  mainBadge: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(11, 13, 18, 0.85)',
+    borderWidth: 1,
+    borderColor: '#FF5A2A',
+  },
+  mainBadgeText: {
     color: '#FF5A2A',
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '700',
   },
   inputsSection: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     marginTop: 12,
   },
   label: {
-    color: '#E1E3E6',
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '600',
     marginBottom: 8,
-    marginTop: 20,
+    marginTop: 14,
   },
   input: {
-    backgroundColor: '#1A1D24',
-    color: '#FFFFFF',
+    backgroundColor: '#161920',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 14,
     borderWidth: 1,
-    borderColor: '#2E323A',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  textArea: {
-    minHeight: 80,
+  bioInput: {
+    height: 80,
     textAlignVertical: 'top',
   },
   dateButton: {
-    backgroundColor: '#1A1D24',
+    backgroundColor: '#161920',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#2E323A',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   dateButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
   },
   dropdownButton: {
-    backgroundColor: '#1A1D24',
+    backgroundColor: '#161920',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#2E323A',
+    paddingVertical: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   dropdownButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
   },
-  sportsWrap: {
+  educationRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  jenjangButton: {
+    flex: 1.2,
+  },
+  institusiInput: {
+    flex: 2,
+  },
+  sportsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  addSportText: {
+    color: '#FF5A2A',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  sportsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 4,
   },
   sportChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 9,
-    paddingHorizontal: 14,
+    backgroundColor: '#161920',
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    marginBottom: 4,
   },
-  sportChipActive: {
-    backgroundColor: 'rgba(255, 90, 31, 0.15)',
-    borderColor: '#FF5A1F',
+  sportChipSelected: {
+    backgroundColor: 'rgba(255, 90, 42, 0.16)',
+    borderColor: '#FF5A2A',
   },
   sportChipText: {
-    color: '#8F94A6',
+    color: '#888A90',
     fontSize: 13,
     fontWeight: '500',
   },
-  sportChipTextActive: {
+  sportChipTextSelected: {
     color: '#FFFFFF',
     fontWeight: '600',
   },
-  sportHint: {
-    fontSize: 12,
-    color: '#8F94A6',
+  errorHint: {
+    color: '#FF3B30',
+    fontSize: 11,
     marginTop: 6,
-  },
-  addSportChip: {
-    borderStyle: 'dashed',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    backgroundColor: 'transparent',
-  },
-  addSportChipText: {
-    color: '#8F94A6',
-    fontSize: 13,
-    fontWeight: '600',
   },
   saveButton: {
     backgroundColor: '#FF5A2A',
-    paddingVertical: 16,
-    borderRadius: 14,
-    marginTop: 36,
+    borderRadius: 25,
+    paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 28,
+    marginBottom: 20,
     shadowColor: '#FF5A2A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
-    marginBottom: 20,
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
   },
   saveButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
-  
-  // Modal styles
-  modalBackground: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
   },
-  modalContainer: {
-    backgroundColor: '#1A1D24',
-    width: '100%',
+  modalContent: {
+    backgroundColor: '#161920',
     borderRadius: 16,
-    padding: 24,
+    padding: 20,
+    width: '100%',
+    maxWidth: 340,
     borderWidth: 1,
-    borderColor: '#2E323A',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   modalTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
+    marginBottom: 12,
   },
   modalInput: {
     backgroundColor: '#0B0D12',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     color: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
+    fontSize: 14,
     borderWidth: 1,
-    borderColor: '#2E323A',
-    marginBottom: 20,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 16,
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
+    justifyContent: 'flex-end',
+    gap: 10,
   },
   modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
   },
   modalButtonCancel: {
-    backgroundColor: '#2E323A',
-  },
-  modalButtonCancelText: {
-    color: '#888A90',
-    fontSize: 15,
-    fontWeight: '600',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   modalButtonSave: {
     backgroundColor: '#FF5A2A',
   },
-  modalButtonSaveText: {
+  modalButtonTextCancel: {
+    color: '#888A90',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  modalButtonTextSave: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '600',
   },
-
-  // Bottom Sheet Picker styles (Negara & Jenjang)
-  bottomSheetBackground: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  bottomSheetContainer: {
-    backgroundColor: '#1A1D24',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
+  pickerModalContent: {
+    backgroundColor: '#161920',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
     maxHeight: '60%',
     borderWidth: 1,
-    borderColor: '#2E323A',
-    borderBottomWidth: 0,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  bottomSheetHeader: {
+  pickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 10,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderColor: '#2E323A',
+    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
+    marginBottom: 8,
   },
-  bottomSheetTitle: {
+  pickerTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  bottomSheetList: {
-    flexGrow: 0,
-  },
-  bottomSheetItem: {
+  pickerItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderColor: '#2E323A',
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
   },
-  bottomSheetItemActive: {
-    backgroundColor: 'rgba(255, 90, 42, 0.05)',
+  pickerItemText: {
+    color: '#E0E0E0',
+    fontSize: 14,
   },
-  bottomSheetItemText: {
-    color: '#888A90',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  bottomSheetItemTextActive: {
+  pickerItemTextSelected: {
     color: '#FF5A2A',
     fontWeight: 'bold',
   },
