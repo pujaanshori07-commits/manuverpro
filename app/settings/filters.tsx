@@ -26,7 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_KEY = '@manuver_match_filters_v1';
 
 const AVAILABLE_SPORTS = [
-  { id: 'badminton', name: 'Badminton', icon: 'badminton' as const },
+  { id: 'badminton', name: 'Badminton', icon: 'tennisball-outline' as const },
   { id: 'running', name: 'Running', icon: 'walk-outline' as const },
   { id: 'gym', name: 'Gym & Fitness', icon: 'barbell-outline' as const },
   { id: 'futsal', name: 'Futsal', icon: 'football-outline' as const },
