@@ -142,35 +142,37 @@ export default function OnboardingFlowScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // 1. Update Profile Preferences
-        await supabase
-          .from('profiles')
-          .update({
-            has_completed_onboarding: true,
-            primary_sport: selectedSports[0] || 'badminton',
-            age_pref_min: ageRange[0],
-            age_pref_max: ageRange[1],
-            gender_pref: genderPref,
-          })
-          .eq('id', user.id);
+      // Structure selected sports and experience into JSON array
+      const sportsPayload = selectedSports.map((sportId) => ({
+        sport_id: sportId,
+        experience: sportExperience[sportId] || '1-3 thn',
+      }));
 
-        // 2. Insert or replace user_sports with experience
-        const sportsData = selectedSports.map((sportId) => ({
-          user_id: user.id,
-          sport_id: sportId,
-          experience_level: sportExperience[sportId] || '1-3 thn',
-        }));
+      // Call the atomic Supabase RPC
+      const { data, error } = await supabase.rpc('complete_user_onboarding', {
+        p_primary_sport: selectedSports[0] || 'badminton',
+        p_sports: sportsPayload,
+        p_age_pref_min: ageRange[0],
+        p_age_pref_max: ageRange[1],
+        p_gender_pref: genderPref,
+        p_location_granted: true,
+        p_latitude: null, // Pass device coordinates if expo-location is used
+        p_longitude: null,
+      });
 
-        await supabase.from('user_sports').delete().eq('user_id', user.id);
-        await supabase.from('user_sports').insert(sportsData);
+      if (error) {
+        console.error('Error completing onboarding:', error.message);
+        Alert.alert('Gagal Menyimpan', 'Terjadi kesalahan saat menyimpan preferensimu. Silakan coba lagi.');
+        return;
       }
-    } catch (e) {
-      console.warn('Failed to save onboarding directly:', e);
+
+      // Refresh user profile in app context and redirect to Discover
+      router.replace('/(tabs)');
+    } catch (err) {
+      console.error('Unexpected onboarding error:', err);
+      router.replace('/(tabs)');
     } finally {
       setSubmitting(false);
-      router.replace('/(tabs)');
     }
   };
 

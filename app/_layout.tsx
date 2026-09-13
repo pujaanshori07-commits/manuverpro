@@ -35,6 +35,7 @@ type Profile = {
   life_tags: string[] | null;
   interests: string[] | null;
   workout_preference: string | null;
+  has_completed_onboarding?: boolean;
 };
 
 type AuthContextType = {
@@ -221,18 +222,16 @@ export default function RootLayout() {
   if (!session) {
     if (!inAuthGroup) redirectTo = '/welcome';
   } else if (profile) {
-    if (!profile.terms_accepted || !profile.location_asked || !profile.onboarding_complete) {
+    if (!profile.onboarding_complete && !profile.has_completed_onboarding) {
       if (!inOnboardingGroup) {
-        if (!profile.terms_accepted) redirectTo = '/onboarding/terms';
-        else if (!profile.location_asked) redirectTo = '/onboarding/location';
-        else if (!profile.onboarding_complete) redirectTo = '/onboarding/questionnaire';
+        redirectTo = '/onboarding/flow';
       }
     } 
     else if (inAuthGroup || inOnboardingGroup) {
       redirectTo = '/';
     }
   } else {
-    if (!checkingProfile && !inAuthGroup && !inOnboardingGroup) redirectTo = '/onboarding/terms';
+    if (!checkingProfile && !inAuthGroup && !inOnboardingGroup) redirectTo = '/onboarding/flow';
   }
 
   return (
