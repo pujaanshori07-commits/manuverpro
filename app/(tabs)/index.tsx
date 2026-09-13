@@ -544,19 +544,6 @@ export default function DiscoverScreen() {
                       </View>
                     </View>
 
-                    {/* ========================================================= */}
-                    {/* BLOCK 6: Third Photo (Optional Full-Width Photo)          */}
-                    {/* ========================================================= */}
-                    {currentProfile.photos && currentProfile.photos[2] && (
-                      <View style={styles.storyPhotoWrapper}>
-                        <Image
-                          source={{ uri: currentProfile.photos[2] }}
-                          style={styles.storyPhotoImage}
-                          resizeMode="cover"
-                        />
-                      </View>
-                    )}
-
                   </View>
                 </ScrollView>
               </Animated.View>
