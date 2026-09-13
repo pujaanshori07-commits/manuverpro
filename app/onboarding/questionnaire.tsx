@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
+import { supabase } from '../../lib/supabase';
 
 interface SportItem {
   id: string;
@@ -108,8 +109,29 @@ export default function QuestionnaireScreen() {
 
   const isAgeInvalid = myAge !== '' && (parseInt(myAge, 10) < 18 || isNaN(parseInt(myAge, 10)));
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (isAgeInvalid) return;
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const birthYear = new Date().getFullYear() - parseInt(myAge || '18', 10);
+        const tanggalLahir = `${birthYear}-01-01`;
+
+        await supabase
+          .from('profiles')
+          .update({
+            nama: nickname.trim() || null,
+            hobi: myHobbies.trim() || null,
+            bio: myBio.trim() || null,
+            tanggal_lahir: tanggalLahir,
+          })
+          .eq('id', user.id);
+      }
+    } catch (e) {
+      console.log('Failed to save questionnaire', e);
+    }
+
     router.push('/onboarding/location');
   };
 

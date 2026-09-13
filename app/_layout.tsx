@@ -212,13 +212,14 @@ export default function RootLayout() {
 
   // Instead of early return which unmounts Stack, we use an absolute overlay
 
-  const inAuthGroup = segments[0] === 'login';
+  const authRoutes = ['login', 'register', 'welcome', 'intro'];
+  const inAuthGroup = authRoutes.includes(segments[0] as string);
   const inOnboardingGroup = (segments[0] as string) === 'onboarding';
 
   let redirectTo: string | null = null;
 
   if (!session) {
-    if (!inAuthGroup) redirectTo = '/login';
+    if (!inAuthGroup) redirectTo = '/welcome';
   } else if (profile) {
     if (!profile.terms_accepted || !profile.location_asked || !profile.onboarding_complete) {
       if (!inOnboardingGroup) {
