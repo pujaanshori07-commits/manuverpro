@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, TouchableOpacity, Alert, StyleSheet, Dimensions,  Platform, TextInput, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
