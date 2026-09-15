@@ -1,343 +1,309 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  FlatList,
-  Image,
   TouchableOpacity,
-  Modal,
-  Dimensions,
-  ActivityIndicator,
+  Image,
   StatusBar,
+  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Colors, BorderRadius, Spacing, Typography } from '../../constants/theme';
 
-import { Colors, BorderRadius, Spacing } from '../../constants/theme';
-import { supabase } from '../../lib/supabase';
+const CATEGORIES = ['Semua', 'Running', 'Badminton', 'Gym', 'Futsal', 'Basket', 'Tennis'];
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = Math.min(SCREEN_WIDTH - Spacing.base * 2, 440);
-const CARD_HEIGHT = 170;
-
-const ACTIVITY_CATEGORIES = [
-  'Semua',
-  'Running',
-  'Gym',
-  'Badminton',
-  'Basket',
-  'Yoga',
-  'Tennis',
-];
-
-interface ExploreCardItem {
+interface SportEvent {
   id: string;
-  nama: string;
-  umur: number;
-  aktivitas: string;
-  jarak: string;
-  foto_url: string;
-  isLiked?: boolean;
+  title: string;
+  organizer: string;
+  date: string;
+  location: string;
+  city: string;
+  category: string;
+  type: 'Kompetisi' | 'Fun Run' | 'Open Tournament' | 'Komunitas' | 'Festival';
+  participants: string;
+  image: string;
+  isFeatured?: boolean;
+  price: string;
 }
 
-const DEMO_EXPLORE_ITEMS: ExploreCardItem[] = [
+const EVENTS: SportEvent[] = [
   {
-    id: 'exp-1',
-    nama: 'Nadia',
-    umur: 26,
-    aktivitas: 'Running',
-    jarak: '2 km',
-    foto_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80',
+    id: 'ev-1',
+    title: 'Jakarta Marathon 2026',
+    organizer: 'Athletics Indonesia',
+    date: '12 Oktober 2026',
+    location: 'Bundaran HI, Jakarta Pusat',
+    city: 'Jakarta',
+    category: 'Running',
+    type: 'Fun Run',
+    participants: '12.500 peserta',
+    image: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=800&q=80',
+    isFeatured: true,
+    price: 'Rp 250.000',
   },
   {
-    id: 'exp-2',
-    nama: 'Raka',
-    umur: 27,
-    aktivitas: 'Gym',
-    jarak: '4 km',
-    foto_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=800&q=80',
+    id: 'ev-2',
+    title: 'Badminton Open GBK Cup',
+    organizer: 'PBSI DKI Jakarta',
+    date: '5–7 Oktober 2026',
+    location: 'GBK Arena, Senayan',
+    city: 'Jakarta',
+    category: 'Badminton',
+    type: 'Open Tournament',
+    participants: '320 atlet',
+    image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
+    price: 'Rp 150.000 / pasang',
   },
   {
-    id: 'exp-3',
-    nama: 'Dinda',
-    umur: 24,
-    aktivitas: 'Badminton',
-    jarak: '3 km',
-    foto_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80',
+    id: 'ev-3',
+    title: 'Bandung Night Run Festival',
+    organizer: 'RunBDG Community',
+    date: '19 Oktober 2026',
+    location: 'Lapangan Gasibu, Bandung',
+    city: 'Bandung',
+    category: 'Running',
+    type: 'Festival',
+    participants: '5.000 peserta',
+    image: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?auto=format&fit=crop&w=800&q=80',
+    price: 'Rp 175.000',
   },
   {
-    id: 'exp-4',
-    nama: 'Budi',
-    umur: 28,
-    aktivitas: 'Basket',
-    jarak: '5 km',
-    foto_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80',
+    id: 'ev-4',
+    title: 'Surabaya Futsal Championship',
+    organizer: 'PSSI Surabaya',
+    date: '26–27 Oktober 2026',
+    location: 'Lapangan Futsal Bung Tomo',
+    city: 'Surabaya',
+    category: 'Futsal',
+    type: 'Kompetisi',
+    participants: '64 tim',
+    image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
+    price: 'Rp 500.000 / tim',
+  },
+  {
+    id: 'ev-5',
+    title: '3×3 Basketball Jakarta Open',
+    organizer: 'Perbasi DKI',
+    date: '2 November 2026',
+    location: 'Pantai Karnaval, Ancol',
+    city: 'Jakarta',
+    category: 'Basket',
+    type: 'Open Tournament',
+    participants: '48 tim',
+    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
+    price: 'Rp 300.000 / tim',
+  },
+  {
+    id: 'ev-6',
+    title: 'Yogyakarta Tennis Open 2026',
+    organizer: 'Pelti DIY',
+    date: '8–10 November 2026',
+    location: 'Gor Klebengan, Yogyakarta',
+    city: 'Yogyakarta',
+    category: 'Tennis',
+    type: 'Open Tournament',
+    participants: '128 peserta',
+    image: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=800&q=80',
+    price: 'Rp 200.000',
+  },
+  {
+    id: 'ev-7',
+    title: 'Gym Fest Bali 2026',
+    organizer: 'Bali Fitness Community',
+    date: '15 November 2026',
+    location: 'Seminyak Square, Bali',
+    city: 'Bali',
+    category: 'Gym',
+    type: 'Festival',
+    participants: '800 peserta',
+    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
+    price: 'Gratis',
+  },
+  {
+    id: 'ev-8',
+    title: 'Bekasi Half Marathon',
+    organizer: 'Komunitas Lari Bekasi',
+    date: '22 November 2026',
+    location: 'Summarecon Mall Bekasi',
+    city: 'Bekasi',
+    category: 'Running',
+    type: 'Fun Run',
+    participants: '3.000 peserta',
+    image: 'https://images.unsplash.com/photo-1594882645126-14ac19a33f3e?auto=format&fit=crop&w=800&q=80',
+    price: 'Rp 125.000',
   },
 ];
+
+const TYPE_COLORS: Record<string, string> = {
+  Kompetisi: '#FF453A',
+  'Fun Run': '#30D158',
+  'Open Tournament': '#FF9F0A',
+  Komunitas: '#64D2FF',
+  Festival: '#BF5AF2',
+};
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-
   const [selectedCategory, setSelectedCategory] = useState('Semua');
-  const [filterModalVisible, setFilterModalVisible] = useState(false);
-  const [items, setItems] = useState<ExploreCardItem[]>(DEMO_EXPLORE_ITEMS);
-  const [loading, setLoading] = useState(false);
 
-  // Filter Modal selections
-  const [modalCategory, setModalCategory] = useState('Semua');
-  const [modalGender, setModalGender] = useState('Semua');
+  const filteredEvents =
+    selectedCategory === 'Semua'
+      ? EVENTS
+      : EVENTS.filter((e) => e.category === selectedCategory);
 
-  const fetchExploreUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .limit(20);
-
-      if (error || !data || data.length === 0) {
-        setItems(DEMO_EXPLORE_ITEMS);
-      } else {
-        const formatted: ExploreCardItem[] = data.map((d: any, idx: number) => ({
-          id: d.id,
-          nama: d.nama || `User ${idx + 1}`,
-          umur: d.umur || 25,
-          aktivitas: Array.isArray(d.hobi) && d.hobi.length > 0 ? d.hobi[0] : (d.hobi || 'Running'),
-          jarak: `${(idx + 1) * 2} km`,
-          foto_url: d.foto_url || DEMO_EXPLORE_ITEMS[idx % DEMO_EXPLORE_ITEMS.length].foto_url,
-        }));
-        setItems(formatted);
-      }
-    } catch {
-      setItems(DEMO_EXPLORE_ITEMS);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchExploreUsers();
-  }, [fetchExploreUsers]);
-
-  const toggleLike = (id: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isLiked: !item.isLiked } : item
-      )
-    );
-  };
-
-  const filteredItems = items.filter((item) => {
-    if (selectedCategory === 'Semua') return true;
-    return item.aktivitas.toLowerCase() === selectedCategory.toLowerCase();
-  });
-
-  const renderCard = ({ item }: { item: ExploreCardItem }) => (
-    <TouchableOpacity
-      style={styles.cardContainer}
-      activeOpacity={0.9}
-      onPress={() => router.push(`/user/${item.id}`)}
-    >
-      <Image source={{ uri: item.foto_url }} style={styles.cardImage} resizeMode="cover" />
-
-      {/* Dark gradient overlay */}
-      <LinearGradient
-        colors={['transparent', 'rgba(9, 10, 13, 0.45)', 'rgba(9, 10, 13, 0.95)']}
-        locations={[0, 0.5, 1]}
-        style={styles.cardGradient}
-      >
-        <View style={styles.cardTopRow}>
-          <View style={styles.activityBadge}>
-            <Ionicons name="fitness-outline" size={12} color={Colors.primary} />
-            <Text style={styles.activityBadgeText}>{item.aktivitas}</Text>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.likeButton, item.isLiked && styles.likeButtonActive]}
-            onPress={() => toggleLike(item.id)}
-            activeOpacity={0.7}
-            accessibilityLabel="Sukai Profil"
-          >
-            <Ionicons
-              name={item.isLiked ? 'heart' : 'heart-outline'}
-              size={18}
-              color={item.isLiked ? Colors.primary : Colors.white}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.cardBottomRow}>
-          <View>
-            <Text style={styles.userNameText}>
-              {item.nama}, {item.umur}
-            </Text>
-            <View style={styles.distanceRow}>
-              <Ionicons name="location-sharp" size={12} color={Colors.textSecondary} />
-              <Text style={styles.distanceText}>{item.jarak} dari lokasimu</Text>
-            </View>
-          </View>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
+  const featured = selectedCategory === 'Semua' ? EVENTS.find((e) => e.isFeatured) : null;
+  const listEvents = selectedCategory === 'Semua'
+    ? EVENTS.filter((e) => !e.isFeatured)
+    : filteredEvents;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#090A0D" />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
 
-      {/* Header Bar */}
+      {/* Header */}
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Explore</Text>
-          <Text style={styles.headerSubtitle}>Temukan partner olahraga di dekatmu</Text>
+          <Text style={styles.headerSubtitle}>Event & kompetisi olahraga terkini</Text>
         </View>
-        <TouchableOpacity
-          style={styles.filterIconButton}
-          onPress={() => setFilterModalVisible(true)}
-          activeOpacity={0.7}
-          accessibilityLabel="Buka Filter"
-        >
-          <Ionicons name="filter-outline" size={20} color={Colors.white} />
+        <TouchableOpacity style={styles.notifBtn} accessibilityLabel="Notifikasi">
+          <Ionicons name="notifications-outline" size={22} color={Colors.white} />
         </TouchableOpacity>
       </View>
 
-      {/* Category Pills Bar */}
-      <View style={styles.categoryScrollWrapper}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryList}
-        >
-          {ACTIVITY_CATEGORIES.map((cat) => {
-            const isSelected = selectedCategory === cat;
-            return (
-              <TouchableOpacity
-                key={cat}
-                style={[styles.categoryPill, isSelected && styles.categoryPillActive]}
-                onPress={() => setSelectedCategory(cat)}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[styles.categoryPillText, isSelected && styles.categoryPillTextActive]}
-                >
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* Profile Cards Feed */}
-      {loading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
-      ) : (
-        <FlatList
-          data={filteredItems}
-          keyExtractor={(item) => item.id}
-          renderItem={renderCard}
-          contentContainerStyle={[styles.feedContent, { paddingBottom: insets.bottom + 80 }]}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={40} color={Colors.textSecondary} />
-              <Text style={styles.emptyTitle}>Tidak ada partner ditemukan</Text>
-              <Text style={styles.emptySubtitle}>
-                Coba pilih cabang olahraga lain atau perbarui filter pencarianmu.
-              </Text>
-            </View>
-          }
-        />
-      )}
-
-      {/* Filter Bottom Sheet Modal */}
-      <Modal
-        visible={filterModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setFilterModalVisible(false)}
+      {/* Category Pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryList}
+        style={styles.categoryScroll}
       >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>
-            <View style={styles.modalDragHandle} />
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filter Partner</Text>
-              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
-                <Ionicons name="close" size={22} color={Colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Kategori Olahraga */}
-            <Text style={styles.modalSectionLabel}>Cabang Olahraga</Text>
-            <View style={styles.modalGrid}>
-              {ACTIVITY_CATEGORIES.map((cat) => (
-                <TouchableOpacity
-                  key={cat}
-                  style={[styles.modalChip, modalCategory === cat && styles.modalChipActive]}
-                  onPress={() => setModalCategory(cat)}
-                >
-                  <Text style={[styles.modalChipText, modalCategory === cat && styles.modalChipTextActive]}>
-                    {cat}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Preferensi Gender */}
-            <Text style={styles.modalSectionLabel}>Gender</Text>
-            <View style={styles.modalGrid}>
-              {['Semua', 'Pria', 'Wanita'].map((g) => (
-                <TouchableOpacity
-                  key={g}
-                  style={[styles.modalChip, modalGender === g && styles.modalChipActive]}
-                  onPress={() => setModalGender(g)}
-                >
-                  <Text style={[styles.modalChipText, modalGender === g && styles.modalChipTextActive]}>
-                    {g}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Terapkan CTA */}
+        {CATEGORIES.map((cat) => {
+          const active = selectedCategory === cat;
+          return (
             <TouchableOpacity
-              style={styles.modalApplyButton}
-              onPress={() => {
-                setSelectedCategory(modalCategory);
-                setFilterModalVisible(false);
-              }}
-              activeOpacity={0.8}
+              key={cat}
+              style={[styles.pill, active && styles.pillActive]}
+              onPress={() => setSelectedCategory(cat)}
+              activeOpacity={0.7}
             >
-              <Text style={styles.modalApplyButtonText}>Terapkan Filter</Text>
+              <Text style={[styles.pillText, active && styles.pillTextActive]}>{cat}</Text>
             </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 90 }]}
+      >
+        {/* Featured Event */}
+        {featured && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>🔥 Event Unggulan</Text>
+            <View style={styles.featuredCard}>
+              <Image source={{ uri: featured.image }} style={styles.featuredImage} resizeMode="cover" />
+              <LinearGradient
+                colors={['transparent', 'rgba(9,10,13,0.55)', 'rgba(9,10,13,0.98)']}
+                locations={[0, 0.45, 1]}
+                style={styles.featuredGradient}
+              >
+                <View style={styles.featuredBadgeRow}>
+                  <View style={[styles.typeBadge, { backgroundColor: TYPE_COLORS[featured.type] + '33', borderColor: TYPE_COLORS[featured.type] }]}>
+                    <Text style={[styles.typeBadgeText, { color: TYPE_COLORS[featured.type] }]}>{featured.type}</Text>
+                  </View>
+                  <View style={styles.categoryBadge}>
+                    <Ionicons name="fitness-outline" size={11} color={Colors.primary} />
+                    <Text style={styles.categoryBadgeText}>{featured.category}</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.featuredTitle}>{featured.title}</Text>
+
+                <View style={styles.metaRow}>
+                  <Ionicons name="calendar-outline" size={13} color={Colors.textSecondary} />
+                  <Text style={styles.metaText}>{featured.date}</Text>
+                  <Text style={styles.metaDot}>·</Text>
+                  <Ionicons name="location-outline" size={13} color={Colors.textSecondary} />
+                  <Text style={styles.metaText}>{featured.city}</Text>
+                </View>
+
+                <View style={styles.featuredFooter}>
+                  <View style={styles.participantBadge}>
+                    <Ionicons name="people-outline" size={12} color={Colors.textSecondary} />
+                    <Text style={styles.participantText}>{featured.participants}</Text>
+                  </View>
+                  <View style={styles.registerBtn}>
+                    <Text style={styles.registerBtnText}>Daftar · {featured.price}</Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
           </View>
+        )}
+
+        {/* Event List */}
+        <View style={styles.section}>
+          {selectedCategory === 'Semua' && (
+            <Text style={styles.sectionLabel}>📅 Semua Event</Text>
+          )}
+          {listEvents.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="calendar-outline" size={44} color={Colors.textSecondary} />
+              <Text style={styles.emptyTitle}>Belum ada event</Text>
+              <Text style={styles.emptySubtitle}>Event untuk kategori ini segera hadir. Pantau terus!</Text>
+            </View>
+          ) : (
+            listEvents.map((event) => (
+              <View key={event.id} style={styles.eventCard}>
+                <Image source={{ uri: event.image }} style={styles.eventImage} resizeMode="cover" />
+                <View style={styles.eventInfo}>
+                  <View style={styles.eventTopRow}>
+                    <View style={[styles.typeBadge, { backgroundColor: TYPE_COLORS[event.type] + '22', borderColor: TYPE_COLORS[event.type] }]}>
+                      <Text style={[styles.typeBadgeText, { color: TYPE_COLORS[event.type] }]}>{event.type}</Text>
+                    </View>
+                    <Text style={styles.eventPrice}>{event.price}</Text>
+                  </View>
+
+                  <Text style={styles.eventTitle} numberOfLines={2}>{event.title}</Text>
+                  <Text style={styles.eventOrganizer}>{event.organizer}</Text>
+
+                  <View style={styles.eventMeta}>
+                    <View style={styles.eventMetaItem}>
+                      <Ionicons name="calendar-outline" size={12} color={Colors.textSecondary} />
+                      <Text style={styles.eventMetaText}>{event.date}</Text>
+                    </View>
+                    <View style={styles.eventMetaItem}>
+                      <Ionicons name="location-outline" size={12} color={Colors.textSecondary} />
+                      <Text style={styles.eventMetaText} numberOfLines={1}>{event.city}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.eventMetaItem}>
+                    <Ionicons name="people-outline" size={12} color={Colors.textSecondary} />
+                    <Text style={styles.eventMetaText}>{event.participants}</Text>
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
         </View>
-      </Modal>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.xs,
@@ -353,24 +319,23 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  filterIconButton: {
-    width: 44,
-    height: 44,
+  notifBtn: {
+    width: 42,
+    height: 42,
     borderRadius: BorderRadius.round,
     backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  categoryScrollWrapper: {
-    paddingVertical: Spacing.sm,
-  },
+  categoryScroll: { paddingBottom: 4 },
   categoryList: {
     paddingHorizontal: Spacing.base,
     gap: 8,
+    paddingVertical: Spacing.sm,
   },
-  categoryPill: {
+  pill: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: BorderRadius.round,
@@ -378,190 +343,111 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
-  categoryPillActive: {
+  pillActive: {
     backgroundColor: Colors.primaryMuted,
     borderColor: Colors.primary,
   },
-  categoryPillText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: Colors.textSecondary,
+  pillText: { fontSize: 13, fontWeight: '500', color: Colors.textSecondary },
+  pillTextActive: { color: Colors.primary, fontWeight: '700' },
+  scroll: { paddingHorizontal: Spacing.base },
+  section: { marginBottom: Spacing.lg },
+  sectionLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.white,
+    marginBottom: Spacing.md,
+    letterSpacing: -0.2,
   },
-  categoryPillTextActive: {
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  feedContent: {
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.xs,
-    gap: Spacing.md,
-  },
-  cardContainer: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    borderRadius: BorderRadius.md,
+  featuredCard: {
+    height: 260,
+    borderRadius: BorderRadius.lg,
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
-    alignSelf: 'center',
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
-  cardImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  cardGradient: {
+  featuredImage: { ...StyleSheet.absoluteFillObject },
+  featuredGradient: {
     ...StyleSheet.absoluteFillObject,
     padding: Spacing.base,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
-  cardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  featuredBadgeRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  featuredTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: Colors.white,
+    letterSpacing: -0.3,
+    marginBottom: 6,
   },
-  activityBadge: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(9, 10, 13, 0.75)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.round,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: Spacing.md,
   },
-  activityBadgeText: {
-    color: Colors.white,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  likeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(9, 10, 13, 0.65)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  likeButtonActive: {
-    backgroundColor: 'rgba(255, 87, 47, 0.25)',
-  },
-  cardBottomRow: {
+  metaText: { fontSize: 12, color: Colors.textSecondary },
+  metaDot: { color: Colors.textSecondary, fontSize: 12 },
+  featuredFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
-  userNameText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.white,
-    marginBottom: 4,
+  participantBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.round,
   },
-  distanceRow: {
+  participantText: { fontSize: 12, color: Colors.textSecondary },
+  registerBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: BorderRadius.round,
+  },
+  registerBtnText: { color: Colors.white, fontSize: 12, fontWeight: '700' },
+  typeBadge: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.round,
+    borderWidth: 1,
+  },
+  typeBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+  categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-  },
-  distanceText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: Spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.white,
-    marginTop: 12,
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  modalSheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: BorderRadius.lg,
-    borderTopRightRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.base,
-    paddingTop: 12,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-  },
-  modalDragHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.lg,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.white,
-  },
-  modalSectionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: 8,
-    marginTop: 6,
-  },
-  modalGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: Spacing.base,
-  },
-  modalChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: BorderRadius.round,
-    backgroundColor: Colors.elevatedSurface,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-  },
-  modalChipActive: {
     backgroundColor: Colors.primaryMuted,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.round,
+    borderWidth: 1,
     borderColor: Colors.primary,
   },
-  modalChipText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
+  categoryBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.primary },
+  eventCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    marginBottom: Spacing.md,
   },
-  modalChipTextActive: {
-    color: Colors.primary,
-    fontWeight: '600',
-  },
-  modalApplyButton: {
-    backgroundColor: Colors.primary,
-    height: 48,
-    borderRadius: BorderRadius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.sm,
-  },
-  modalApplyButtonText: {
-    color: Colors.white,
-    fontSize: 14,
-    fontWeight: '700',
-  },
+  eventImage: { width: 105, height: 130 },
+  eventInfo: { flex: 1, padding: Spacing.md, justifyContent: 'space-between' },
+  eventTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  eventTitle: { fontSize: 14, fontWeight: '700', color: Colors.white, lineHeight: 20, marginBottom: 2 },
+  eventOrganizer: { fontSize: 11, color: Colors.textSecondary, marginBottom: 8 },
+  eventPrice: { fontSize: 11, fontWeight: '700', color: Colors.primary },
+  eventMeta: { flexDirection: 'row', gap: 12, marginBottom: 4 },
+  eventMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  eventMetaText: { fontSize: 11, color: Colors.textSecondary, flexShrink: 1 },
+  emptyContainer: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: Spacing.xl },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: Colors.white, marginTop: 12, marginBottom: 6 },
+  emptySubtitle: { fontSize: 13, color: Colors.textSecondary, textAlign: 'center', lineHeight: 18 },
 });
+

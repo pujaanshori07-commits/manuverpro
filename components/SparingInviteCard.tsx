@@ -3,7 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, BorderRadius } from '../constants/theme';
 import { SPORT_TAG_MAP } from '../app/(tabs)/index';
-
+import { addMatchToCalendar } from '../lib/calendar';
+import { scheduleMatchReminder } from '../lib/notifications';
+import { Alert, ActivityIndicator } from 'react-native';
 interface SparingInviteCardProps {
   inviteId: string;
   sport: string;
@@ -102,6 +104,42 @@ export default function SparingInviteCard({
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, styles.acceptBtn]} onPress={onAccept}>
             <Text style={styles.acceptText}>Terima</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {status === 'accepted' && (
+        <View style={styles.actionRow}>
+          <TouchableOpacity 
+            style={[styles.actionBtn, styles.calendarBtn]} 
+            onPress={async () => {
+              const dateObj = new Date(scheduledAt);
+              const endDate = new Date(dateObj.getTime() + 2 * 60 * 60 * 1000); // +2 hours
+              const title = `Sparing ${sportData.name}`;
+
+              const calendarSuccess = await addMatchToCalendar({
+                title,
+                startDate: dateObj,
+                endDate,
+                location: venueName,
+                notes: note || 'Jadwal Sparing dari Manuver App',
+              });
+
+              if (calendarSuccess) {
+                const notifSuccess = await scheduleMatchReminder(
+                  'Sparing Segera Dimulai!',
+                  `Sparing ${sportData.name} di ${venueName} akan dimulai dalam 2 jam.`,
+                  dateObj
+                );
+                Alert.alert(
+                  'Sukses!', 
+                  'Jadwal tersimpan di Kalender Anda' + (notifSuccess ? ' beserta alarm pengingat.' : '.')
+                );
+              }
+            }}
+          >
+            <Ionicons name="calendar" size={18} color={Colors.white} style={{ marginRight: 8 }} />
+            <Text style={styles.calendarText}>Tambahkan ke Kalender</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -221,6 +259,15 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontSemiBold,
     fontSize: 14,
     color: Colors.primary,
+  },
+  calendarBtn: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primary,
+  },
+  calendarText: {
+    fontFamily: Typography.fontSemiBold,
+    fontSize: 14,
+    color: Colors.white,
   },
   waitingFooter: {
     flexDirection: 'row',

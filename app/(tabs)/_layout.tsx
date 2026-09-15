@@ -4,12 +4,27 @@ import { View, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography } from '../../constants/theme';
-
+import { useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import { registerForPushNotifications, savePushToken } from '../../lib/pushNotifications';
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
   const tabHeight = Platform.OS === 'ios' ? 62 + insets.bottom : 66;
   const paddingBottom = Platform.OS === 'ios' ? Math.max(insets.bottom, 10) : 10;
+
+  useEffect(() => {
+    async function setupPush() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      
+      const token = await registerForPushNotifications();
+      if (token) {
+        await savePushToken(session.user.id, token);
+      }
+    }
+    setupPush();
+  }, []);
 
   return (
     <Tabs
@@ -47,15 +62,15 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 2. Open Sparing / Sesi */}
+      {/* 2. Explore */}
       <Tabs.Screen
-        name="sessions"
+        name="explore"
         options={{
-          title: 'Sesi',
+          title: 'Explore',
           tabBarIcon: ({ color, focused }) => (
             <View style={styles.iconContainer}>
               <Ionicons
-                name={focused ? 'people' : 'people-outline'}
+                name={focused ? 'compass' : 'compass-outline'}
                 size={24}
                 color={color}
               />
@@ -98,9 +113,9 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Explore disabled from bottom tabs */}
+      {/* Sessions hidden from bottom tabs */}
       <Tabs.Screen
-        name="explore"
+        name="sessions"
         options={{
           href: null,
         }}

@@ -30,7 +30,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
-        shouldPlaySound: true,
+        shouldPlaySound: false,
         shouldSetBadge: true,
         shouldShowBanner: true,
         shouldShowList: true,

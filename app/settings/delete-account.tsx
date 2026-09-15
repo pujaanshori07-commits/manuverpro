@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,14 +26,16 @@ export default function DeleteAccountScreen() {
         throw error;
       }
       
-      // Successfully deleted on backend, now sign out locally
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) {
-         console.error('Sign out error after delete:', signOutError);
-      }
+      // Successfully deleted on backend, now force sign out locally
+      await supabase.auth.signOut();
       
-      router.replace('/login' as any);
+      // Force clear storage in case signOut failed to clear it
+      await AsyncStorage.removeItem('supabase.auth.token');
+      await AsyncStorage.clear();
+      
+      // Delay routing to ensure layout listener catches the auth change
       setTimeout(() => {
+        router.replace('/welcome' as any);
         Alert.alert('Berhasil', 'Akun kamu telah dihapus.');
       }, 500);
 

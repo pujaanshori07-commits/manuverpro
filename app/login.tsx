@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, TouchableOpacity, Alert, StyleSheet, Dimensions,  Platform, TextInput, ActivityIndicator, KeyboardAvoidingView } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  StyleSheet,
+  Dimensions,
+  Platform,
+  TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Image,
+} from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { makeRedirectUri } from 'expo-auth-session';
@@ -9,22 +21,36 @@ import { useAuth } from './_layout';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants/DesignSystem';
-import { Image } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 WebBrowser.maybeCompleteAuthSession();
+
+// Adaptive redirect URI (Outputs exp:// in Expo Go, and manuverapp:// in APK)
 const redirectTo = makeRedirectUri();
 
-// Custom robust parser for React Native (avoids URLSearchParams issues)
+// Robust query and hash fragment parser for React Native custom schemes
 function parseParamsFromUrl(url: string) {
-  let paramString = url.split('#')[1] || url.split('?')[1] || '';
   const params: Record<string, string> = {};
-  paramString.split('&').forEach(pair => {
-      const [k, v] = pair.split('=');
-      if (k && v) params[k] = decodeURIComponent(v);
-  });
-  return { params, errorCode: params.error_description || params.error || null };
+  const segments = url.split(/[\?\#]/);
+  
+  for (let i = 1; i < segments.length; i++) {
+    segments[i].split('&').forEach((pair) => {
+      const [key, value] = pair.split('=');
+      if (key && value) {
+        try {
+          params[key] = decodeURIComponent(value.replace(/\+/g, ' '));
+        } catch {
+          params[key] = value;
+        }
+      }
+    });
+  }
+
+  return {
+    params,
+    errorCode: params.error_description || params.error || null,
+  };
 }
 
 export default function LoginScreen() {
@@ -35,80 +61,115 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fallback listener for deep links if WebBrowser misses them
+  // Fallback deep link listener
   useEffect(() => {
     const handleDeepLink = (event: Linking.EventType) => {
-      if (event.url && (event.url.includes('access_token=') || event.url.includes('error='))) {
+      if (
+        event.url &&
+        (event.url.includes('code=') ||
+          event.url.includes('access_token=') ||
+          event.url.includes('error='))
+      ) {
         createSessionFromUrl(event.url);
       }
     };
-    
+
     const subscription = Linking.addEventListener('url', handleDeepLink);
     return () => subscription.remove();
   }, []);
 
   const createSessionFromUrl = async (url: string) => {
     try {
-      console.log('Received URL from Auth:', url);
       const { params, errorCode } = parseParamsFromUrl(url);
-      
+
       if (errorCode) {
         Alert.alert('OAuth Error', errorCode);
         return;
       }
-      
-      const { access_token, refresh_token } = params;
-      if (!access_token) {
-        Alert.alert('Token Missing', 'No access token found in the redirect URL. URL received: ' + url.substring(0, 50) + '...');
+
+      setIsLoading(true);
+
+      // 1. PKCE Flow (exchange authorization code)
+      if (params.code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(params.code);
+        if (error) throw error;
         return;
       }
 
-      const { error } = await supabase.auth.setSession({ access_token, refresh_token });
-      if (error) throw error;
+      // 2. Implicit Flow (access_token & refresh_token)
+      if (params.access_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token: params.access_token,
+          refresh_token: params.refresh_token || '',
+        });
+        if (error) throw error;
+        return;
+      }
+
+      Alert.alert('Auth Error', 'No authorization code or tokens received in redirect.');
     } catch (e: any) {
-      Alert.alert('Session Parse Error', e.message);
+      Alert.alert('Session Parse Error', e.message || 'Failed to authenticate.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo, skipBrowserRedirect: true },
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+          queryParams: {
+            prompt: 'select_account',
+            access_type: 'offline',
+          },
+        },
       });
-      if (error) return Alert.alert('Login failed', error.message);
 
-      const result = await WebBrowser.openAuthSessionAsync(data.url!, redirectTo);
-      
-      if (result.type === 'success') {
+      if (error) {
+        setIsLoading(false);
+        return Alert.alert('Login Failed', error.message);
+      }
+
+      // Pass showInRecents: true to prevent Android task affinity freezing
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url!,
+        redirectTo,
+        { showInRecents: true }
+      );
+
+      if (result.type === 'success' && result.url) {
         await createSessionFromUrl(result.url);
-      } else if (result.type === 'cancel') {
-        // User closed browser
       } else {
-        Alert.alert('Auth Result', 'Browser returned type: ' + result.type);
+        setIsLoading(false);
       }
     } catch (err: any) {
-      Alert.alert('Auth Launch Error', err.message);
+      setIsLoading(false);
+      Alert.alert('Auth Launch Error', err.message || 'Could not start Google login.');
     }
   };
 
   const handleEmailLogin = async () => {
-    if (!email || !email.includes('@')) return Alert.alert('Invalid Email', 'Please enter a valid email address.');
-    if (!password) return Alert.alert('Invalid Password', 'Please enter your password.');
-    
+    if (!email || !email.includes('@')) {
+      return Alert.alert('Invalid Email', 'Please enter a valid email address.');
+    }
+    if (!password) {
+      return Alert.alert('Invalid Password', 'Please enter your password.');
+    }
+
     setIsLoading(true);
-    
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
-      password: password,
+      password,
     });
-    
     setIsLoading(false);
-    
+
     if (error) {
       Alert.alert('Login Error', error.message);
     }
-    // _layout.tsx will automatically redirect upon session change.
   };
 
   const handleDummyAction = () => {
@@ -117,8 +178,11 @@ export default function LoginScreen() {
 
   if (session) {
     return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
-        <Text style={{ color: COLORS.primary }}>Mengarahkan...</Text>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ color: COLORS.primary, marginTop: 12, fontWeight: '600' }}>
+          Mengarahkan...
+        </Text>
       </View>
     );
   }
@@ -136,23 +200,34 @@ export default function LoginScreen() {
 
   const renderFooter = () => (
     <Text style={styles.footerText}>
-      By continuing, you agree to our <Text style={styles.linkText}>Terms of Service</Text> and <Text style={styles.linkText}>Privacy Policy</Text>.
+      By continuing, you agree to our <Text style={styles.linkText}>Terms of Service</Text> and{' '}
+      <Text style={styles.linkText}>Privacy Policy</Text>.
     </Text>
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-        
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
         {/* --- STEP 1: LANDING SCREEN --- */}
         {step === 'landing' && (
           <View style={styles.content}>
             <View style={styles.centerSection}>{renderLogo()}</View>
             <View style={styles.bottomSection}>
-              <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/register')} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={() => router.push('/register')}
+                activeOpacity={0.8}
+              >
                 <Text style={styles.primaryButtonText}>Create an account</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep('options')} activeOpacity={0.6}>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => setStep('options')}
+                activeOpacity={0.6}
+              >
                 <Text style={styles.secondaryButtonText}>I have an account</Text>
               </TouchableOpacity>
               {renderFooter()}
@@ -177,8 +252,11 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.optionsSectionBottom}>
-              
-              <TouchableOpacity style={styles.optionButtonDark} onPress={() => setStep('email_input')} activeOpacity={0.8}>
+              <TouchableOpacity
+                style={styles.optionButtonDark}
+                onPress={() => setStep('email_input')}
+                activeOpacity={0.8}
+              >
                 <Ionicons name="mail" size={24} color={COLORS.text} style={styles.optionIcon} />
                 <Text style={styles.optionButtonTextLight}>Quick sign in (Email)</Text>
               </TouchableOpacity>
@@ -188,9 +266,20 @@ export default function LoginScreen() {
                 <Text style={styles.optionButtonTextLight}>Continue with Apple ID</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.optionButtonGoogle} onPress={handleGoogleLogin} activeOpacity={0.8}>
-                <Ionicons name="logo-google" size={24} color={COLORS.background} style={styles.optionIcon} />
-                <Text style={styles.optionButtonTextDark}>Continue with Google</Text>
+              <TouchableOpacity
+                style={styles.optionButtonGoogle}
+                onPress={handleGoogleLogin}
+                activeOpacity={0.8}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color={COLORS.background} />
+                ) : (
+                  <>
+                    <Ionicons name="logo-google" size={24} color={COLORS.background} style={styles.optionIcon} />
+                    <Text style={styles.optionButtonTextDark}>Continue with Google</Text>
+                  </>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.optionButtonDark} onPress={handleDummyAction} activeOpacity={0.8}>
@@ -208,7 +297,7 @@ export default function LoginScreen() {
             <TouchableOpacity style={styles.backButton} onPress={() => setStep('options')}>
               <Ionicons name="chevron-back" size={28} color={COLORS.text} />
             </TouchableOpacity>
-            
+
             <Text style={styles.authTitle}>Email Login</Text>
             <Text style={styles.authSubtitle}>Enter your email and password to log in.</Text>
 
@@ -242,32 +331,22 @@ export default function LoginScreen() {
               />
             </View>
 
-            <TouchableOpacity 
-              style={[styles.primaryButton, { marginTop: 40, opacity: email.includes('@') && password ? 1 : 0.5 }]} 
-              onPress={handleEmailLogin} 
+            <TouchableOpacity
+              style={[
+                styles.primaryButton,
+                { marginTop: 40, opacity: email.includes('@') && password ? 1 : 0.5 },
+              ]}
+              onPress={handleEmailLogin}
               disabled={isLoading || !email.includes('@') || !password}
             >
-              {isLoading ? <ActivityIndicator color={COLORS.text} /> : <Text style={styles.primaryButtonText}>Continue</Text>}
+              {isLoading ? (
+                <ActivityIndicator color={COLORS.text} />
+              ) : (
+                <Text style={styles.primaryButtonText}>Continue</Text>
+              )}
             </TouchableOpacity>
           </View>
         )}
-
-        {/* --- STEP 4: CHECK EMAIL --- */}
-        {step === 'check_email' && (
-          <View style={styles.authFlowContent}>
-            <TouchableOpacity style={styles.backButton} onPress={() => setStep('email_input')}>
-              <Ionicons name="chevron-back" size={28} color={COLORS.text} />
-            </TouchableOpacity>
-            
-            <Text style={styles.authTitle}>Check your email</Text>
-            <Text style={styles.authSubtitle}>We sent a verification link to {email}. Please check your inbox and click the link to login.</Text>
-
-            <TouchableOpacity style={{ marginTop: 40, alignItems: 'center' }} onPress={handleSendOtp}>
-              {isLoading ? <ActivityIndicator color={COLORS.primary} /> : <Text style={styles.resendText}>Resend email</Text>}
-            </TouchableOpacity>
-          </View>
-        )}
-
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -288,22 +367,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 80,
   },
-  
-  // LOGO STYLES
   centerSection: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  topSection: { alignItems: 'center', marginTop: 40, marginBottom: 40 },
   logoContainer: { alignItems: 'center' },
-  logoContainerSmall: { transform: [{ scale: 0.8 }] },
-  logoHexagon: {
-    width: 120, height: 104, backgroundColor: COLORS.text, justifyContent: 'center',
-    alignItems: 'center', marginBottom: 20, borderRadius: 24,
-  },
-  logoHexagonSmall: { width: 90, height: 78, borderRadius: 18, marginBottom: 10 },
-  logoDash1: { width: '40%', height: 12, backgroundColor: COLORS.background, borderRadius: 6, marginBottom: 6 },
-  logoDash2: { width: '70%', height: 12, backgroundColor: COLORS.background, borderRadius: 6, marginBottom: 6 },
-  logoDash3: { width: '40%', height: 12, backgroundColor: COLORS.background, borderRadius: 6 },
-  logoText: { color: COLORS.text, fontSize: 42, fontWeight: '900', letterSpacing: -1 },
-  logoTextSmall: { fontSize: 32 },
   taglineText: {
     color: COLORS.secondaryText,
     fontSize: 16,
@@ -316,61 +381,73 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginTop: -5,
   },
-
-  // BUTTONS & FOOTER
   bottomSection: { paddingBottom: 20 },
   primaryButton: {
-    backgroundColor: COLORS.primary, width: '100%', paddingVertical: 16,
-    borderRadius: 30, alignItems: 'center', marginBottom: 16,
+    backgroundColor: COLORS.primary,
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: 'center',
+    marginBottom: 16,
   },
   primaryButtonText: { color: COLORS.text, fontSize: 16, fontWeight: '800' },
   secondaryButton: { width: '100%', paddingVertical: 16, alignItems: 'center', marginBottom: 24 },
   secondaryButtonText: { color: COLORS.text, fontSize: 16, fontWeight: '600' },
   footerText: { color: COLORS.secondaryText, fontSize: 12, textAlign: 'center', lineHeight: 18 },
   linkText: { color: COLORS.text, textDecorationLine: 'underline' },
-
-  // OPTIONS SCREEN
   backButton: {
-    position: 'absolute', top: 10, left: 0, width: 44, height: 44,
-    backgroundColor: COLORS.surface, borderRadius: 22, justifyContent: 'center',
-    alignItems: 'center', zIndex: 10,
+    position: 'absolute',
+    top: 10,
+    left: 0,
+    width: 44,
+    height: 44,
+    backgroundColor: COLORS.surface,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   optionsSectionBottom: { gap: 12 },
   optionButtonDark: {
-    flexDirection: 'row', backgroundColor: COLORS.surface, paddingVertical: 16,
-    paddingHorizontal: 20, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: COLORS.border,
+    flexDirection: 'row',
+    backgroundColor: COLORS.surface,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   optionButtonGoogle: {
-    flexDirection: 'row', backgroundColor: COLORS.text, paddingVertical: 16,
-    paddingHorizontal: 20, borderRadius: 30, alignItems: 'center', justifyContent: 'center',
+    flexDirection: 'row',
+    backgroundColor: COLORS.text,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   optionIcon: { position: 'absolute', left: 20 },
   optionButtonTextLight: { color: COLORS.text, fontSize: 15, fontWeight: '700' },
   optionButtonTextDark: { color: COLORS.background, fontSize: 15, fontWeight: '700' },
   bottomFooterSection: { paddingBottom: 20, paddingTop: 20 },
-
-  // AUTH FLOW STYLES (OTP & Phone)
   authTitle: { color: COLORS.text, fontSize: 32, fontWeight: '800', marginBottom: 10 },
   authSubtitle: { color: COLORS.secondaryText, fontSize: 15, marginBottom: 30 },
   phoneInputContainer: {
-    flexDirection: 'row', alignItems: 'center', borderBottomWidth: 2,
-    borderBottomColor: COLORS.primary, paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
+    paddingBottom: 10,
   },
   countryCodeBadge: {
-    flexDirection: 'row', alignItems: 'center', marginRight: 15,
-    borderRightWidth: 1, borderRightColor: COLORS.border, paddingRight: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
+    borderRightWidth: 1,
+    borderRightColor: COLORS.border,
+    paddingRight: 15,
   },
-  countryCodeText: { color: COLORS.text, fontSize: 20, fontWeight: '600' },
   phoneInput: { flex: 1, color: COLORS.text, fontSize: 24, fontWeight: '600' },
-  
-  otpInputContainer: {
-    alignItems: 'center', borderBottomWidth: 2, borderBottomColor: COLORS.primary, paddingBottom: 10,
-  },
-  otpInput: {
-    color: COLORS.text, fontSize: 40, fontWeight: '800', textAlign: 'center', width: '100%',
-  },
-  resendText: {
-    color: COLORS.secondaryText, fontSize: 14, fontWeight: '600', textDecorationLine: 'underline',
-  }
 });

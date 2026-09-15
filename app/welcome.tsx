@@ -92,7 +92,7 @@ export default function WelcomeScreen() {
                 onPress={() => router.push('/register')}
                 activeOpacity={0.8}
               >
-                <Text style={styles.primaryBtnText}>GET STARTED</Text>
+                <Text style={styles.primaryBtnText} adjustsFontSizeToFit numberOfLines={1}>GET STARTED</Text>
               </TouchableOpacity>
             </Animated.View>
             
@@ -102,7 +102,7 @@ export default function WelcomeScreen() {
                 onPress={() => router.push('/login')}
                 activeOpacity={0.7}
               >
-                <Text style={styles.secondaryBtnText}>I ALREADY HAVE AN ACCOUNT</Text>
+                <Text style={styles.secondaryBtnText} adjustsFontSizeToFit numberOfLines={1}>I ALREADY HAVE AN ACCOUNT</Text>
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontHeading,
     fontSize: 16,
     color: '#FFFFFF',
-    letterSpacing: 1,
   },
   secondaryBtn: {
     width: '100%',
@@ -188,6 +187,5 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontHeading,
     fontSize: 14,
     color: '#FFFFFF',
-    letterSpacing: 1,
   },
 });

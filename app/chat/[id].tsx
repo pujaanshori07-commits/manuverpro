@@ -18,7 +18,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
-
+import AjakMainSheet from '../../components/AjakMainSheet';
+import SparingInviteCard from '../../components/SparingInviteCard';
+import { sendPushNotification } from '../../lib/sendPushNotification';
 interface Message {
   id: string;
   sender_id: string;
@@ -27,9 +29,6 @@ interface Message {
   metadata?: any;
   created_at: string;
 }
-
-import AjakMainSheet from '../../components/AjakMainSheet';
-import SparingInviteCard from '../../components/SparingInviteCard';
 
 const CHEMISTRY_MESSAGES = [
   "Kalian berdua suka Badminton & Running 🏸🏃",
@@ -140,6 +139,38 @@ export default function ChatScreen() {
         sender_id: currentUserId,
         content: text.trim(),
       });
+
+      // Fetch recipient push token
+      const { data: match } = await supabase
+        .from('matches')
+        .select('user1_id, user2_id')
+        .eq('id', id)
+        .single();
+        
+      if (match) {
+        const recipientId = match.user1_id === currentUserId ? match.user2_id : match.user1_id;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('push_token, full_name')
+          .eq('id', recipientId)
+          .single();
+
+        if (profile?.push_token) {
+          // Get sender's name to display in the notification
+          const { data: myProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', currentUserId)
+            .single();
+            
+          const senderName = myProfile?.full_name || 'Teman Sparing';
+          await sendPushNotification(
+            profile.push_token,
+            `Pesan dari ${senderName}`,
+            text.trim()
+          );
+        }
+      }
     } catch {
       // offline handling
     }
@@ -346,6 +377,37 @@ export default function ChatScreen() {
               type: 'sparing_invite',
               metadata: newMsg.metadata
             });
+
+            // Send push notification for the invite
+            const { data: match } = await supabase
+              .from('matches')
+              .select('user1_id, user2_id')
+              .eq('id', id)
+              .single();
+              
+            if (match) {
+              const recipientId = match.user1_id === currentUserId ? match.user2_id : match.user1_id;
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('push_token')
+                .eq('id', recipientId)
+                .single();
+
+              if (profile?.push_token) {
+                const { data: myProfile } = await supabase
+                  .from('profiles')
+                  .select('full_name')
+                  .eq('id', currentUserId)
+                  .single();
+                  
+                const senderName = myProfile?.full_name || 'Teman Sparing';
+                await sendPushNotification(
+                  profile.push_token,
+                  `🔥 ${senderName} Mengajak Sparing!`,
+                  `Sparing ${inviteData.sport} di ${inviteData.venue_name}. Buka aplikasi untuk menerima.`
+                );
+              }
+            }
           } catch (e) {
             console.error("Failed to send invite", e);
           }
