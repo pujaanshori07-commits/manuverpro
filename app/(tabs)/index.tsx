@@ -26,6 +26,7 @@ import Animated, {
   withTiming,
   runOnJS,
   interpolate,
+  withRepeat,
 } from 'react-native-reanimated';
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
@@ -131,10 +132,23 @@ export default function DiscoverScreen() {
   const fetchProfiles = useCallback(async () => {
     try {
       setLoading(true);
+      
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      
+      if (!userId) {
+        setProfiles(DEMO_PROFILES);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .limit(20);
+        .rpc('get_nearby_profiles', {
+          user_id_param: userId,
+          max_distance_km: 50,
+          max_age_val: 60,
+          limit_val: 25
+        });
 
       if (error || !data || data.length === 0) {
         setProfiles(DEMO_PROFILES);
@@ -178,6 +192,27 @@ export default function DiscoverScreen() {
     }
   }, []);
 
+  // Radar Animation for Empty State
+  const radarScale = useSharedValue(1);
+  const radarOpacity = useSharedValue(0.8);
+
+  useEffect(() => {
+    if (!loading && (!profiles || profiles.length === 0 || currentIndex >= profiles.length)) {
+      radarScale.value = withRepeat(withTiming(2.2, { duration: 2500 }), -1, false);
+      radarOpacity.value = withRepeat(withTiming(0, { duration: 2500 }), -1, false);
+    } else {
+      radarScale.value = 1;
+      radarOpacity.value = 0.8;
+    }
+  }, [loading, profiles, currentIndex, radarScale, radarOpacity]);
+
+  const radarAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: radarScale.value }],
+      opacity: radarOpacity.value,
+    };
+  });
+
   useEffect(() => {
     fetchProfiles();
   }, [fetchProfiles]);
@@ -199,13 +234,15 @@ export default function DiscoverScreen() {
     translateY.value = 0;
     resetScrollPosition();
 
-    if (swipedId) {
+    if (swipedId && !swipedId.startsWith('demo-')) {
       supabase.auth.getUser().then(({ data }) => {
         if (data?.user?.id) {
           supabase.from('swipes').insert({
-            swiper_id: data.user.id,
-            swipee_id: swipedId,
+            user_id: data.user.id,
+            target_user_id: swipedId,
             action: direction === 'right' ? 'like' : 'pass',
+          }).then(({ error }) => {
+            if (error) console.error('Error recording swipe:', error);
           });
         }
       });
@@ -318,6 +355,7 @@ export default function DiscoverScreen() {
           /* Empty Deck State */
           <View style={styles.emptyContainer}>
             <View style={styles.glowingRingsOuter}>
+              <Animated.View style={[styles.glowingRingsOuter, StyleSheet.absoluteFillObject, radarAnimatedStyle, { backgroundColor: 'rgba(255, 87, 47, 0.15)' }]} />
               <View style={styles.glowingRingsInner}>
                 <Ionicons name="flame" size={56} color={Colors.primary} />
               </View>

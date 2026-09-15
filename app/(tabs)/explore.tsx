@@ -8,11 +8,13 @@ import {
   Image,
   StatusBar,
   Linking,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, BorderRadius, Spacing, Typography } from '../../constants/theme';
+import { supabase } from '../../lib/supabase';
 
 const CATEGORIES = ['Semua', 'Running', 'Badminton', 'Gym', 'Futsal', 'Basket', 'Tennis'];
 
@@ -31,113 +33,6 @@ interface SportEvent {
   price: string;
 }
 
-const EVENTS: SportEvent[] = [
-  {
-    id: 'ev-1',
-    title: 'Jakarta Marathon 2026',
-    organizer: 'Athletics Indonesia',
-    date: '12 Oktober 2026',
-    location: 'Bundaran HI, Jakarta Pusat',
-    city: 'Jakarta',
-    category: 'Running',
-    type: 'Fun Run',
-    participants: '12.500 peserta',
-    image: 'https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=800&q=80',
-    isFeatured: true,
-    price: 'Rp 250.000',
-  },
-  {
-    id: 'ev-2',
-    title: 'Badminton Open GBK Cup',
-    organizer: 'PBSI DKI Jakarta',
-    date: '5–7 Oktober 2026',
-    location: 'GBK Arena, Senayan',
-    city: 'Jakarta',
-    category: 'Badminton',
-    type: 'Open Tournament',
-    participants: '320 atlet',
-    image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=800&q=80',
-    price: 'Rp 150.000 / pasang',
-  },
-  {
-    id: 'ev-3',
-    title: 'Bandung Night Run Festival',
-    organizer: 'RunBDG Community',
-    date: '19 Oktober 2026',
-    location: 'Lapangan Gasibu, Bandung',
-    city: 'Bandung',
-    category: 'Running',
-    type: 'Festival',
-    participants: '5.000 peserta',
-    image: 'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?auto=format&fit=crop&w=800&q=80',
-    price: 'Rp 175.000',
-  },
-  {
-    id: 'ev-4',
-    title: 'Surabaya Futsal Championship',
-    organizer: 'PSSI Surabaya',
-    date: '26–27 Oktober 2026',
-    location: 'Lapangan Futsal Bung Tomo',
-    city: 'Surabaya',
-    category: 'Futsal',
-    type: 'Kompetisi',
-    participants: '64 tim',
-    image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=800&q=80',
-    price: 'Rp 500.000 / tim',
-  },
-  {
-    id: 'ev-5',
-    title: '3×3 Basketball Jakarta Open',
-    organizer: 'Perbasi DKI',
-    date: '2 November 2026',
-    location: 'Pantai Karnaval, Ancol',
-    city: 'Jakarta',
-    category: 'Basket',
-    type: 'Open Tournament',
-    participants: '48 tim',
-    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=800&q=80',
-    price: 'Rp 300.000 / tim',
-  },
-  {
-    id: 'ev-6',
-    title: 'Yogyakarta Tennis Open 2026',
-    organizer: 'Pelti DIY',
-    date: '8–10 November 2026',
-    location: 'Gor Klebengan, Yogyakarta',
-    city: 'Yogyakarta',
-    category: 'Tennis',
-    type: 'Open Tournament',
-    participants: '128 peserta',
-    image: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=800&q=80',
-    price: 'Rp 200.000',
-  },
-  {
-    id: 'ev-7',
-    title: 'Gym Fest Bali 2026',
-    organizer: 'Bali Fitness Community',
-    date: '15 November 2026',
-    location: 'Seminyak Square, Bali',
-    city: 'Bali',
-    category: 'Gym',
-    type: 'Festival',
-    participants: '800 peserta',
-    image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80',
-    price: 'Gratis',
-  },
-  {
-    id: 'ev-8',
-    title: 'Bekasi Half Marathon',
-    organizer: 'Komunitas Lari Bekasi',
-    date: '22 November 2026',
-    location: 'Summarecon Mall Bekasi',
-    city: 'Bekasi',
-    category: 'Running',
-    type: 'Fun Run',
-    participants: '3.000 peserta',
-    image: 'https://images.unsplash.com/photo-1594882645126-14ac19a33f3e?auto=format&fit=crop&w=800&q=80',
-    price: 'Rp 125.000',
-  },
-];
 
 const TYPE_COLORS: Record<string, string> = {
   Kompetisi: '#FF453A',
@@ -150,15 +45,37 @@ const TYPE_COLORS: Record<string, string> = {
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [events, setEvents] = useState<SportEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    async function fetchEvents() {
+      try {
+        const { data, error } = await supabase.from('events').select('*');
+        if (error) throw error;
+        // map backend keys to frontend keys if they differ
+        const formatted = (data || []).map((e: any) => ({
+          ...e,
+          image: e.image_url, // map image_url to image
+        }));
+        setEvents(formatted);
+      } catch (e) {
+        console.error('Error fetching events:', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchEvents();
+  }, []);
 
   const filteredEvents =
     selectedCategory === 'Semua'
-      ? EVENTS
-      : EVENTS.filter((e) => e.category === selectedCategory);
+      ? events
+      : events.filter((e) => e.category === selectedCategory);
 
-  const featured = selectedCategory === 'Semua' ? EVENTS.find((e) => e.isFeatured) : null;
+  const featured = selectedCategory === 'Semua' ? events.find((e) => e.isFeatured) : null;
   const listEvents = selectedCategory === 'Semua'
-    ? EVENTS.filter((e) => !e.isFeatured)
+    ? events.filter((e) => !e.isFeatured)
     : filteredEvents;
 
   return (
@@ -176,31 +93,20 @@ export default function ExploreScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Category Pills */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoryList}
-        style={styles.categoryScroll}
-      >
-        {CATEGORIES.map((cat) => {
-          const active = selectedCategory === cat;
-          return (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.pill, active && styles.pillActive]}
-              onPress={() => setSelectedCategory(cat)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.pillText, active && styles.pillTextActive]}>{cat}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={20} color={Colors.textMuted} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Cari event, kompetisi, atau kota..."
+          placeholderTextColor={Colors.textMuted}
+        />
+      </View>
+
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 90 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 90, paddingTop: 16 }]}
       >
         {/* Featured Event */}
         {featured && (
@@ -249,9 +155,7 @@ export default function ExploreScreen() {
 
         {/* Event List */}
         <View style={styles.section}>
-          {selectedCategory === 'Semua' && (
-            <Text style={styles.sectionLabel}>📅 Semua Event</Text>
-          )}
+          <Text style={styles.sectionLabel}>📅 Semua Event</Text>
           {listEvents.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="calendar-outline" size={44} color={Colors.textSecondary} />
@@ -358,8 +262,30 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
     letterSpacing: -0.2,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    marginHorizontal: Spacing.base,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.pill,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    height: 44,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: Colors.textPrimary,
+    fontSize: 14,
+    fontFamily: Typography.fontRegular,
+  },
   featuredCard: {
-    height: 260,
+    height: 180,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
     borderWidth: 1,
