@@ -18,18 +18,27 @@ export const SIZES = {
 export const SPACING = {
   xs: 4,
   s: 8,
+  sm: 8,
   m: 16,
+  md: 16,
+  base: 16,
   l: 24,
+  lg: 24,
   xl: 32,
   xxl: 40,
+  xxxl: 48,
+  xxxxl: 64,
 };
 
 export const RADIUS = {
   s: 8,
   m: 16,
+  md: 16,
   l: 24,
+  lg: 24,
   xl: 32,
   round: 9999,
+  pill: 9999,
 };
 
 export const TYPOGRAPHY = {
@@ -38,7 +47,9 @@ export const TYPOGRAPHY = {
   h3: { fontSize: 20, fontWeight: '600' as const },
   body1: { fontSize: 16, fontWeight: '400' as const },
   body2: { fontSize: 14, fontWeight: '400' as const },
+  bodySmall: { fontSize: 12, fontWeight: '400' as const },
   caption: { fontSize: 12, fontWeight: '400' as const },
+  button: { fontSize: 16, fontWeight: '600' as const },
 };
 
 export const Palette = {

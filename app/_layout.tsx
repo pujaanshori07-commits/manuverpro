@@ -1,5 +1,6 @@
 import { Session } from '@supabase/supabase-js';
-import { Redirect, Stack, SplashScreen, useSegments } from 'expo-router';
+import { Redirect, Stack, SplashScreen, useSegments, useRouter } from 'expo-router';
+import * as Linking from 'expo-linking';
 import React, { Component, ErrorInfo, ReactNode, createContext, useCallback, useContext, useEffect, useState, useRef } from 'react';
 import { ActivityIndicator, Text, View, Platform, TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -35,6 +36,7 @@ type Profile = {
   life_tags: string[] | null;
   interests: string[] | null;
   workout_preference: string | null;
+  availability: string[] | null;
   has_completed_onboarding?: boolean;
 };
 
@@ -140,6 +142,72 @@ export default function RootLayout() {
   }, []);
 
   const segments = useSegments();
+  const router = useRouter();
+
+  // Robust query and hash fragment parser for React Native custom schemes
+  const parseParamsFromUrl = (url: string) => {
+    const params: Record<string, string> = {};
+    const urlSegments = url.split(/[\?\#]/);
+    for (let i = 1; i < urlSegments.length; i++) {
+      urlSegments[i].split('&').forEach((pair) => {
+        const [key, value] = pair.split('=');
+        if (key && value) {
+          try {
+            params[key] = decodeURIComponent(value.replace(/\+/g, ' '));
+          } catch {
+            params[key] = value;
+          }
+        }
+      });
+    }
+    return { params, errorCode: params.error_description || params.error || null };
+  };
+
+  useEffect(() => {
+    // Global Deep Link Handler for Password Recovery
+    const handleDeepLink = async (event: { url: string }) => {
+      if (
+        event.url &&
+        (event.url.includes('code=') ||
+         event.url.includes('access_token=') ||
+         event.url.includes('error='))
+      ) {
+        const { params, errorCode } = parseParamsFromUrl(event.url);
+        if (errorCode) return;
+
+        // 1. Recovery Flow
+        if (params.type === 'recovery' && params.access_token) {
+          const { error } = await supabase.auth.setSession({
+            access_token: params.access_token,
+            refresh_token: params.refresh_token || '',
+          });
+          if (!error) {
+            router.push('/reset-password');
+          }
+          return;
+        }
+
+        // 2. PKCE Flow (OAuth exchange code)
+        if (params.code) {
+          await supabase.auth.exchangeCodeForSession(params.code);
+          return;
+        }
+
+        // 3. Implicit Flow (access_token)
+        if (params.access_token) {
+          await supabase.auth.setSession({
+            access_token: params.access_token,
+            refresh_token: params.refresh_token || '',
+          });
+          return;
+        }
+      }
+    };
+
+    Linking.getInitialURL().then(url => { if (url) handleDeepLink({ url }); });
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession()
@@ -213,7 +281,7 @@ export default function RootLayout() {
 
   // Instead of early return which unmounts Stack, we use an absolute overlay
 
-  const authRoutes = ['login', 'register', 'welcome', 'intro'];
+  const authRoutes = ['login', 'register', 'welcome', 'intro', 'forgot-password', 'reset-password'];
   const inAuthGroup = authRoutes.includes(segments[0] as string);
   const inOnboardingGroup = (segments[0] as string) === 'onboarding';
 

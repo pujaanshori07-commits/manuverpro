@@ -22,7 +22,7 @@ create or replace function public.complete_onboarding(
   p_bio text,
   p_pendidikan text,
   p_pekerjaan text,
-  p_sport_ids integer[]
+  p_sport_ids text[]
 )
 returns void
 language plpgsql
@@ -67,5 +67,5 @@ end;
 $$;
 
 grant execute on function public.complete_onboarding(
-  text, date, text, text, text, text, text, text, text, text, text, text, integer[]
+  text, date, text, text, text, text, text, text, text, text, text, text, text[]
 ) to authenticated;

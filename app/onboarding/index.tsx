@@ -27,7 +27,7 @@ export default function WelcomeScreen() {
       <LinearGradient
         colors={['rgba(255, 90, 31, 0.16)', 'rgba(11, 13, 18, 0.95)', '#0B0D12']}
         locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>

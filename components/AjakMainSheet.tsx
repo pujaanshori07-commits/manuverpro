@@ -14,8 +14,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { SPORT_TAG_MAP } from '../app/(tabs)/index';
 import { Colors, Typography, BorderRadius, Spacing } from '../constants/theme';
+
+const SPORT_TAG_MAP: Record<string, { name: string, icon: any }> = {
+  badminton: { name: 'Badminton', icon: 'tennisball-outline' },
+  lari: { name: 'Lari', icon: 'walk-outline' },
+  gym: { name: 'Gym', icon: 'barbell-outline' },
+  sepeda: { name: 'Sepeda', icon: 'bicycle-outline' },
+  basket: { name: 'Basket', icon: 'basketball-outline' },
+  futsal: { name: 'Futsal', icon: 'football-outline' },
+};
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 

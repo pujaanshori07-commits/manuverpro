@@ -27,10 +27,12 @@ const GRID_PADDING = 20;
 const GRID_GAP = 10;
 const SLOT_SIZE = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * 2) / 3;
 
+import { SPORT_TAG_MAP } from './(tabs)/index';
+
 type Sport = {
-  id: number;
+  id: string;
   nama: string;
-  icon?: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  icon?: string;
 };
 
 const COUNTRIES = [
@@ -41,6 +43,9 @@ const COUNTRIES = [
 
 const JENJANG_PENDIDIKAN = ['D3', 'S1', 'S2', 'S3', 'Lainnya'];
 const MAX_PHOTOS = 6;
+
+const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Pro'];
+const AVAILABILITY_OPTIONS = ['Pagi', 'Siang', 'Sore', 'Malam', 'Akhir Pekan'];
 
 export default function EditProfileScreen() {
   const { session, profile, refreshProfile } = useAuth();
@@ -66,10 +71,11 @@ export default function EditProfileScreen() {
   const [institusi, setInstitusi] = useState('');
 
   // Sports list & user selected sports
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [selectedSports, setSelectedSports] = useState<number[]>([]);
+  const [selectedSports, setSelectedSports] = useState<string[]>([]);
+  const [skillLevel, setSkillLevel] = useState('');
+  const [availability, setAvailability] = useState<string[]>([]);
 
-  // Add custom sport modal
+  // Add custom sport modal (disabled as we use hardcoded sports now)
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [customSportName, setCustomSportName] = useState('');
 
@@ -87,6 +93,8 @@ export default function EditProfileScreen() {
     setHobi(profile.hobi || '');
     setPekerjaan(profile.pekerjaan || '');
     setBio(profile.bio || '');
+    setSkillLevel(profile.skill_level || '');
+    setAvailability(profile.availability ? (profile.availability as any).split(', ') : []);
 
     // Initialize photos array (fallback to foto_url if photos column is not populated yet)
     const rawPhotos = (profile as any)?.photos;
@@ -131,14 +139,6 @@ export default function EditProfileScreen() {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Fetch all sports
-        const { data: allSports, error: sportsError } = await supabase
-          .from('sports')
-          .select('id, nama, icon')
-          .order('nama', { ascending: true });
-        if (sportsError) throw sportsError;
-        if (allSports) setSports(allSports as Sport[]);
-
         // Fetch user selected sports IDs
         const { data: userSportsData, error: userSportsError } = await supabase
           .from('user_sports')
@@ -162,9 +162,11 @@ export default function EditProfileScreen() {
     loadData();
   }, [session, profile]);
 
-  const toggleSport = (id: number) => {
+  const toggleSport = (sportId: string) => {
     setSelectedSports((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+      prev.includes(sportId)
+        ? prev.filter((id) => id !== sportId)
+        : [...prev, sportId]
     );
   };
 
@@ -263,45 +265,7 @@ export default function EditProfileScreen() {
   };
 
   const handleAddCustomSport = async () => {
-    const trimmedSport = customSportName.trim();
-    if (!trimmedSport) return Alert.alert('Nama olahraga tidak boleh kosong');
-
-    try {
-      const { data: existing, error: checkError } = await supabase
-        .from('sports')
-        .select('id, nama')
-        .ilike('nama', trimmedSport);
-
-      if (checkError) throw checkError;
-
-      if (existing && existing.length > 0) {
-        const matchedSport = existing[0];
-        if (!selectedSports.includes(matchedSport.id)) {
-          setSelectedSports((prev) => [...prev, matchedSport.id]);
-        }
-        setIsModalVisible(false);
-        setCustomSportName('');
-        return;
-      }
-
-      const { data: newSport, error: insertError } = await supabase
-        .from('sports')
-        .insert({ nama: trimmedSport })
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      if (newSport) {
-        setSports((prev) => [...prev, newSport].sort((a, b) => a.nama.localeCompare(b.nama)));
-        setSelectedSports((prev) => [...prev, newSport.id]);
-      }
-
-      setIsModalVisible(false);
-      setCustomSportName('');
-    } catch (err: any) {
-      Alert.alert('Gagal menambah olahraga', err.message);
-    }
+    Alert.alert('Info', 'Penambahan olahraga custom dinonaktifkan sementara.');
   };
 
   const handleSave = async () => {
@@ -337,6 +301,8 @@ export default function EditProfileScreen() {
           pendidikan: combinedPendidikan,
           pekerjaan: pekerjaan.trim() || null,
           bio: bio.trim() || null,
+          skill_level: skillLevel || null,
+          availability: availability.length > 0 ? availability.join(', ') : null,
           foto_url: primaryAvatar,
           photos: photos,
         })
@@ -569,18 +535,19 @@ export default function EditProfileScreen() {
         </View>
 
         <View style={styles.sportsContainer}>
-          {sports.map((sport) => {
-            const isSelected = selectedSports.includes(sport.id);
+          {Object.entries(SPORT_TAG_MAP).map(([sportId, rawSport]) => {
+            const sport = rawSport as any;
+            const isSelected = selectedSports.includes(sportId);
             return (
               <TouchableOpacity
-                key={sport.id}
+                key={sportId}
                 style={[styles.sportChip, isSelected && styles.sportChipSelected]}
-                onPress={() => toggleSport(sport.id)}
+                onPress={() => toggleSport(sportId)}
                 activeOpacity={0.7}
               >
                 {sport.icon ? (
-                  <MaterialCommunityIcons
-                    name={sport.icon}
+                  <Ionicons
+                    name={sport.icon as any}
                     size={18}
                     color={isSelected ? '#FFFFFF' : '#888A90'}
                     style={{ marginRight: 6 }}
@@ -594,7 +561,7 @@ export default function EditProfileScreen() {
                   />
                 )}
                 <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
-                  {sport.nama}
+                  {sport.name}
                 </Text>
               </TouchableOpacity>
             );
@@ -603,6 +570,48 @@ export default function EditProfileScreen() {
         {selectedSports.length === 0 && (
           <Text style={styles.errorHint}>Pilih minimal satu cabang olahraga.</Text>
         )}
+
+        <Text style={[styles.label, { marginTop: 16 }]}>Kemampuan Olahraga Umum (Skill Level)</Text>
+        <View style={styles.sportsContainer}>
+          {SKILL_LEVELS.map(level => {
+            const isSelected = skillLevel === level;
+            return (
+              <TouchableOpacity
+                key={level}
+                style={[styles.sportChip, isSelected && styles.sportChipSelected]}
+                onPress={() => setSkillLevel(level)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
+                  {level}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <Text style={[styles.label, { marginTop: 16 }]}>Kapan kamu biasa berolahraga? (Pilih &gt;1)</Text>
+        <View style={styles.sportsContainer}>
+          {AVAILABILITY_OPTIONS.map(time => {
+            const isSelected = availability.includes(time);
+            return (
+              <TouchableOpacity
+                key={time}
+                style={[styles.sportChip, isSelected && styles.sportChipSelected]}
+                onPress={() => {
+                  setAvailability(prev => 
+                    prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
+                  );
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
+                  {time}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {/* Save Button */}
         <TouchableOpacity

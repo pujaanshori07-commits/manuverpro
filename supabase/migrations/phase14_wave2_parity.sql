@@ -30,7 +30,7 @@ RETURNS TABLE (
 ) AS $$
 DECLARE
   requester_location GEOGRAPHY;
-  requester_sports UUID[];
+  requester_sports TEXT[];
 BEGIN
   SELECT location INTO requester_location FROM public.profiles WHERE public.profiles.id = user_id_param;
   SELECT ARRAY_AGG(sport_id) INTO requester_sports FROM public.user_sports WHERE public.user_sports.user_id = user_id_param;
@@ -67,7 +67,7 @@ BEGIN
         (30 * (
           SELECT COUNT(*)::float / GREATEST(COALESCE(array_length(requester_sports, 1), 1), 1)
           FROM public.user_sports us 
-          WHERE us.user_id = p.id AND us.sport_id = ANY(COALESCE(requester_sports, ARRAY[]::UUID[]))
+          WHERE us.user_id = p.id AND us.sport_id = ANY(COALESCE(requester_sports, ARRAY[]::TEXT[]))
         ))
         +
         -- Mutual Interest Boost (+50 pts if target already liked requester)

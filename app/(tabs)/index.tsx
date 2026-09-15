@@ -31,6 +31,7 @@ import Animated, {
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import MatchCelebration from '../../components/MatchCelebration';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
@@ -127,6 +128,8 @@ export default function DiscoverScreen() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [matchData, setMatchData] = useState<{ matchId: string, nama: string, foto_url: string | null } | null>(null);
+  const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
   const fetchProfiles = useCallback(async () => {
@@ -137,7 +140,6 @@ export default function DiscoverScreen() {
       const userId = userData?.user?.id;
       
       if (!userId) {
-        setProfiles(DEMO_PROFILES);
         setLoading(false);
         return;
       }
@@ -151,42 +153,41 @@ export default function DiscoverScreen() {
         });
 
       if (error || !data || data.length === 0) {
-        setProfiles(DEMO_PROFILES);
+        setProfiles([]);
       } else {
-        const formatted: Profile[] = data.map((item: any, idx: number) => {
-          const fallbackDemo = DEMO_PROFILES[idx % DEMO_PROFILES.length];
+        const formatted: Profile[] = data.map((item: any) => {
           const rawPhotos = Array.isArray(item.photos) && item.photos.length > 0
             ? item.photos
             : item.foto_url
             ? [item.foto_url]
-            : fallbackDemo.photos;
+            : ['https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80'];
 
           return {
             id: item.id,
-            nama: item.nama || fallbackDemo.nama,
-            umur: item.umur || fallbackDemo.umur,
-            foto_url: rawPhotos[0] || fallbackDemo.foto_url,
+            nama: item.nama || 'Pengguna',
+            umur: item.umur || 25,
+            foto_url: rawPhotos[0],
             photos: rawPhotos,
-            alamat: item.alamat || fallbackDemo.alamat,
-            jarak: item.jarak || fallbackDemo.jarak,
+            alamat: item.alamat || 'Unknown Location',
+            jarak: item.jarak || '1 km',
             hobi: Array.isArray(item.hobi)
               ? item.hobi
               : item.hobi
               ? item.hobi.split(',').map((s: string) => s.trim())
-              : fallbackDemo.hobi,
-            bio: item.bio || fallbackDemo.bio,
-            prompt_question: item.prompt_question || fallbackDemo.prompt_question,
-            prompt_answer: item.prompt_answer || fallbackDemo.prompt_answer,
-            skill_level: item.skill_level || fallbackDemo.skill_level,
-            availability: item.availability || fallbackDemo.availability,
-            distance_pref: item.distance_pref || fallbackDemo.distance_pref,
-            interests: item.interests || fallbackDemo.interests,
+              : ['Olahraga'],
+            bio: item.bio || '',
+            prompt_question: item.prompt_question,
+            prompt_answer: item.prompt_answer,
+            skill_level: item.skill_level || 'Beginner',
+            availability: item.availability || 'Weekend',
+            distance_pref: item.distance_pref,
+            interests: item.interests || [],
           };
         });
         setProfiles(formatted);
       }
     } catch {
-      setProfiles(DEMO_PROFILES);
+      setProfiles([]);
     } finally {
       setLoading(false);
     }
@@ -227,30 +228,42 @@ export default function DiscoverScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   };
 
-  const handleSwipeComplete = (direction: 'left' | 'right') => {
+  const handleSwipeComplete = async (direction: 'left' | 'right') => {
     const swipedId = currentProfile?.id;
+    const swipedName = currentProfile?.nama;
+    const swipedPhoto = currentProfile?.foto_url;
+
     setCurrentIndex((prev) => prev + 1);
     translateX.value = 0;
     translateY.value = 0;
     resetScrollPosition();
 
     if (swipedId && !swipedId.startsWith('demo-')) {
-      supabase.auth.getUser().then(({ data }) => {
-        if (data?.user?.id) {
-          supabase.from('swipes').insert({
-            user_id: data.user.id,
-            target_user_id: swipedId,
-            action: direction === 'right' ? 'like' : 'pass',
-          }).then(({ error }) => {
-            if (error) console.error('Error recording swipe:', error);
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user?.id) {
+        // Optimistically record the swipe using RPC to also check for mutual match
+        const { data, error } = await supabase.rpc('handle_swipe', {
+          target_id: swipedId,
+          swipe_action: direction === 'right' ? 'like' : 'pass'
+        });
+
+        if (error) {
+          console.error('Error recording swipe:', error);
+        } else if (data?.is_match) {
+          // Fetch my avatar to show in the celebration modal
+          const { data: myProfile } = await supabase.from('profiles').select('foto_url').eq('id', userData.user.id).single();
+          setMyAvatarUrl(myProfile?.foto_url || null);
+          setMatchData({
+            matchId: data.match_id,
+            nama: swipedName || 'Seseorang',
+            foto_url: swipedPhoto || null
           });
         }
-      });
+      }
     }
   };
 
   const triggerSwipe = (direction: 'left' | 'right') => {
-    'worklet';
     runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
 
     if (direction === 'left') {
@@ -330,8 +343,9 @@ export default function DiscoverScreen() {
   };
 
   return (
-    <GestureHandlerRootView style={styles.rootContainer}>
-      <View style={[styles.container, { paddingTop: insets.top }]}>
+    <>
+      <GestureHandlerRootView style={styles.rootContainer}>
+        <View style={[styles.container, { paddingTop: insets.top }]}>
         
         {/* Header with Centered "manuver" Wordmark */}
         <View style={styles.header}>
@@ -355,7 +369,7 @@ export default function DiscoverScreen() {
           /* Empty Deck State */
           <View style={styles.emptyContainer}>
             <View style={styles.glowingRingsOuter}>
-              <Animated.View style={[styles.glowingRingsOuter, StyleSheet.absoluteFillObject, radarAnimatedStyle, { backgroundColor: 'rgba(255, 87, 47, 0.15)' }]} />
+              <Animated.View style={[styles.glowingRingsOuter, StyleSheet.absoluteFill, radarAnimatedStyle, { backgroundColor: 'rgba(255, 87, 47, 0.15)' }]} />
               <View style={styles.glowingRingsInner}>
                 <Ionicons name="flame" size={56} color={Colors.primary} />
               </View>
@@ -626,6 +640,13 @@ export default function DiscoverScreen() {
         )}
       </View>
     </GestureHandlerRootView>
+      <MatchCelebration
+        visible={matchData !== null}
+        matchData={matchData}
+        myAvatarUrl={myAvatarUrl}
+        onClose={() => setMatchData(null)}
+      />
+    </>
   );
 }
 

@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, BorderRadius } from '../constants/theme';
-import { SPORT_TAG_MAP } from '../app/(tabs)/index';
 import { addMatchToCalendar } from '../lib/calendar';
 import { scheduleMatchReminder } from '../lib/notifications';
 import { Alert, ActivityIndicator } from 'react-native';
@@ -28,14 +27,24 @@ export default function SparingInviteCard({
   onDecline,
   note,
 }: SparingInviteCardProps) {
-  const sportData = SPORT_TAG_MAP[sport.toLowerCase()] || { name: sport, icon: 'fitness' };
+  const getSportIcon = (name: string): any => {
+    const lower = name.toLowerCase();
+    if (lower.includes('run') || lower.includes('lari')) return 'walk-outline';
+    if (lower.includes('gym') || lower.includes('fit') || lower.includes('barbell')) return 'barbell-outline';
+    if (lower.includes('cycle') || lower.includes('sepeda')) return 'bicycle-outline';
+    if (lower.includes('badminton') || lower.includes('tennis')) return 'tennisball-outline';
+    if (lower.includes('basket')) return 'basketball-outline';
+    if (lower.includes('futsal') || lower.includes('football')) return 'football-outline';
+    return 'fitness-outline';
+  };
+  const sportData = { name: sport, icon: getSportIcon(sport) };
   
   const dateObj = new Date(scheduledAt);
   const formattedDate = dateObj.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
   const formattedTime = dateObj.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
   // Determine status display
-  let statusBadgeColor = Colors.primary;
+  let statusBadgeColor: string = Colors.primary;
   let statusText = 'Pending';
   let isExpired = false;
 

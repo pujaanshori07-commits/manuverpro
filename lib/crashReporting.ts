@@ -2,6 +2,7 @@
  * Crash Reporting for Manuver
  * Wraps Sentry to capture exceptions and breadcrumbs in production.
  */
+// @ts-ignore
 import * as Sentry from '@sentry/react-native';
 
 const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN || 'https://20637363d045ba6a1256b6b100515d8f@o4512040256405504.ingest.us.sentry.io/4512040327577600';

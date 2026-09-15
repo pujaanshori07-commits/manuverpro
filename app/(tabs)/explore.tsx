@@ -291,9 +291,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
   },
-  featuredImage: { ...StyleSheet.absoluteFillObject },
+  featuredImage: { ...StyleSheet.absoluteFill },
   featuredGradient: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     padding: Spacing.base,
     justifyContent: 'flex-end',
   },

@@ -212,7 +212,7 @@ export default function MatchCelebrationScreen() {
       <LinearGradient
         colors={['rgba(11, 13, 19, 0.98)', '#0B0D13', '#120D0B']}
         locations={[0, 0.65, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       {/* Decorative Sport Ambient Flare (Top Right & Bottom Left) */}
@@ -265,7 +265,7 @@ export default function MatchCelebrationScreen() {
           <Animated.View style={[styles.avatarGlowRing, glowAnimatedStyle]}>
             <LinearGradient
               colors={['rgba(255, 90, 42, 0.45)', 'rgba(255, 90, 42, 0.05)', 'transparent']}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
           </Animated.View>
 

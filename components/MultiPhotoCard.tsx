@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   touchZonesContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flexDirection: 'row',
     zIndex: 10,
   },

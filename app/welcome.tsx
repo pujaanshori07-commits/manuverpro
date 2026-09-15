@@ -53,19 +53,12 @@ export default function WelcomeScreen() {
 
   return (
     <View style={styles.container}>
-        {/* Glowing Mesh Background */}
-        <Animated.View style={[styles.glowOrb, { top: -100, left: -100 }]} entering={FadeIn.duration(1500)}>
-          <LinearGradient
-            colors={['rgba(255, 90, 42, 0.25)', 'transparent']}
-            style={StyleSheet.absoluteFillObject}
-          />
-        </Animated.View>
-        <Animated.View style={[styles.glowOrb, { bottom: -100, right: -100 }]} entering={FadeIn.duration(1500).delay(500)}>
-          <LinearGradient
-            colors={['rgba(255, 90, 42, 0.15)', 'transparent']}
-            style={StyleSheet.absoluteFillObject}
-          />
-        </Animated.View>
+        {/* Smooth Full Screen Background Gradient */}
+        <LinearGradient
+          colors={['#2A1108', '#0B0D12']}
+          locations={[0, 0.6]}
+          style={StyleSheet.absoluteFill}
+        />
 
         <SafeAreaView style={styles.content}>
           <View style={styles.brandContainer}>
@@ -117,13 +110,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B0D12',
     overflow: 'hidden',
   },
-  glowOrb: {
-    position: 'absolute',
-    width: width * 1.5,
-    height: width * 1.5,
-    borderRadius: width,
-    zIndex: 0,
-  },
+
   content: {
     flex: 1,
     justifyContent: 'space-between',

@@ -89,14 +89,25 @@ export default function LoginScreen() {
 
       setIsLoading(true);
 
-      // 1. PKCE Flow (exchange authorization code)
+      // 1. Recovery Flow (User clicked reset password link)
+      if (params.type === 'recovery' && params.access_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token: params.access_token,
+          refresh_token: params.refresh_token || '',
+        });
+        if (error) throw error;
+        router.push('/reset-password');
+        return;
+      }
+
+      // 2. PKCE Flow (exchange authorization code)
       if (params.code) {
         const { error } = await supabase.auth.exchangeCodeForSession(params.code);
         if (error) throw error;
         return;
       }
 
-      // 2. Implicit Flow (access_token & refresh_token)
+      // 3. Implicit Flow (access_token & refresh_token)
       if (params.access_token) {
         const { error } = await supabase.auth.setSession({
           access_token: params.access_token,
@@ -344,6 +355,13 @@ export default function LoginScreen() {
               ) : (
                 <Text style={styles.primaryButtonText}>Continue</Text>
               )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={{ marginTop: 20, alignSelf: 'center' }} 
+              onPress={() => router.push('/forgot-password')}
+            >
+              <Text style={{ color: COLORS.primary, fontSize: 16, fontWeight: '600' }}>Lupa Password?</Text>
             </TouchableOpacity>
           </View>
         )}

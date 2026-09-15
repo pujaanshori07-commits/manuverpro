@@ -223,7 +223,7 @@ export default function OnboardingFlowScreen() {
       <LinearGradient
         colors={['#0F1118', '#0B0D13', '#08090D']}
         locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
 
       {/* Top Header & Segmented Progress Bar */}

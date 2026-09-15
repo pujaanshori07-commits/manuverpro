@@ -36,55 +36,6 @@ interface ConversationItem {
   unreadCount?: number;
 }
 
-const DEMO_NEW_MATCHES: MatchUser[] = [
-  {
-    id: 'user-1',
-    name: 'Sarah',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    isNew: true,
-  },
-  {
-    id: 'user-2',
-    name: 'Dimas',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
-    isNew: true,
-  },
-  {
-    id: 'user-3',
-    name: 'Sari',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
-    isNew: false,
-  },
-];
-
-const DEMO_CONVERSATIONS: ConversationItem[] = [
-  {
-    id: 'chat-1',
-    partnerId: 'user-1',
-    name: 'Sarah',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    lastMessage: 'Ajak main tenis di Senayan Sabtu ini yuk?',
-    timestamp: '10:42',
-    unreadCount: 1,
-  },
-  {
-    id: 'chat-2',
-    partnerId: 'user-2',
-    name: 'Dimas',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&q=80',
-    lastMessage: 'Oke mantap, jam 7 malam ya!',
-    timestamp: 'Kemarin',
-  },
-  {
-    id: 'chat-3',
-    partnerId: 'user-3',
-    name: 'Sari',
-    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
-    lastMessage: 'Besok pagi jadi running bareng?',
-    timestamp: 'Rab',
-  },
-];
-
 export default function MatchesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -100,8 +51,8 @@ export default function MatchesScreen() {
       const currentUserId = authData?.user?.id;
 
       if (!currentUserId) {
-        setNewMatches(DEMO_NEW_MATCHES);
-        setConversations(DEMO_CONVERSATIONS);
+        setNewMatches([]);
+        setConversations([]);
         return;
       }
 
@@ -120,8 +71,8 @@ export default function MatchesScreen() {
         .order('created_at', { ascending: false });
 
       if (matchError || !matchRows || matchRows.length === 0) {
-        setNewMatches(DEMO_NEW_MATCHES);
-        setConversations(DEMO_CONVERSATIONS);
+        setNewMatches([]);
+        setConversations([]);
         return;
       }
 
@@ -129,13 +80,14 @@ export default function MatchesScreen() {
       const parsedConversations: ConversationItem[] = [];
 
       for (const m of matchRows) {
-        const partner = m.user_a_id === currentUserId ? m.user_b : m.user_a;
+        const rawPartner = m.user_a_id === currentUserId ? m.user_b : m.user_a;
+        const partner = Array.isArray(rawPartner) ? rawPartner[0] : rawPartner;
         if (!partner) continue;
 
         parsedMatches.push({
           id: partner.id,
           name: partner.nama || 'Partner',
-          avatar: partner.foto_url || DEMO_NEW_MATCHES[0].avatar,
+          avatar: partner.foto_url || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
           isNew: true,
         });
 
@@ -143,17 +95,17 @@ export default function MatchesScreen() {
           id: m.id,
           partnerId: partner.id,
           name: partner.nama || 'Partner',
-          avatar: partner.foto_url || DEMO_NEW_MATCHES[0].avatar,
+          avatar: partner.foto_url || 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
           lastMessage: 'Mulai obrolan sekarang...',
           timestamp: 'Baru saja',
         });
       }
 
-      setNewMatches(parsedMatches.length ? parsedMatches : DEMO_NEW_MATCHES);
-      setConversations(parsedConversations.length ? parsedConversations : DEMO_CONVERSATIONS);
+      setNewMatches(parsedMatches);
+      setConversations(parsedConversations);
     } catch {
-      setNewMatches(DEMO_NEW_MATCHES);
-      setConversations(DEMO_CONVERSATIONS);
+      setNewMatches([]);
+      setConversations([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

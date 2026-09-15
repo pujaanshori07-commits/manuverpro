@@ -2,7 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
+  handleNotification: async (): Promise<any> => ({
     shouldShowAlert: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
@@ -47,7 +47,7 @@ export async function scheduleMatchReminder(
           body,
           sound: false,
         },
-        trigger: reminderTime,
+        trigger: reminderTime as any,
       });
       return true;
     } catch (error) {
