@@ -21,7 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // If you have your supabase client configured at lib/supabase.ts:
-// import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 const STORAGE_KEY = '@manuver_match_filters_v1';
 
@@ -197,16 +197,15 @@ export default function MatchFiltersScreen() {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 
       // 2. Persist to Supabase if connected
-      /*
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase.from('profiles').update({
-          preferences: payload,
+          age_pref_min: parsedMin,
+          age_pref_max: parsedMax,
           is_ghost_mode: !showMyProfile,
           updated_at: new Date().toISOString(),
         }).eq('id', user.id);
       }
-      */
 
       // 3. Return to previous screen with filters encoded in navigation params
       router.back();

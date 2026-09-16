@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   GestureHandlerRootView,
   GestureDetector,
@@ -144,11 +145,30 @@ export default function DiscoverScreen() {
         return;
       }
 
+      // Read preferences from AsyncStorage
+      const storedFilters = await AsyncStorage.getItem('@manuver_match_filters_v1');
+      let maxDist = 50;
+      let maxAge = 60;
+      let minAge = 18;
+      let filterSports = null;
+
+      if (storedFilters) {
+        const parsed = JSON.parse(storedFilters);
+        maxDist = parsed.maxDistance ?? 50;
+        maxAge = parsed.maxAge ?? 60;
+        minAge = parsed.minAge ?? 18;
+        if (parsed.selectedSports && parsed.selectedSports.length > 0) {
+          filterSports = parsed.selectedSports;
+        }
+      }
+
       const { data, error } = await supabase
         .rpc('get_nearby_profiles', {
           user_id_param: userId,
-          max_distance_km: 50,
-          max_age_val: 60,
+          max_distance_km: maxDist,
+          max_age_val: maxAge,
+          min_age_val: minAge,
+          filter_sports: filterSports,
           limit_val: 25
         });
 

@@ -25,30 +25,48 @@ export default function WelcomeScreen() {
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'dark'];
 
-  // Hologram Glow Animation
+  // Hologram Glow Animation & Floating
   const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0);
+  const pulseOpacity = useSharedValue(0.2);
+  const floatY = useSharedValue(0);
 
   useEffect(() => {
+    // Smooth and dynamic breathing animation using bezier
     pulseScale.value = withRepeat(
-      withTiming(1.05, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      withTiming(1.2, { duration: 2000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) }),
       -1,
       true
     );
     pulseOpacity.value = withRepeat(
-      withTiming(0.6, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+      withTiming(0.7, { duration: 2000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) }),
+      -1,
+      true
+    );
+    // Extra subtle floating animation
+    floatY.value = withRepeat(
+      withTiming(-12, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
       -1,
       true
     );
   }, []);
 
-  const hologramStyle = useAnimatedStyle(() => ({
+  const glowStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
+    opacity: pulseOpacity.value,
+    backgroundColor: themeColors.primary,
+    position: 'absolute',
+    width: width * 0.5,
+    height: width * 0.5,
+    borderRadius: width * 0.25,
     shadowColor: themeColors.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: pulseOpacity.value,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOpacity: 0.8,
+    shadowRadius: 30,
+    elevation: 20,
+  }));
+
+  const floatStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: floatY.value }],
   }));
 
   return (
@@ -62,7 +80,8 @@ export default function WelcomeScreen() {
 
         <SafeAreaView style={styles.content}>
           <View style={styles.brandContainer}>
-            <Animated.View style={[hologramStyle, styles.logoWrapper]}>
+            <Animated.View style={glowStyle} />
+            <Animated.View style={[floatStyle, styles.logoWrapper]}>
               <Image 
                 source={require('../assets/images/logo.png')} 
                 style={styles.logoImage} 
@@ -72,14 +91,14 @@ export default function WelcomeScreen() {
           </View>
           
           <View style={styles.bottomSection}>
-            <Animated.Text entering={FadeInDown.duration(800).delay(300).springify()} style={styles.headline}>
+            <Animated.Text entering={FadeInDown.duration(1000).delay(300).springify().damping(14)} style={styles.headline}>
               Find your sports{'\n'}buddies nearby.
             </Animated.Text>
-            <Animated.Text entering={FadeInDown.duration(800).delay(500).springify()} style={styles.subhead}>
+            <Animated.Text entering={FadeInDown.duration(1000).delay(500).springify().damping(14)} style={styles.subhead}>
               Connect, train, and dominate together.
             </Animated.Text>
             
-            <Animated.View entering={FadeInDown.duration(800).delay(700).springify()}>
+            <Animated.View entering={FadeInDown.duration(1000).delay(700).springify().damping(14)}>
               <TouchableOpacity 
                 style={[styles.primaryBtn, { backgroundColor: themeColors.primary }]}
                 onPress={() => router.push('/register')}
@@ -89,7 +108,7 @@ export default function WelcomeScreen() {
               </TouchableOpacity>
             </Animated.View>
             
-            <Animated.View entering={FadeInDown.duration(800).delay(900).springify()}>
+            <Animated.View entering={FadeInDown.duration(1000).delay(900).springify().damping(14)}>
               <TouchableOpacity 
                 style={styles.secondaryBtn}
                 onPress={() => router.push('/login')}

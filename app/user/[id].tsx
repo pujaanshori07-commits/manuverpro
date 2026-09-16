@@ -15,6 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
+import { supabase } from '../../lib/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HERO_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.25);
@@ -43,7 +44,7 @@ const DEMO_USER_DETAILS = {
 export default function UserDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { name, avatar } = useLocalSearchParams();
+  const { id, name, avatar } = useLocalSearchParams();
 
   const [activePhotoIdx] = useState(0);
 
@@ -53,11 +54,51 @@ export default function UserDetailScreen() {
     photos: avatar ? [avatar as string, ...DEMO_USER_DETAILS.photos.slice(1)] : DEMO_USER_DETAILS.photos,
   };
 
-  const handleReport = () => {
-    Alert.alert('Laporkan Profil', 'Pilih alasan untuk melaporkan partner ini ke tim pengawas.', [
+  const executeBlock = async () => {
+    try {
+      const { error } = await supabase.rpc('block_user', { p_blocked_id: id });
+      if (error) throw error;
+      Alert.alert('Berhasil', `${user.nama} telah diblokir.`);
+      router.back();
+    } catch (e: any) {
+      Alert.alert('Error Blokir', e.message);
+    }
+  };
+
+  const confirmBlock = () => {
+    Alert.alert(
+      'Konfirmasi Blokir',
+      `Apakah Anda yakin ingin memblokir ${user.nama}? Anda berdua tidak akan bisa saling berinteraksi lagi.`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        { text: 'Ya, Blokir', style: 'destructive', onPress: executeBlock },
+      ]
+    );
+  };
+
+  const executeReport = async (reason: string) => {
+    try {
+      const { error } = await supabase.rpc('report_user', { p_reported_id: id, p_reason: reason });
+      if (error) throw error;
+      Alert.alert('Terima kasih', 'Laporan kamu telah diterima dan sedang ditinjau oleh tim keamanan kami.');
+    } catch (e: any) {
+      Alert.alert('Error Pelaporan', e.message);
+    }
+  };
+
+  const handleReportFlow = () => {
+    Alert.alert('Laporkan Profil', `Pilih alasan untuk melaporkan ${user.nama}:`, [
       { text: 'Batal', style: 'cancel' },
-      { text: 'Perilaku Tidak Sopan', style: 'destructive', onPress: () => Alert.alert('Terima kasih', 'Laporan kamu sedang ditinjau.') },
-      { text: 'Spam atau Akun Palsu', style: 'destructive', onPress: () => Alert.alert('Terima kasih', 'Laporan kamu sedang ditinjau.') },
+      { text: 'Perilaku Tidak Sopan', onPress: () => executeReport('Perilaku Tidak Sopan') },
+      { text: 'Spam atau Akun Palsu', onPress: () => executeReport('Spam atau Akun Palsu') },
+    ]);
+  };
+
+  const handleMoreOptions = () => {
+    Alert.alert('Keamanan & Privasi', 'Apa yang ingin Anda lakukan terhadap profil ini?', [
+      { text: 'Batal', style: 'cancel' },
+      { text: 'Laporkan (Report)', onPress: handleReportFlow },
+      { text: 'Blokir Pengguna', style: 'destructive', onPress: confirmBlock },
     ]);
   };
 
@@ -76,7 +117,7 @@ export default function UserDetailScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.circleIconBtn}
-          onPress={handleReport}
+          onPress={handleMoreOptions}
           activeOpacity={0.8}
         >
           <Ionicons name="ellipsis-horizontal" size={20} color={Colors.white} />
