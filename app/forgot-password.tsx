@@ -18,7 +18,7 @@ export default function ForgotPasswordScreen() {
 
   const handleResetPassword = async () => {
     if (!email || !email.includes('@')) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      Alert.alert('Email Tidak Valid', 'Silakan masukkan alamat email yang benar.');
       return;
     }
 
@@ -34,7 +34,7 @@ export default function ForgotPasswordScreen() {
 
       setIsSuccess(true);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to send reset email.');
+      Alert.alert('Gagal', err.message || 'Gagal mengirimkan tautan reset password.');
     } finally {
       setIsLoading(false);
     }

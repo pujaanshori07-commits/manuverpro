@@ -17,11 +17,11 @@ export default function ResetPasswordScreen() {
 
   const handleUpdatePassword = async () => {
     if (!password || password.length < 6) {
-      Alert.alert('Invalid Password', 'Password must be at least 6 characters.');
+      Alert.alert('Password Lemah', 'Password harus minimal 6 karakter.');
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Mismatch', 'Passwords do not match.');
+      Alert.alert('Tidak Cocok', 'Konfirmasi password tidak sama dengan password baru.');
       return;
     }
 
@@ -37,7 +37,7 @@ export default function ResetPasswordScreen() {
 
       setIsSuccess(true);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to update password.');
+      Alert.alert('Gagal', err.message || 'Gagal memperbarui password.');
     } finally {
       setIsLoading(false);
     }
@@ -63,7 +63,7 @@ export default function ResetPasswordScreen() {
           <Text style={styles.title}>Buat Password Baru</Text>
           <Text style={styles.subtitle}>
             {isSuccess 
-              ? 'Password kamu berhasil diperbarui. Silakan login kembali.' 
+              ? 'Password kamu berhasil diperbarui. Kamu sekarang sudah masuk ke dalam aplikasi.' 
               : 'Silakan masukkan password baru untuk akun kamu.'}
           </Text>
 
@@ -108,9 +108,9 @@ export default function ResetPasswordScreen() {
           ) : (
             <TouchableOpacity 
               style={styles.button}
-              onPress={() => router.push('/login')}
+              onPress={() => router.replace('/(tabs)')}
             >
-              <Text style={styles.buttonText}>Kembali ke Login</Text>
+              <Text style={styles.buttonText}>Lanjutkan ke Aplikasi</Text>
             </TouchableOpacity>
           )}
         </View>
