@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { View, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography } from '../../constants/theme';
-import { useEffect } from 'react';
+
 import { supabase } from '../../lib/supabase';
 import { registerForPushNotifications, savePushToken } from '../../lib/pushNotifications';
 export default function TabLayout() {

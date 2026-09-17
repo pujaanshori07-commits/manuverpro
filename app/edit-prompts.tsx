@@ -17,7 +17,6 @@ export default function EditPromptsScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { loadData(); }, []);
 
   const loadData = async () => {
     try {
@@ -46,6 +45,7 @@ export default function EditPromptsScreen() {
     }
   };
 
+  useEffect(() => { loadData(); }, []);
   const handleSelectQuestion = (questionId: string) => {
     if (userPrompts.length >= 3 && !userPrompts.find(p => p.question_id === questionId)) {
       Alert.alert('Maksimal 3 Prompts', 'Anda telah memilih 3 prompts. Hapus salah satu terlebih dahulu untuk mengganti.');

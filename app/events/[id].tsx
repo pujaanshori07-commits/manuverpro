@@ -17,10 +17,6 @@ export default function EventDetailScreen() {
   const [registering, setRegistering] = useState(false);
   const [hasRegistered, setHasRegistered] = useState(false);
 
-  useEffect(() => {
-    fetchEventDetails();
-  }, [id]);
-
   const fetchEventDetails = async () => {
     try {
       const { data: userData } = await supabase.auth.getUser();

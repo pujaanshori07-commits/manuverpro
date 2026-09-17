@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image , useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useColorScheme } from 'react-native';
+
 import { Colors } from '../constants/Colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,7 +27,7 @@ export default function WelcomeScreen() {
 
   // Hologram Glow Animation & Floating
   const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.2);
+  const pulseOpacity = useSharedValue(0.1);
   const floatY = useSharedValue(0);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function WelcomeScreen() {
       true
     );
     pulseOpacity.value = withRepeat(
-      withTiming(0.7, { duration: 2000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) }),
+      withTiming(0.4, { duration: 2000, easing: Easing.bezier(0.25, 0.1, 0.25, 1) }),
       -1,
       true
     );
@@ -56,7 +56,7 @@ export default function WelcomeScreen() {
     borderRadius: width * 0.25,
     shadowColor: themeColors.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.4,
     shadowRadius: 30,
     elevation: 20,
   }));

@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity , Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Typography, BorderRadius } from '../constants/theme';
 import { addMatchToCalendar } from '../lib/calendar';
 import { scheduleMatchReminder } from '../lib/notifications';
-import { Alert, ActivityIndicator } from 'react-native';
+
 interface SparingInviteCardProps {
   inviteId: string;
   sport: string;

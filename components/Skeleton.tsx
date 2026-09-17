@@ -10,7 +10,7 @@ interface SkeletonProps {
 }
 
 export default function Skeleton({ width, height, borderRadius = 8, style }: SkeletonProps) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
+  const [opacity] = React.useState(() => new Animated.Value(0.3));
 
   useEffect(() => {
     const pulse = Animated.loop(
