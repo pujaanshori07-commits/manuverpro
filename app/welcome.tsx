@@ -23,7 +23,7 @@ const { width, height } = Dimensions.get('window');
 export default function WelcomeScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const themeColors = Colors[colorScheme ?? 'dark'];
+  const themeColors = Colors[colorScheme === 'light' ? 'light' : 'dark'];
 
   // Hologram Glow Animation & Floating
   const pulseScale = useSharedValue(1);
@@ -42,12 +42,8 @@ export default function WelcomeScreen() {
       -1,
       true
     );
-    // Extra subtle floating animation
-    floatY.value = withRepeat(
-      withTiming(-12, { duration: 2500, easing: Easing.inOut(Easing.sin) }),
-      -1,
-      true
-    );
+    // Logo should not move based on user feedback
+    floatY.value = 0;
   }, []);
 
   const glowStyle = useAnimatedStyle(() => ({
@@ -91,30 +87,30 @@ export default function WelcomeScreen() {
           </View>
           
           <View style={styles.bottomSection}>
-            <Animated.Text entering={FadeInDown.duration(1000).delay(300).springify().damping(14)} style={styles.headline}>
+            <Animated.Text entering={FadeInDown.duration(800).delay(200)} style={styles.headline}>
               Find your sports{'\n'}buddies nearby.
             </Animated.Text>
-            <Animated.Text entering={FadeInDown.duration(1000).delay(500).springify().damping(14)} style={styles.subhead}>
+            <Animated.Text entering={FadeInDown.duration(800).delay(400)} style={styles.subhead}>
               Connect, train, and dominate together.
             </Animated.Text>
             
-            <Animated.View entering={FadeInDown.duration(1000).delay(700).springify().damping(14)}>
+            <Animated.View entering={FadeInDown.duration(800).delay(600)}>
               <TouchableOpacity 
                 style={[styles.primaryBtn, { backgroundColor: themeColors.primary }]}
                 onPress={() => router.push('/register')}
                 activeOpacity={0.8}
               >
-                <Text style={styles.primaryBtnText} adjustsFontSizeToFit numberOfLines={1}>GET STARTED</Text>
+                <Text style={styles.primaryBtnText}>GET STARTED</Text>
               </TouchableOpacity>
             </Animated.View>
             
-            <Animated.View entering={FadeInDown.duration(1000).delay(900).springify().damping(14)}>
+            <Animated.View entering={FadeInDown.duration(800).delay(800)}>
               <TouchableOpacity 
                 style={styles.secondaryBtn}
                 onPress={() => router.push('/login')}
                 activeOpacity={0.7}
               >
-                <Text style={styles.secondaryBtnText} adjustsFontSizeToFit numberOfLines={1}>I ALREADY HAVE AN ACCOUNT</Text>
+                <Text style={styles.secondaryBtnText}>I ALREADY HAVE AN ACCOUNT</Text>
               </TouchableOpacity>
             </Animated.View>
           </View>

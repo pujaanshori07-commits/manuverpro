@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { Colors, BorderRadius, Spacing, Typography } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 
@@ -43,6 +44,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function ExploreScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [events, setEvents] = useState<SportEvent[]>([]);
@@ -112,7 +114,11 @@ export default function ExploreScreen() {
         {featured && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>🔥 Event Unggulan</Text>
-            <View style={styles.featuredCard}>
+            <TouchableOpacity 
+              style={styles.featuredCard}
+              activeOpacity={0.9}
+              onPress={() => router.push(`/events/${featured.id}`)}
+            >
               <Image source={{ uri: featured.image }} style={styles.featuredImage} resizeMode="cover" />
               <LinearGradient
                 colors={['transparent', 'rgba(9,10,13,0.55)', 'rgba(9,10,13,0.98)']}
@@ -149,7 +155,7 @@ export default function ExploreScreen() {
                   </View>
                 </View>
               </LinearGradient>
-            </View>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -164,7 +170,12 @@ export default function ExploreScreen() {
             </View>
           ) : (
             listEvents.map((event) => (
-              <View key={event.id} style={styles.eventCard}>
+              <TouchableOpacity 
+                key={event.id} 
+                style={styles.eventCard}
+                activeOpacity={0.7}
+                onPress={() => router.push(`/events/${event.id}`)}
+              >
                 <Image source={{ uri: event.image }} style={styles.eventImage} resizeMode="cover" />
                 <View style={styles.eventInfo}>
                   <View style={styles.eventTopRow}>
@@ -193,11 +204,27 @@ export default function ExploreScreen() {
                     <Text style={styles.eventMetaText}>{event.participants}</Text>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>
       </ScrollView>
+
+      {/* Floating Action Button untuk Membuat Event */}
+      <TouchableOpacity
+        style={[styles.fabContainer, { bottom: insets.bottom + 85 }]}
+        onPress={() => router.push('/events/create')}
+        activeOpacity={0.85}
+      >
+        <LinearGradient
+          colors={['#FF5A1F', '#FF3A00']}
+          style={styles.fabGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Ionicons name="add" size={26} color={Colors.white} />
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -375,5 +402,21 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: 'center', paddingVertical: 60, paddingHorizontal: Spacing.xl },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: Colors.white, marginTop: 12, marginBottom: 6 },
   emptySubtitle: { fontSize: 13, color: Colors.textSecondary, textAlign: 'center', lineHeight: 18 },
+  fabContainer: {
+    position: 'absolute',
+    right: Spacing.base,
+    shadowColor: '#FF5A1F',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  fabGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 

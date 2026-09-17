@@ -22,24 +22,28 @@ import Animated, {
   withTiming,
   Easing,
   interpolate,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../_layout';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TOTAL_STEPS = 5;
 
-// Available sports catalog
+// Available sports catalog - Aligned strictly with edit-profile.tsx SPORT_TAG_MAP
 const SPORTS_CATALOG = [
   { id: 'badminton', name: 'Badminton', icon: 'tennisball-outline' as const },
-  { id: 'running', name: 'Running', icon: 'walk-outline' as const },
-  { id: 'gym', name: 'Gym & Fitness', icon: 'barbell-outline' as const },
+  { id: 'lari', name: 'Lari', icon: 'walk-outline' as const },
+  { id: 'gym', name: 'Gym / Fitness', icon: 'barbell-outline' as const },
   { id: 'futsal', name: 'Futsal', icon: 'football-outline' as const },
-  { id: 'basket', name: 'Basketball', icon: 'basketball-outline' as const },
-  { id: 'tennis', name: 'Tennis', icon: 'tennisball-outline' as const },
-  { id: 'cycling', name: 'Cycling', icon: 'bicycle-outline' as const },
-  { id: 'yoga', name: 'Yoga / Pilates', icon: 'body-outline' as const },
-  { id: 'swimming', name: 'Renang', icon: 'water-outline' as const },
+  { id: 'minisoccer', name: 'Mini Soccer', icon: 'football-outline' as const },
+  { id: 'basket', name: 'Basket', icon: 'basketball-outline' as const },
+  { id: 'voli', name: 'Voli', icon: 'basketball-outline' as const },
+  { id: 'tenis', name: 'Tenis', icon: 'tennisball-outline' as const },
+  { id: 'sepeda', name: 'Bersepeda', icon: 'bicycle-outline' as const },
+  { id: 'yoga', name: 'Yoga', icon: 'body-outline' as const },
+  { id: 'renang', name: 'Berenang', icon: 'water-outline' as const },
 ];
 
 const EXPERIENCE_OPTIONS = [
@@ -53,16 +57,17 @@ export default function OnboardingFlowScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
+  const { refreshProfile } = useAuth();
 
   // Current Step (0 to 4)
   const [currentStep, setCurrentStep] = useState(0);
 
   // Onboarding Form States
   const [houseRulesAccepted, setHouseRulesAccepted] = useState(false);
-  const [selectedSports, setSelectedSports] = useState<string[]>(['badminton', 'running']);
+  const [selectedSports, setSelectedSports] = useState<string[]>(['badminton', 'lari']);
   const [sportExperience, setSportExperience] = useState<Record<string, string>>({
     badminton: '1-3 thn',
-    running: '6 bln-1 thn',
+    lari: '6 bln-1 thn',
   });
   const [ageRange, setAgeRange] = useState<[number, number]>([20, 32]);
   const [genderPref, setGenderPref] = useState<'all' | 'men' | 'women'>('all');
@@ -167,6 +172,7 @@ export default function OnboardingFlowScreen() {
       }
 
       // Refresh user profile in app context and redirect to Discover
+      await refreshProfile();
       router.replace('/(tabs)');
     } catch (err) {
       console.error('Unexpected onboarding error:', err);
@@ -726,7 +732,7 @@ function SportPill({
 }
 
 // --- Expanding Radar Ring Component ---
-function RadarRing({ pulse }: { pulse: Animated.SharedValue<number> }) {
+function RadarRing({ pulse }: { pulse: SharedValue<number> }) {
   const animatedStyle = useAnimatedStyle(() => {
     const scale = interpolate(pulse.value, [0, 1], [0.6, 2.2]);
     const opacity = interpolate(pulse.value, [0, 0.4, 1], [0.6, 0.25, 0]);

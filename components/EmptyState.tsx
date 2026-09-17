@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   description: {
-    ...TYPOGRAPHY.body,
+    ...TYPOGRAPHY.body1,
     color: COLORS.secondaryText,
     textAlign: 'center',
     marginBottom: SPACING.xl,

@@ -48,17 +48,19 @@ export default function LocationPermissionScreen() {
       setTimeout(async () => {
         await markOnboardingComplete();
         setRequesting(false);
-        router.replace('/(tabs)/');
+        router.replace('/(tabs)');
       }, 700);
-    } catch {
+    } catch (e) {
+      console.error(e);
       setRequesting(false);
-      Alert.alert('Gagal', 'Tidak dapat mengakses lokasi. Silakan coba lagi.');
+      // Even if it fails, proceed to tabs so we don't block
+      router.replace('/(tabs)');
     }
   };
 
   const handleSkip = async () => {
     await markOnboardingComplete();
-    router.replace('/(tabs)/');
+    router.replace('/(tabs)');
   };
 
   return (

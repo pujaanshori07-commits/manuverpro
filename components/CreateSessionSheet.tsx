@@ -22,7 +22,7 @@ interface CreateSessionSheetProps {
 }
 
 const SPORTS_OPTIONS = [
-  { id: 'badminton', name: 'Badminton', icon: 'badminton' as const },
+  { id: 'badminton', name: 'Badminton', icon: 'tennisball-outline' as const },
   { id: 'running', name: 'Running', icon: 'walk-outline' as const },
   { id: 'gym', name: 'Gym', icon: 'barbell-outline' as const },
   { id: 'tennis', name: 'Tennis', icon: 'tennisball-outline' as const },

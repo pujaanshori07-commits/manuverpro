@@ -22,12 +22,24 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './_layout';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
+const SPORT_TAG_MAP: Record<string, { name: string, icon: any }> = {
+  futsal: { name: 'Futsal', icon: 'football-outline' },
+  minisoccer: { name: 'Mini Soccer', icon: 'football-outline' },
+  basket: { name: 'Basket', icon: 'basketball-outline' },
+  lari: { name: 'Lari', icon: 'walk-outline' },
+  badminton: { name: 'Badminton', icon: 'tennisball-outline' },
+  gym: { name: 'Gym / Fitness', icon: 'barbell-outline' },
+  sepeda: { name: 'Bersepeda', icon: 'bicycle-outline' },
+  renang: { name: 'Berenang', icon: 'water-outline' },
+  yoga: { name: 'Yoga', icon: 'body-outline' },
+  tenis: { name: 'Tenis', icon: 'tennisball-outline' },
+  voli: { name: 'Voli', icon: 'basketball-outline' },
+};
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_PADDING = 20;
 const GRID_GAP = 10;
 const SLOT_SIZE = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * 2) / 3;
-
-import { SPORT_TAG_MAP } from './(tabs)/index';
 
 type Sport = {
   id: string;

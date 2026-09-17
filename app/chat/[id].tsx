@@ -259,7 +259,7 @@ export default function ChatScreen() {
       <View style={[styles.header, { paddingTop: insets.top }]}>
         <LinearGradient
           colors={['rgba(9,10,13,0.98)', 'rgba(9,10,13,0.9)']}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <TouchableOpacity 
           style={styles.backBtn}

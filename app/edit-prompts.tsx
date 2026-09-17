@@ -149,7 +149,7 @@ export default function EditPromptsScreen() {
             <TextInput
               style={styles.answerInput}
               placeholder="Tulis jawaban unik Anda..."
-              placeholderTextColor={COLORS.muted}
+              placeholderTextColor={COLORS.secondaryText}
               value={draftAnswer}
               onChangeText={setDraftAnswer}
               maxLength={150}
@@ -209,10 +209,10 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   backButton: { padding: SPACING.xs },
-  headerTitle: { ...TYPOGRAPHY.screenTitle, color: COLORS.text },
+  headerTitle: { ...TYPOGRAPHY.h1, color: COLORS.text },
   title: { ...TYPOGRAPHY.h2, color: COLORS.text, marginBottom: SPACING.xs, marginTop: SPACING.sm },
   subtitle: { ...TYPOGRAPHY.bodySmall, color: COLORS.secondaryText, marginBottom: SPACING.lg, lineHeight: 20 },
-  sectionLabel: { ...TYPOGRAPHY.label, color: COLORS.secondaryText, marginTop: SPACING.lg, marginBottom: SPACING.sm },
+  sectionLabel: { ...TYPOGRAPHY.h3, color: COLORS.secondaryText, marginTop: SPACING.lg, marginBottom: SPACING.sm },
   selectedPromptCard: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
   },
   questionText: { ...TYPOGRAPHY.caption, color: COLORS.primary, fontWeight: '700', marginBottom: SPACING.xs },
-  answerText: { ...TYPOGRAPHY.body, color: COLORS.text, marginBottom: SPACING.md, fontWeight: '600' },
+  answerText: { ...TYPOGRAPHY.body1, color: COLORS.text, marginBottom: SPACING.md, fontWeight: '600' },
   promptActions: { flexDirection: 'row', gap: SPACING.lg },
   editLink: { color: COLORS.secondaryText, fontSize: 13, fontWeight: '600' },
   removeLink: { color: COLORS.error, fontSize: 13, fontWeight: '600' },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   },
   editorQuestionText: { ...TYPOGRAPHY.h3, color: COLORS.text, marginBottom: SPACING.sm },
   answerInput: {
-    ...TYPOGRAPHY.body,
+    ...TYPOGRAPHY.body1,
     color: COLORS.text,
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.md,

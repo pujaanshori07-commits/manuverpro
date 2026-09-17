@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Dimensions, Keyboa
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
 import { COLORS } from '../constants/DesignSystem';
 
@@ -38,6 +39,7 @@ export default function RegisterScreen() {
           data: {
             nama: fullName.trim(), // Save to user metadata
           },
+          emailRedirectTo: Linking.createURL('/'), // Deep link back to the app
         },
       });
 

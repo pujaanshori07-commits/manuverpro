@@ -138,7 +138,7 @@ export default function UserDetailScreen() {
           <LinearGradient
             colors={['rgba(11, 13, 19, 0.4)', 'transparent', 'rgba(11, 13, 19, 0.95)', '#0B0D13']}
             locations={[0, 0.45, 0.85, 1]}
-            style={StyleSheet.absoluteFillObject}
+            style={StyleSheet.absoluteFill}
           />
           <View style={styles.heroInfo}>
             <View style={styles.nameRow}>

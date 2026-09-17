@@ -72,6 +72,12 @@
           "remindersPermission": "The app needs to access your reminders to send match alerts."
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow manuver-app to use your location to find sports friends near you."
+        }
+      ],
       "expo-notifications"
     ],
     "experiments": {

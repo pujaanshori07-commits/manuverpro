@@ -21,6 +21,7 @@ import { decode } from 'base64-arraybuffer';
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import ReliabilityBadge from '../../components/ReliabilityBadge';
+import { useLocationManager } from '../../hooks/useLocationManager';
 
 interface ProfileData {
   nama: string;
@@ -48,6 +49,8 @@ export default function ProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+
+  const { permissionState, openSettings } = useLocationManager();
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -315,6 +318,34 @@ export default function ProfileScreen() {
                 />
               </View>
 
+              {/* Pengaturan Privasi */}
+              <View style={[styles.inputGroup, { marginTop: 10 }]}>
+                <Text style={styles.inputLabel}>Pengaturan Privasi & Akses</Text>
+                <TouchableOpacity 
+                  style={styles.settingRow}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    if (permissionState !== 'GRANTED') {
+                      openSettings();
+                    }
+                  }}
+                >
+                  <View style={styles.settingRowLeft}>
+                    <Ionicons name="location" size={20} color={Colors.textSecondary} />
+                    <Text style={styles.settingRowText}>Akses Lokasi</Text>
+                  </View>
+                  <View style={styles.settingRowRight}>
+                    <Text style={[
+                      styles.settingRowStatus,
+                      { color: permissionState === 'GRANTED' ? '#00C48C' : Colors.textMuted }
+                    ]}>
+                      {permissionState === 'GRANTED' ? 'Aktif' : 'Nonaktif'}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+
               {/* Save Button */}
               <TouchableOpacity
                 style={styles.saveBtn}
@@ -469,5 +500,35 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.white,
     letterSpacing: 0.3,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surfaceInput,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: 14,
+  },
+  settingRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  settingRowText: {
+    fontFamily: Typography.fontMedium,
+    fontSize: 15,
+    color: Colors.textPrimary,
+  },
+  settingRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  settingRowStatus: {
+    fontFamily: Typography.fontRegular,
+    fontSize: 14,
   },
 });

@@ -33,6 +33,8 @@ import Animated, {
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import MatchCelebration from '../../components/MatchCelebration';
+import LocationPermissionModal from '../../components/LocationPermissionModal';
+import { useLocationManager } from '../../hooks/useLocationManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
@@ -132,6 +134,35 @@ export default function DiscoverScreen() {
   const [matchData, setMatchData] = useState<{ matchId: string, nama: string, foto_url: string | null } | null>(null);
   const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+
+  // Location Manager
+  const [modalVisible, setModalVisible] = useState(false);
+  const { permissionState, loading: locationLoading, requestPermissions, openSettings, getCurrentLocation } = useLocationManager();
+
+  // Show contextual permission modal if never asked
+  useEffect(() => {
+    if (!locationLoading && permissionState === 'NOT_DETERMINED') {
+      setModalVisible(true);
+    }
+  }, [locationLoading, permissionState]);
+
+  const handleRequestLocation = async () => {
+    const newState = await requestPermissions();
+    if (newState === 'GRANTED') {
+      setModalVisible(false);
+      const loc = await getCurrentLocation();
+      if (loc) {
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user?.id) {
+          await supabase.from('profiles').update({
+            last_latitude: loc.coords.latitude,
+            last_longitude: loc.coords.longitude,
+          }).eq('id', userData.user.id);
+        }
+      }
+      fetchProfiles();
+    }
+  };
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -369,7 +400,16 @@ export default function DiscoverScreen() {
         
         {/* Header with Centered "manuver" Wordmark */}
         <View style={styles.header}>
-          <View style={styles.headerSpacer} />
+          {permissionState !== 'GRANTED' ? (
+            <TouchableOpacity 
+              style={[styles.filterBtn, { backgroundColor: 'transparent', borderColor: 'transparent' }]}
+              onPress={() => setModalVisible(true)}
+            >
+              <Ionicons name="location-outline" size={22} color="#FF572F" />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.headerSpacer} />
+          )}
           <Text style={styles.headerBrandText}>manuver</Text>
           <TouchableOpacity
             style={styles.filterBtn}
@@ -660,6 +700,16 @@ export default function DiscoverScreen() {
         )}
       </View>
     </GestureHandlerRootView>
+
+      <LocationPermissionModal
+        visible={modalVisible}
+        state={permissionState}
+        loading={locationLoading}
+        onRequestPermission={handleRequestLocation}
+        onOpenSettings={openSettings}
+        onSkip={() => setModalVisible(false)}
+      />
+
       <MatchCelebration
         visible={matchData !== null}
         matchData={matchData}

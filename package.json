@@ -25,6 +25,7 @@
     "base64-arraybuffer": "^1.0.2",
     "expo": "^57.0.19",
     "expo-auth-session": "^57.0.12",
+    "expo-blur": "~57.0.3",
     "expo-calendar": "~57.0.3",
     "expo-constants": "~57.0.17",
     "expo-contacts": "~57.0.4",
