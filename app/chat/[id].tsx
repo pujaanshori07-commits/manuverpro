@@ -143,15 +143,15 @@ export default function ChatScreen() {
       // Fetch recipient push token
       const { data: match } = await supabase
         .from('matches')
-        .select('user1_id, user2_id')
+        .select('user_a_id, user_b_id')
         .eq('id', id)
         .single();
         
       if (match) {
-        const recipientId = match.user1_id === currentUserId ? match.user2_id : match.user1_id;
+        const recipientId = match.user_a_id === currentUserId ? match.user_b_id : match.user_a_id;
         const { data: profile } = await supabase
           .from('profiles')
-          .select('push_token, full_name')
+          .select('push_token, nama')
           .eq('id', recipientId)
           .single();
 
@@ -159,11 +159,11 @@ export default function ChatScreen() {
           // Get sender's name to display in the notification
           const { data: myProfile } = await supabase
             .from('profiles')
-            .select('full_name')
+            .select('nama')
             .eq('id', currentUserId)
             .single();
             
-          const senderName = myProfile?.full_name || 'Teman Sparing';
+          const senderName = myProfile?.nama || 'Teman Sparing';
           await sendPushNotification(
             profile.push_token,
             `Pesan dari ${senderName}`,
@@ -381,12 +381,12 @@ export default function ChatScreen() {
             // Send push notification for the invite
             const { data: match } = await supabase
               .from('matches')
-              .select('user1_id, user2_id')
+              .select('user_a_id, user_b_id')
               .eq('id', id)
               .single();
               
             if (match) {
-              const recipientId = match.user1_id === currentUserId ? match.user2_id : match.user1_id;
+              const recipientId = match.user_a_id === currentUserId ? match.user_b_id : match.user_a_id;
               const { data: profile } = await supabase
                 .from('profiles')
                 .select('push_token')
@@ -396,11 +396,11 @@ export default function ChatScreen() {
               if (profile?.push_token) {
                 const { data: myProfile } = await supabase
                   .from('profiles')
-                  .select('full_name')
+                  .select('nama')
                   .eq('id', currentUserId)
                   .single();
                   
-                const senderName = myProfile?.full_name || 'Teman Sparing';
+                const senderName = myProfile?.nama || 'Teman Sparing';
                 await sendPushNotification(
                   profile.push_token,
                   `🔥 ${senderName} Mengajak Sparing!`,
