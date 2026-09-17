@@ -3,12 +3,12 @@ import { View, Text, StyleSheet, TouchableOpacity, TextInput, Dimensions, Keyboa
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { makeRedirectUri } from 'expo-auth-session';
+import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../constants/DesignSystem';
 
 const { width } = Dimensions.get('window');
-const redirectTo = makeRedirectUri();
+const redirectTo = Linking.createURL('/');
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
