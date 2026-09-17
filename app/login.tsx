@@ -179,7 +179,18 @@ export default function LoginScreen() {
     setIsLoading(false);
 
     if (error) {
-      Alert.alert('Login Error', error.message);
+      if (error.message.includes('Invalid login credentials')) {
+        Alert.alert(
+          'Email / Password Salah', 
+          'Pastikan email dan password Anda benar. Jika Anda baru mendaftar, pastikan Anda sudah mengklik link verifikasi di email Anda.',
+          [
+            { text: 'Coba Lagi', style: 'cancel' },
+            { text: 'Lupa Password?', onPress: () => router.push('/forgot-password') }
+          ]
+        );
+      } else {
+        Alert.alert('Gagal Masuk', error.message);
+      }
     }
   };
 

@@ -195,7 +195,7 @@ export default function OnboardingFlowScreen() {
     return Math.round(Math.max(MIN_AGE, Math.min(MAX_AGE, raw)));
   };
 
-  const panMin = useRef(
+  const [panMin] = useState(() =>
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderMove: (_, gestureState) => {
@@ -207,9 +207,9 @@ export default function OnboardingFlowScreen() {
         }
       },
     })
-  ).current;
+  );
 
-  const panMax = useRef(
+  const [panMax] = useState(() =>
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderMove: (_, gestureState) => {
@@ -221,7 +221,7 @@ export default function OnboardingFlowScreen() {
         }
       },
     })
-  ).current;
+  );
 
   return (
     <View style={styles.container}>
