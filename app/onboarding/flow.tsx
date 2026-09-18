@@ -71,6 +71,8 @@ export default function OnboardingFlowScreen() {
   });
   const [ageRange, setAgeRange] = useState<[number, number]>([20, 32]);
   const [genderPref, setGenderPref] = useState<'all' | 'men' | 'women'>('all');
+  const [myGender, setMyGender] = useState<'male' | 'female'>('male');
+  const [myAge, setMyAge] = useState<string>('20');
   const [submitting, setSubmitting] = useState(false);
 
   // Radar Pulse Animation Shared Values
@@ -153,6 +155,10 @@ export default function OnboardingFlowScreen() {
         experience: sportExperience[sportId] || '1-3 thn',
       }));
 
+      // Calculate birthdate from age
+      const birthYear = new Date().getFullYear() - parseInt(myAge || '20', 10);
+      const birthdateStr = `${birthYear}-01-01`;
+
       // Call the atomic Supabase RPC
       const { data, error } = await supabase.rpc('complete_user_onboarding', {
         p_primary_sport: selectedSports[0] || 'badminton',
@@ -163,6 +169,8 @@ export default function OnboardingFlowScreen() {
         p_location_granted: true,
         p_latitude: null, // Pass device coordinates if expo-location is used
         p_longitude: null,
+        p_birthdate: birthdateStr,
+        p_gender: myGender,
       });
 
       if (error) {
@@ -459,18 +467,71 @@ export default function OnboardingFlowScreen() {
           >
             <View style={styles.titleSection}>
               <View style={styles.chipTag}>
-                <Text style={styles.chipTagText}>PREFERENSI PARTNER</Text>
+                <Text style={styles.chipTagText}>PROFIL & PREFERENSI</Text>
               </View>
-              <Text style={styles.heroTitle}>Kriteria Partner{'\n'}Olahraga</Text>
+              <Text style={styles.heroTitle}>Detail Diri & Kriteria</Text>
               <Text style={styles.heroSubtitle}>
-                Sesuaikan rentang usia dan preferensi partner yang ingin kamu temukan di feed Discover.
+                Isi sedikit info tentangmu agar Radar kami bisa mencari teman yang pas!
               </Text>
+            </View>
+
+            {/* My Profile */}
+            <View style={styles.preferenceCard}>
+              <Text style={styles.prefSectionTitle}>Profil Kamu</Text>
+              
+              <View style={[styles.subFieldGroup, { marginTop: 12 }]}>
+                <Text style={styles.fieldLabel}>UMUR KAMU (MIN 18)</Text>
+                <TextInput
+                  style={styles.glassInput}
+                  value={myAge}
+                  onChangeText={setMyAge}
+                  placeholder="Misal: 25"
+                  placeholderTextColor="#8A8F9E"
+                  keyboardType="numeric"
+                  maxLength={2}
+                />
+              </View>
+
+              <View style={[styles.subFieldGroup, { marginTop: 20 }]}>
+                <Text style={styles.fieldLabel}>GENDER KAMU</Text>
+                <View style={styles.genderOptionsRow}>
+                  {[
+                    { id: 'male', label: 'Pria' },
+                    { id: 'female', label: 'Wanita' },
+                  ].map((item) => {
+                    const isSelected = myGender === item.id;
+                    return (
+                      <Pressable
+                        key={item.id}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                          setMyGender(item.id as any);
+                        }}
+                        style={[
+                          styles.genderPill,
+                          isSelected && styles.genderPillSelected,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.genderPillText,
+                            isSelected && styles.genderPillTextSelected,
+                          ]}
+                        >
+                          {item.label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
             </View>
 
             {/* Custom Dual-Thumb Age Slider Card */}
             <View style={styles.preferenceCard}>
-              <View style={styles.prefHeaderRow}>
-                <Text style={styles.prefSectionTitle}>Rentang Usia</Text>
+              <Text style={styles.prefSectionTitle}>Preferensi Partner</Text>
+              <View style={[styles.prefHeaderRow, { marginTop: 12 }]}>
+                <Text style={styles.fieldLabel}>RENTANG USIA</Text>
                 <Text style={styles.prefValueDisplay}>
                   {ageRange[0]} – {ageRange[1]} tahun
                 </Text>
