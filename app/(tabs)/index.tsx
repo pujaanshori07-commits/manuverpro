@@ -34,6 +34,7 @@ import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme
 import { supabase } from '../../lib/supabase';
 import MatchCelebration from '../../components/MatchCelebration';
 import LocationPermissionModal from '../../components/LocationPermissionModal';
+import SwipeCard, { SwipeCardRef } from '../../components/SwipeCard';
 import { useLocationManager } from '../../hooks/useLocationManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -134,6 +135,7 @@ export default function DiscoverScreen() {
   const [matchData, setMatchData] = useState<{ matchId: string, nama: string, foto_url: string | null } | null>(null);
   const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const swipeCardRef = useRef<SwipeCardRef>(null);
 
   // Location Manager
   const [modalVisible, setModalVisible] = useState(false);
@@ -272,9 +274,6 @@ export default function DiscoverScreen() {
   const currentProfile = profiles[currentIndex];
   const nextProfile = profiles[currentIndex + 1];
 
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-
   const resetScrollPosition = () => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   };
@@ -285,8 +284,6 @@ export default function DiscoverScreen() {
     const swipedPhoto = currentProfile?.foto_url;
 
     setCurrentIndex((prev) => prev + 1);
-    translateX.value = 0;
-    translateY.value = 0;
     resetScrollPosition();
 
     if (swipedId && !swipedId.startsWith('demo-')) {
@@ -315,61 +312,13 @@ export default function DiscoverScreen() {
   };
 
   const triggerSwipe = (direction: 'left' | 'right') => {
-    runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
-
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (direction === 'left') {
-      translateX.value = withTiming(-SCREEN_WIDTH * 1.4, { duration: 250 }, () => {
-        runOnJS(handleSwipeComplete)('left');
-      });
+      swipeCardRef.current?.swipeLeft();
     } else {
-      translateX.value = withTiming(SCREEN_WIDTH * 1.4, { duration: 250 }, () => {
-        runOnJS(handleSwipeComplete)('right');
-      });
+      swipeCardRef.current?.swipeRight();
     }
   };
-
-  // Horizontal pan gesture with vertical scroll allowance
-  const panGesture = Gesture.Pan()
-    .activeOffsetX([-20, 20])
-    .failOffsetY([-15, 15])
-    .onUpdate((event) => {
-      translateX.value = event.translationX;
-      translateY.value = event.translationY * 0.15;
-    })
-    .onEnd((event) => {
-      if (event.translationX > SWIPE_THRESHOLD) {
-        triggerSwipe('right');
-      } else if (event.translationX < -SWIPE_THRESHOLD) {
-        triggerSwipe('left');
-      } else {
-        translateX.value = withSpring(0, { damping: 15 });
-        translateY.value = withSpring(0, { damping: 15 });
-      }
-    });
-
-  const animatedCardStyle = useAnimatedStyle(() => {
-    const rotate = interpolate(
-      translateX.value,
-      [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-      [-8, 0, 8]
-    );
-
-    return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { rotate: `${rotate}deg` },
-      ],
-    };
-  });
-
-  const likeStampStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [20, SWIPE_THRESHOLD], [0, 1]),
-  }));
-
-  const passStampStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, -20], [1, 0]),
-  }));
 
   const getInterestIcon = (name: string): keyof typeof Ionicons.glyphMap => {
     const lower = name.toLowerCase();
@@ -464,26 +413,22 @@ export default function DiscoverScreen() {
               </View>
             )}
 
-            {/* Active Card with Pan Gesture & Bumble Vertical Scroll */}
-            <GestureDetector gesture={panGesture}>
-              <Animated.View style={[styles.card, animatedCardStyle]}>
-                
-                {/* LIKE / PASS Visual Stamps */}
-                <Animated.View style={[styles.stampBadge, styles.likeBadge, likeStampStyle]} pointerEvents="none">
-                  <Text style={styles.likeBadgeText}>INTERESTED</Text>
-                </Animated.View>
-                <Animated.View style={[styles.stampBadge, styles.passBadge, passStampStyle]} pointerEvents="none">
-                  <Text style={styles.passBadgeText}>PASS</Text>
-                </Animated.View>
-
-                {/* Vertically Scrollable Bumble-Style Profile Rhythm */}
-                <ScrollView
-                  ref={scrollRef}
-                  style={styles.profileScrollView}
-                  contentContainerStyle={styles.scrollContentContainer}
-                  showsVerticalScrollIndicator={false}
-                  bounces={true}
-                >
+              {/* Active Card with Pan Gesture & Bumble Vertical Scroll */}
+              <SwipeCard
+                ref={swipeCardRef}
+                onSwipedLeft={() => handleSwipeComplete('left')}
+                onSwipedRight={() => handleSwipeComplete('right')}
+              >
+                <View style={styles.card}>
+                  
+                  {/* Vertically Scrollable Bumble-Style Profile Rhythm */}
+                  <ScrollView
+                    ref={scrollRef}
+                    style={styles.profileScrollView}
+                    contentContainerStyle={styles.scrollContentContainer}
+                    showsVerticalScrollIndicator={false}
+                    bounces={true}
+                  >
                   {/* ========================================================= */}
                   {/* BLOCK 1 (Hero Photo + Bottom-Left Overlay Name & Badges)  */}
                   {/* ========================================================= */}
@@ -655,10 +600,10 @@ export default function DiscoverScreen() {
                       </View>
                     </View>
 
-                  </View>
-                </ScrollView>
-              </Animated.View>
-            </GestureDetector>
+                    </View>
+                  </ScrollView>
+                </View>
+              </SwipeCard>
 
             {/* Sticky Bottom Action Buttons */}
             <View style={[styles.bottomActionContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
