@@ -14,6 +14,7 @@ export default function RegisterScreen() {
   
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [noHp, setNoHp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,8 +23,9 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     // 1. Validation
     setErrorMsg(null);
-    if (!fullName.trim()) return setErrorMsg('Full name cannot be empty.');
-    if (!email.trim() || !email.includes('@')) return setErrorMsg('Please enter a valid email address.');
+    if (!fullName.trim()) return setErrorMsg('Nama tidak boleh kosong.');
+    if (!email.trim() || !email.includes('@')) return setErrorMsg('Email tidak valid.');
+    if (!noHp.trim()) return setErrorMsg('Nomor HP tidak boleh kosong.');
     if (!password) return setErrorMsg('Password cannot be empty.');
     if (password.length < 6) return setErrorMsg('Password must be at least 6 characters.');
     if (password !== confirmPassword) return setErrorMsg('Passwords do not match.');
@@ -38,6 +40,7 @@ export default function RegisterScreen() {
         options: {
           data: {
             nama: fullName.trim(), // Save to user metadata
+            no_hp: noHp.trim(),
           },
           emailRedirectTo: Linking.createURL('/'), // Deep link back to the app
         },
@@ -57,7 +60,14 @@ export default function RegisterScreen() {
         router.push('/login');
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'An error occurred during registration.');
+      const errorStr = err.message || '';
+      if (errorStr.toLowerCase().includes('already registered')) {
+        setErrorMsg('Akun ini telah terdaftar (Email sudah digunakan).');
+      } else if (errorStr.toLowerCase().includes('duplicate key value violates unique constraint') && errorStr.toLowerCase().includes('no_hp')) {
+        setErrorMsg('Akun ini telah terdaftar (Nomor HP sudah digunakan).');
+      } else {
+        setErrorMsg(errorStr || 'An error occurred during registration.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +122,22 @@ export default function RegisterScreen() {
                   autoCapitalize="none"
                   value={email}
                   onChangeText={setEmail}
+                  editable={!isLoading}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>NOMOR HP</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="call-outline" size={20} color="#888" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Contoh: 081234567890"
+                  placeholderTextColor="#666"
+                  keyboardType="phone-pad"
+                  value={noHp}
+                  onChangeText={setNoHp}
                   editable={!isLoading}
                 />
               </View>

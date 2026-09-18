@@ -12,10 +12,10 @@ ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS flagged_for_review BOOLEAN DEFAULT false,
   ADD COLUMN IF NOT EXISTS push_token TEXT;
 
--- 3. Backfill Location from existing latitude/longitude
+-- 3. Backfill Location from existing last_latitude/last_longitude
 UPDATE public.profiles 
-SET location = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography
-WHERE latitude IS NOT NULL AND longitude IS NOT NULL AND location IS NULL;
+SET location = ST_SetSRID(ST_MakePoint(last_longitude, last_latitude), 4326)::geography
+WHERE last_latitude IS NOT NULL AND last_longitude IS NOT NULL AND location IS NULL;
 
 -- 4. Spatial GIST Index for high-performance geospatial queries
 CREATE INDEX IF NOT EXISTS idx_profiles_location ON public.profiles USING GIST (location);
@@ -24,8 +24,8 @@ CREATE INDEX IF NOT EXISTS idx_profiles_location ON public.profiles USING GIST (
 CREATE OR REPLACE FUNCTION sync_profile_location()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL THEN
-    NEW.location := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+  IF NEW.last_latitude IS NOT NULL AND NEW.last_longitude IS NOT NULL THEN
+    NEW.location := ST_SetSRID(ST_MakePoint(NEW.last_longitude, NEW.last_latitude), 4326)::geography;
   END IF;
   RETURN NEW;
 END;
@@ -33,7 +33,7 @@ $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_sync_location ON public.profiles;
 CREATE TRIGGER trg_sync_location
-  BEFORE INSERT OR UPDATE OF latitude, longitude ON public.profiles
+  BEFORE INSERT OR UPDATE OF last_latitude, last_longitude ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION sync_profile_location();
 
 -- 6. touch_last_active RPC
