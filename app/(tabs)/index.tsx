@@ -13,7 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   GestureHandlerRootView,
@@ -35,31 +35,18 @@ import { supabase } from '../../lib/supabase';
 import MatchCelebration from '../../components/MatchCelebration';
 import LocationPermissionModal from '../../components/LocationPermissionModal';
 import SwipeCard, { SwipeCardRef } from '../../components/SwipeCard';
+import RadarAnimation from '../../components/RadarAnimation';
+import ProfileCardSummary from '../../components/ProfileCardSummary';
+import ProfileBottomSheet from '../../components/ProfileBottomSheet';
 import { useLocationManager } from '../../hooks/useLocationManager';
+import { useProfiles } from '../../hooks/useProfiles';
+import { Profile } from '../../types/database';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
 // Hero photo height matches 1.25x width for consistent mobile portrait presentation
 const HERO_PHOTO_HEIGHT = Math.round((SCREEN_WIDTH - 20) * 1.25);
 const SECOND_PHOTO_HEIGHT = Math.round((SCREEN_WIDTH - 20) * 1.15);
-
-interface Profile {
-  id: string;
-  nama: string;
-  umur?: number;
-  foto_url: string;
-  photos: string[];
-  alamat?: string;
-  jarak?: string;
-  hobi?: string[];
-  bio?: string;
-  prompt_question?: string;
-  prompt_answer?: string;
-  skill_level?: string;
-  availability?: string[];
-  distance_pref?: string;
-  interests?: string[];
-}
 
 const DEMO_PROFILES: Profile[] = [
   {
@@ -73,7 +60,7 @@ const DEMO_PROFILES: Profile[] = [
     ],
     alamat: 'GBK Senayan',
     jarak: '2 km away',
-    hobi: ['Gym & Fitness', 'Running', 'Badminton'],
+    hobi: 'Gym & Fitness, Running, Badminton',
     prompt_question: 'Target olahraga bulan ini',
     prompt_answer: 'Rutinitas lari 5K sub-28 menit & konsisten gym 3x seminggu. Butuh partner yang gak gampang cancel!',
     bio: 'Senang olahraga bareng. Mencari partner latihan rutin di sekitarku dan ikut event lari bersama.',
@@ -94,7 +81,7 @@ const DEMO_PROFILES: Profile[] = [
     ],
     alamat: 'Senayan',
     jarak: '3 km away',
-    hobi: ['Badminton', 'Running', 'Yoga'],
+    hobi: 'Badminton, Running, Yoga',
     prompt_question: 'Partner sparing ideal buatku',
     prompt_answer: 'Yang mainnya seru, bisa rally panjang badminton, dan setelahnya ngopi bareng santai.',
     bio: 'Cari partner badminton santai atau sparring lari pagi di GBK. Let’s stay active together! 💪🏸',
@@ -115,27 +102,54 @@ const DEMO_PROFILES: Profile[] = [
     ],
     alamat: 'Cilandak',
     jarak: '4 km away',
-    hobi: ['Gym & Fitness', 'Basketball', 'Running'],
+    hobi: 'Gym & Fitness, Basketball, Running',
     prompt_question: 'Gaya latihan favorit',
     prompt_answer: 'Push-Pull-Legs di gym, lanjut pickup game basket Sabtu sore. Disiplin tapi tetap enjoy!',
     bio: 'Gym 4x seminggu & main basket santai akhir pekan. Looking for a disciplined gym bro.',
     skill_level: 'Intermediate',
     availability: ['Malam', 'Akhir Pekan'],
     distance_pref: '≤ 15 km',
-    interests: ['Fitness', 'Nutrition', 'Music'],
-  },
+  }
 ];
 
 export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [matchData, setMatchData] = useState<{ matchId: string, nama: string, foto_url: string | null } | null>(null);
-  const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const swipeCardRef = useRef<SwipeCardRef>(null);
+
+  const [detailSheetVisible, setDetailSheetVisible] = useState(false);
+
+  const {
+    profiles,
+    loading: profilesLoading,
+    matchData,
+    myAvatarUrl,
+    fetchProfiles,
+    handleSwipeComplete,
+    closeMatchModal,
+  } = useProfiles();
+
+  // Map Profile type to ProfileBottomSheet expected type
+  const mapToBottomSheetProfile = (p: Profile) => {
+    return {
+      id: p.id,
+      nama: p.nama,
+      foto_url: p.foto_url,
+      alamat: p.alamat || null,
+      bio: p.bio || null,
+      skill_level: p.skill_level,
+      availability: p.availability ? p.availability.join(', ') : undefined,
+      distance: p.jarak,
+      distance_km: p.jarak,
+      photos: p.photos || (p.foto_url ? [p.foto_url] : []),
+      prompts: (p.prompt_question && p.prompt_answer) 
+        ? [{ question_text: p.prompt_question, answer_text: p.prompt_answer }] 
+        : undefined,
+      user_sports: p.hobi ? p.hobi.split(',').map(h => ({ sports: { nama: h.trim() } })) : [],
+    };
+  };
 
   // Location Manager
   const [modalVisible, setModalVisible] = useState(false);
@@ -166,110 +180,13 @@ export default function DiscoverScreen() {
     }
   };
 
-  const fetchProfiles = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
+  const loading = profilesLoading || locationLoading;
 
-      // Read preferences from AsyncStorage
-      const storedFilters = await AsyncStorage.getItem('@manuver_match_filters_v1');
-      let maxDist = 50;
-      let maxAge = 60;
-      let minAge = 18;
-      let filterSports = null;
-
-      if (storedFilters) {
-        const parsed = JSON.parse(storedFilters);
-        maxDist = parsed.maxDistance ?? 50;
-        maxAge = parsed.maxAge ?? 60;
-        minAge = parsed.minAge ?? 18;
-        if (parsed.selectedSports && parsed.selectedSports.length > 0) {
-          filterSports = parsed.selectedSports;
-        }
-      }
-
-      const { data, error } = await supabase
-        .rpc('get_nearby_profiles', {
-          user_id_param: userId,
-          max_distance_km: maxDist,
-          max_age_val: maxAge,
-          min_age_val: minAge,
-          filter_sports: filterSports,
-          limit_val: 25
-        });
-
-      if (error || !data || data.length === 0) {
-        setProfiles([]);
-      } else {
-        const formatted: Profile[] = data.map((item: any) => {
-          const rawPhotos = Array.isArray(item.photos) && item.photos.length > 0
-            ? item.photos
-            : item.foto_url
-            ? [item.foto_url]
-            : ['https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80'];
-
-          return {
-            id: item.id,
-            nama: item.nama || 'Pengguna',
-            umur: item.umur || 25,
-            foto_url: rawPhotos[0],
-            photos: rawPhotos,
-            alamat: item.alamat || 'Unknown Location',
-            jarak: item.jarak || '1 km',
-            hobi: Array.isArray(item.hobi)
-              ? item.hobi
-              : item.hobi
-              ? item.hobi.split(',').map((s: string) => s.trim())
-              : ['Olahraga'],
-            bio: item.bio || '',
-            prompt_question: item.prompt_question,
-            prompt_answer: item.prompt_answer,
-            skill_level: item.skill_level || 'Beginner',
-            availability: item.availability || 'Weekend',
-            distance_pref: item.distance_pref,
-            interests: item.interests || [],
-          };
-        });
-        setProfiles(formatted);
-      }
-    } catch {
-      setProfiles([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Radar Animation for Empty State
-  const radarScale = useSharedValue(1);
-  const radarOpacity = useSharedValue(0.8);
-
-  useEffect(() => {
-    if (!loading && (!profiles || profiles.length === 0 || currentIndex >= profiles.length)) {
-      radarScale.value = withRepeat(withTiming(2.2, { duration: 2500 }), -1, false);
-      radarOpacity.value = withRepeat(withTiming(0, { duration: 2500 }), -1, false);
-    } else {
-      radarScale.value = 1;
-      radarOpacity.value = 0.8;
-    }
-  }, [loading, profiles, currentIndex, radarScale, radarOpacity]);
-
-  const radarAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: radarScale.value }],
-      opacity: radarOpacity.value,
-    };
-  });
-
-  useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfiles();
+    }, [fetchProfiles])
+  );
 
   const currentProfile = profiles[currentIndex];
   const nextProfile = profiles[currentIndex + 1];
@@ -278,45 +195,22 @@ export default function DiscoverScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   };
 
-  const handleSwipeComplete = async (direction: 'left' | 'right') => {
-    const swipedId = currentProfile?.id;
-    const swipedName = currentProfile?.nama;
-    const swipedPhoto = currentProfile?.foto_url;
-
+  const onSwipeComplete = async (direction: 'left' | 'right' | 'up') => {
+    if (currentProfile) {
+      await handleSwipeComplete(currentProfile, direction);
+    }
     setCurrentIndex((prev) => prev + 1);
     resetScrollPosition();
-
-    if (swipedId && !swipedId.startsWith('demo-')) {
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData?.user?.id) {
-        // Optimistically record the swipe using RPC to also check for mutual match
-        const { data, error } = await supabase.rpc('handle_swipe', {
-          target_id: swipedId,
-          swipe_action: direction === 'right' ? 'like' : 'pass'
-        });
-
-        if (error) {
-          console.error('Error recording swipe:', error);
-        } else if (data?.is_match) {
-          // Fetch my avatar to show in the celebration modal
-          const { data: myProfile } = await supabase.from('profiles').select('foto_url').eq('id', userData.user.id).single();
-          setMyAvatarUrl(myProfile?.foto_url || null);
-          setMatchData({
-            matchId: data.match_id,
-            nama: swipedName || 'Seseorang',
-            foto_url: swipedPhoto || null
-          });
-        }
-      }
-    }
   };
 
-  const triggerSwipe = (direction: 'left' | 'right') => {
+  const triggerSwipe = (direction: 'left' | 'right' | 'up') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (direction === 'left') {
       swipeCardRef.current?.swipeLeft();
-    } else {
+    } else if (direction === 'right') {
       swipeCardRef.current?.swipeRight();
+    } else if (direction === 'up') {
+      swipeCardRef.current?.swipeUp();
     }
   };
 
@@ -377,12 +271,7 @@ export default function DiscoverScreen() {
         ) : !currentProfile ? (
           /* Empty Deck State */
           <View style={styles.emptyContainer}>
-            <View style={styles.glowingRingsOuter}>
-              <Animated.View style={[styles.glowingRingsOuter, StyleSheet.absoluteFill, radarAnimatedStyle, { backgroundColor: 'rgba(255, 87, 47, 0.15)' }]} />
-              <View style={styles.glowingRingsInner}>
-                <Ionicons name="flame" size={56} color={Colors.primary} />
-              </View>
-            </View>
+            <RadarAnimation />
             <Text style={styles.emptyTitle}>Area Selesai Dijelajahi!</Text>
             <Text style={styles.emptySubtitle}>
               Coba perluas radius atau rentang umur di filter untuk menemukan partner olahraga lainnya.
@@ -416,191 +305,23 @@ export default function DiscoverScreen() {
               {/* Active Card with Pan Gesture & Bumble Vertical Scroll */}
               <SwipeCard
                 ref={swipeCardRef}
-                onSwipedLeft={() => handleSwipeComplete('left')}
-                onSwipedRight={() => handleSwipeComplete('right')}
+                onSwipedLeft={() => onSwipeComplete('left')}
+                onSwipedRight={() => onSwipeComplete('right')}
+                onSwipedUp={() => onSwipeComplete('up')}
               >
                 <View style={styles.card}>
-                  
-                  {/* Vertically Scrollable Bumble-Style Profile Rhythm */}
                   <ScrollView
                     ref={scrollRef}
-                    style={styles.profileScrollView}
-                    contentContainerStyle={styles.scrollContentContainer}
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ paddingBottom: 150 }}
                     showsVerticalScrollIndicator={false}
                     bounces={true}
                   >
-                  {/* ========================================================= */}
-                  {/* BLOCK 1 (Hero Photo + Bottom-Left Overlay Name & Badges)  */}
-                  {/* ========================================================= */}
-                  <View style={styles.heroPhotoWrapper}>
-                    <Image
-                      source={{ uri: currentProfile.photos?.[0] || currentProfile.foto_url }}
-                      style={styles.heroPhoto}
-                      resizeMode="cover"
+                    {/* Profile Card UI Extracted */}
+                    <ProfileCardSummary 
+                      profile={currentProfile} 
+                      onExpandPress={() => setDetailSheetVisible(true)} 
                     />
-
-                    {/* Top Left Category Pill */}
-                    <View style={styles.categoryBadgeWrapper}>
-                      <View style={styles.categoryBadge}>
-                        <Text style={styles.categoryBadgeText}>SPORTS BUDDY</Text>
-                      </View>
-                    </View>
-
-                    {/* Bottom Gradient Fade with Overlaid Name & Verified Badge */}
-                    <LinearGradient
-                      colors={['transparent', 'rgba(15, 17, 23, 0.4)', 'rgba(15, 17, 23, 0.95)', '#0F1117']}
-                      locations={[0, 0.45, 0.85, 1]}
-                      style={styles.heroOverlayGradient}
-                    >
-                      {/* Photo Verified Pill */}
-                      <View style={styles.photoVerifiedPill}>
-                        <Ionicons name="checkmark-circle" size={14} color="#00C48C" />
-                        <Text style={styles.photoVerifiedText}>Photo verified</Text>
-                      </View>
-
-                      {/* Name, Age & Verified Checkmark */}
-                      <View style={styles.heroNameRow}>
-                        <Text style={styles.heroProfileName}>
-                          {currentProfile.nama}, {currentProfile.umur}
-                        </Text>
-                        <View style={styles.verifiedCheck}>
-                          <Ionicons name="checkmark-sharp" size={13} color="#FFFFFF" />
-                        </View>
-                      </View>
-                    </LinearGradient>
-                  </View>
-
-                  {/* Profile Body Blocks */}
-                  <View style={styles.profileDetailsBody}>
-                    
-                    {/* ========================================================= */}
-                    {/* BLOCK 2: Basic Info & Location (Card with Location & Pills)*/}
-                    {/* ========================================================= */}
-                    <View style={styles.bumbleCardBlock}>
-                      <Text style={styles.bumbleCardLabel}>Lokasi & Olahraga Utama</Text>
-                      
-                      <View style={styles.locationLeadRow}>
-                        <View style={styles.locationIconCircle}>
-                          <Ionicons name="location-sharp" size={18} color="#FF5A1F" />
-                        </View>
-                        <View style={styles.locationTextCol}>
-                          <Text style={styles.locationPrimaryText}>
-                            {currentProfile.alamat || 'GBK Senayan'}
-                          </Text>
-                          <Text style={styles.locationSecondaryText}>
-                            ~{currentProfile.jarak || '2 km away'}
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Top 3 Sport Pills */}
-                      <View style={styles.quickSportsRow}>
-                        {(currentProfile.hobi?.slice(0, 3) || ['Badminton', 'Running']).map((sport, idx) => (
-                          <View key={idx} style={styles.sportBadgePill}>
-                            <Ionicons name={getSportIcon(sport)} size={14} color="#FF5A1F" />
-                            <Text style={styles.sportBadgeText}>{sport}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-
-                    {/* ========================================================= */}
-                    {/* BLOCK 3: Sports Prompt / Bio (Clean Frosted Glass Card)   */}
-                    {/* ========================================================= */}
-                    <View style={styles.bumbleCardBlock}>
-                      <Text style={styles.bumbleCardLabel}>
-                        {currentProfile.prompt_question || 'Sports Prompt'}
-                      </Text>
-                      <Text style={styles.promptAnswerText}>
-                        "{currentProfile.prompt_answer || currentProfile.bio || 'Mencari partner sparring yang sportif dan seru.'}"
-                      </Text>
-
-                      {currentProfile.bio && currentProfile.prompt_answer ? (
-                        <View style={styles.bioSubSection}>
-                          <View style={styles.bioSubDivider} />
-                          <Text style={styles.bioSubHeading}>About me</Text>
-                          <Text style={styles.bioSubText}>{currentProfile.bio}</Text>
-                        </View>
-                      ) : null}
-                    </View>
-
-                    {/* ========================================================= */}
-                    {/* BLOCK 4: Second Photo (Full-Width Card Photo with Caption) */}
-                    {/* ========================================================= */}
-                    {currentProfile.photos && currentProfile.photos[1] && (
-                      <View style={styles.storyPhotoWrapper}>
-                        <Image
-                          source={{ uri: currentProfile.photos[1] }}
-                          style={styles.storyPhotoImage}
-                          resizeMode="cover"
-                        />
-                        <LinearGradient
-                          colors={['transparent', 'rgba(15, 17, 23, 0.85)']}
-                          style={styles.photoCaptionGradient}
-                        >
-                          <Text style={styles.photoCaptionText}>
-                            📍 Sering latihan di: {currentProfile.alamat || 'Senayan'}
-                          </Text>
-                        </LinearGradient>
-                      </View>
-                    )}
-
-                    {/* ========================================================= */}
-                    {/* BLOCK 5: Matrix & Interests (Cabang & Jadwal Spar, Minat)  */}
-                    {/* ========================================================= */}
-                    <View style={styles.bumbleCardBlock}>
-                      <Text style={styles.bumbleCardLabel}>Cabang & Jadwal Spar</Text>
-                      
-                      <View style={styles.matrixRow}>
-                        <View style={styles.matrixColumn}>
-                          <Text style={styles.matrixLabel}>Skill Level</Text>
-                          <View style={styles.matrixBadge}>
-                            <Ionicons name="trophy-outline" size={14} color="#FF5A1F" />
-                            <Text style={styles.matrixBadgeText}>
-                              {currentProfile.skill_level || 'Intermediate'}
-                            </Text>
-                          </View>
-                        </View>
-
-                        <View style={styles.matrixColumn}>
-                          <Text style={styles.matrixLabel}>Maks. Jarak</Text>
-                          <View style={styles.matrixBadge}>
-                            <Ionicons name="navigate-outline" size={14} color="#FF5A1F" />
-                            <Text style={styles.matrixBadgeText}>
-                              {currentProfile.distance_pref || '≤ 10 km'}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      {/* Availability */}
-                      <Text style={[styles.matrixLabel, { marginTop: 12, marginBottom: 8 }]}>
-                        Waktu Bermain Tersedia
-                      </Text>
-                      <View style={styles.pillsRow}>
-                        {(currentProfile.availability || ['Pagi', 'Sore', 'Akhir Pekan']).map((time, idx) => (
-                          <View key={idx} style={styles.detailPill}>
-                            <Ionicons name="time-outline" size={13} color="#FF5A1F" />
-                            <Text style={styles.detailPillText}>{time}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-
-                    {/* Minat & Lifestyle */}
-                    <View style={styles.bumbleCardBlock}>
-                      <Text style={styles.bumbleCardLabel}>Minat & Lifestyle</Text>
-                      <View style={styles.pillsRow}>
-                        {(currentProfile.interests || ['Health', 'Travel', 'Music', 'Food']).map((interest, idx) => (
-                          <View key={idx} style={styles.interestPill}>
-                            <Ionicons name={getInterestIcon(interest)} size={14} color="#9EA3B0" />
-                            <Text style={styles.interestPillText}>{interest}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-
-                    </View>
                   </ScrollView>
                 </View>
               </SwipeCard>
@@ -659,7 +380,17 @@ export default function DiscoverScreen() {
         visible={matchData !== null}
         matchData={matchData}
         myAvatarUrl={myAvatarUrl}
-        onClose={() => setMatchData(null)}
+        onClose={closeMatchModal}
+      />
+
+      <ProfileBottomSheet
+        visible={detailSheetVisible}
+        profile={currentProfile}
+        onClose={() => setDetailSheetVisible(false)}
+        onSwipeAction={(action) => {
+          setDetailSheetVisible(false);
+          triggerSwipe(action);
+        }}
       />
     </>
   );

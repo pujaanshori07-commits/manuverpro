@@ -3,21 +3,23 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
 
 export interface SwipeCardRef {
   swipeLeft: () => void;
   swipeRight: () => void;
+  swipeUp: () => void;
 }
 
 interface SwipeCardProps {
   onSwipedLeft: () => void;
   onSwipedRight: () => void;
+  onSwipedUp?: () => void;
   children: React.ReactNode;
 }
 
-const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ onSwipedLeft, onSwipedRight, children }, ref) => {
+const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ onSwipedLeft, onSwipedRight, onSwipedUp, children }, ref) => {
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
@@ -33,9 +35,16 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ onSwipedLeft, onSw
     });
   };
 
+  const swipeUp = () => {
+    translateY.value = withTiming(-SCREEN_HEIGHT * 1.5, { duration: 300 }, () => {
+      if (onSwipedUp) runOnJS(onSwipedUp)();
+    });
+  };
+
   useImperativeHandle(ref, () => ({
     swipeLeft,
     swipeRight,
+    swipeUp,
   }));
 
   // Horizontal pan gesture with vertical scroll allowance
@@ -76,6 +85,10 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ onSwipedLeft, onSw
     opacity: interpolate(translateX.value, [-SWIPE_THRESHOLD, -20], [1, 0], Extrapolation.CLAMP)
   }));
 
+  const superLikeOpacity = useAnimatedStyle(() => ({
+    opacity: interpolate(translateY.value, [-20, -SWIPE_THRESHOLD], [0, 1], Extrapolation.CLAMP)
+  }));
+
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[styles.card, animatedStyle]}>
@@ -87,6 +100,9 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ onSwipedLeft, onSw
         </Animated.View>
         <Animated.View style={[styles.labelContainer, styles.nopeLabelContainer, nopeOpacity]} pointerEvents="none">
           <Text style={styles.nopeLabel}>PASS</Text>
+        </Animated.View>
+        <Animated.View style={[styles.labelContainer, styles.superLikeLabelContainer, superLikeOpacity]} pointerEvents="none">
+          <Text style={styles.superLikeLabel}>SUPER</Text>
         </Animated.View>
       </Animated.View>
     </GestureDetector>
@@ -136,6 +152,19 @@ const styles = StyleSheet.create({
   },
   nopeLabel: {
     color: '#F44336',
+    fontSize: 28,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  superLikeLabelContainer: {
+    top: 'auto',
+    bottom: 80,
+    alignSelf: 'center',
+    borderColor: '#2196F3',
+    transform: [{ rotate: '-10deg' }],
+  },
+  superLikeLabel: {
+    color: '#2196F3',
     fontSize: 28,
     fontWeight: '900',
     letterSpacing: 2,

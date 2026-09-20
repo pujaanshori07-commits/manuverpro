@@ -5,6 +5,7 @@ import React, { Component, ErrorInfo, ReactNode, createContext, useCallback, use
 import { ActivityIndicator, Text, View, Platform, TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Montserrat_800ExtraBold_Italic } from '@expo-google-fonts/montserrat';
 import {
@@ -113,6 +114,16 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
     return this.props.children;
   }
 }
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes cache
+    },
+  },
+});
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -306,26 +317,28 @@ export default function RootLayout() {
     <RootErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style="light" />
-        <AuthContext.Provider value={{ session, profile, loading, checkingProfile, refreshProfile: fetchProfile }}>
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#090A0D' } }}>
-            <Stack.Screen
-              name="match-celebration"
-              options={{
-                presentation: 'transparentModal',
-                animation: 'fade',
-                headerShown: false,
-              }}
-            />
-          </Stack>
-          {redirectTo && <Redirect href={redirectTo as any} />}
-          
-          {/* Loading Overlay to prevent unmounting the Stack context */}
-          {(loading || (session && checkingProfile && !profile)) && (
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#090A0D', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
-              <ActivityIndicator size="large" color="#FF572F" />
-            </View>
-          )}
-        </AuthContext.Provider>
+        <QueryClientProvider client={queryClient}>
+          <AuthContext.Provider value={{ session, profile, loading, checkingProfile, refreshProfile: fetchProfile }}>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#090A0D' } }}>
+              <Stack.Screen
+                name="match-celebration"
+                options={{
+                  presentation: 'transparentModal',
+                  animation: 'fade',
+                  headerShown: false,
+                }}
+              />
+            </Stack>
+            {redirectTo && <Redirect href={redirectTo as any} />}
+            
+            {/* Loading Overlay to prevent unmounting the Stack context */}
+            {(loading || (session && checkingProfile && !profile)) && (
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#090A0D', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }}>
+                <ActivityIndicator size="large" color="#FF572F" />
+              </View>
+            )}
+          </AuthContext.Provider>
+        </QueryClientProvider>
       </GestureHandlerRootView>
     </RootErrorBoundary>
   );

@@ -22,17 +22,9 @@ import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme
 import { supabase } from '../../lib/supabase';
 import ReliabilityBadge from '../../components/ReliabilityBadge';
 import { useLocationManager } from '../../hooks/useLocationManager';
+import { Profile } from '../../types/database';
 
-interface ProfileData {
-  nama: string;
-  pekerjaan: string;
-  pendidikan: string;
-  hobi: string;
-  bio: string;
-  foto_url: string;
-}
-
-const DEFAULT_PROFILE: ProfileData = {
+const DEFAULT_PROFILE: Partial<Profile> = {
   nama: 'Andi Pratama',
   pekerjaan: 'Product Designer',
   pendidikan: 'Universitas Indonesia',
@@ -48,7 +40,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState<Partial<Profile>>(DEFAULT_PROFILE);
 
   const { permissionState, openSettings } = useLocationManager();
 
@@ -108,7 +100,7 @@ export default function ProfileScreen() {
         nama: profile.nama,
         pekerjaan: profile.pekerjaan,
         pendidikan: profile.pendidikan,
-        hobi: profile.hobi.split(',').map((s) => s.trim()).filter(Boolean),
+        hobi: profile.hobi ? profile.hobi.split(',').map((s) => s.trim()).filter(Boolean) : [],
         bio: profile.bio,
         foto_url: profile.foto_url,
         updated_at: new Date().toISOString(),

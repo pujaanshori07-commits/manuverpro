@@ -1,24 +1,39 @@
-import * as Notifications from 'expo-notifications';
 import { Platform, Alert } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-Notifications.setNotificationHandler({
-  handleNotification: async (): Promise<any> => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+let Notifications: any = null;
+try {
+  const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+  if (!isExpoGo) {
+    Notifications = require('expo-notifications');
+    Notifications.setNotificationHandler({
+      handleNotification: async (): Promise<any> => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+  }
+} catch (e) {
+  console.warn('expo-notifications is not available in this environment', e);
+}
 
 export async function requestNotificationPermissions() {
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
+  if (!Notifications) return false;
   
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
+  try {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    
+    return finalStatus === 'granted';
+  } catch (e) {
+    return false;
   }
-  
-  return finalStatus === 'granted';
 }
 
 export async function scheduleMatchReminder(
@@ -26,6 +41,11 @@ export async function scheduleMatchReminder(
   body: string,
   matchDate: Date
 ) {
+  if (!Notifications) {
+    console.warn('Push notifications are disabled in Expo Go.');
+    return false;
+  }
+
   const hasPermission = await requestNotificationPermissions();
   if (!hasPermission) {
     Alert.alert(

@@ -26,8 +26,8 @@ const { width } = Dimensions.get('window');
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Adaptive redirect URI (Outputs exp:// in Expo Go, and manuverapp:// in APK)
-const redirectTo = makeRedirectUri({ path: 'login' });
+// Adaptive redirect URI
+const redirectTo = makeRedirectUri({ scheme: 'manuverapp', path: 'login' });
 
 // Robust query and hash fragment parser for React Native custom schemes
 function parseParamsFromUrl(url: string) {

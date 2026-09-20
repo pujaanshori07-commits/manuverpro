@@ -4,41 +4,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, RADIUS, TYPOGRAPHY } from '../constants/DesignSystem';
 import { FREQUENCY_OPTIONS, PREFERRED_TIME_OPTIONS, SPORT_ROLE_OPTIONS } from '../constants/ProfileOptions';
 import PhotoCarousel from './PhotoCarousel';
+import { Profile } from '../types/database';
 
 const { width, height } = Dimensions.get('window');
 
-type Profile = {
-  id: string;
-  nama: string;
-  foto_url: string | null;
-  alamat: string | null;
-  bio: string | null;
-  skill_level?: string;
-  availability?: string;
-  looking_for?: string;
-  overall_frequency?: string | null;
-  preferred_time?: string | null;
-  home_venue?: string | null;
-  height_cm?: number | null;
-  domisili?: string | null;
-  sport_role?: string | null;
-  user_sports?: { sports: { nama: string; icon?: string } }[];
-  photos?: string[];
-  prompts?: { question_text: string; answer_text: string }[];
-  distance_km?: number;
-  distance?: number;
-  last_active?: string;
-  profile_completeness?: number;
-  match_score?: number;
-  match_percentage?: number;
-};
-
-type Props = {
+interface ProfileBottomSheetProps {
   visible: boolean;
   profile: Profile | null;
   onClose: () => void;
-  onSwipeAction: (action: 'left' | 'right' | 'up') => void;
+  onSwipeAction?: (action: 'left' | 'right' | 'up') => void;
 };
+
+type Props = ProfileBottomSheetProps;
 
 export default function ProfileBottomSheet({ visible, profile, onClose, onSwipeAction }: Props) {
   if (!profile) return null;
@@ -208,7 +185,7 @@ export default function ProfileBottomSheet({ visible, profile, onClose, onSwipeA
             <View style={styles.sheetActionsRow}>
               <TouchableOpacity 
                 style={[styles.sheetActionBtn, { backgroundColor: '#FF4444' }]} 
-                onPress={() => onSwipeAction('left')}
+                onPress={() => onSwipeAction?.('left')}
                 activeOpacity={0.8}
               >
                 <Ionicons name="close" size={24} color="#FFF" />
@@ -216,7 +193,7 @@ export default function ProfileBottomSheet({ visible, profile, onClose, onSwipeA
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.sheetActionBtn, { backgroundColor: '#00D2FF' }]} 
-                onPress={() => onSwipeAction('up')}
+                onPress={() => onSwipeAction?.('up')}
                 activeOpacity={0.8}
               >
                 <Ionicons name="star" size={22} color="#FFF" />
@@ -224,7 +201,7 @@ export default function ProfileBottomSheet({ visible, profile, onClose, onSwipeA
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.sheetActionBtn, { backgroundColor: '#00E676' }]} 
-                onPress={() => onSwipeAction('right')}
+                onPress={() => onSwipeAction?.('right')}
                 activeOpacity={0.8}
               >
                 <Ionicons name="heart" size={24} color="#FFF" />

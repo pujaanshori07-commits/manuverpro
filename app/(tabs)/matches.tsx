@@ -134,7 +134,7 @@ export default function MatchesScreen() {
 
       {/* Screen Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Matches & Chat</Text>
+        <Text style={styles.headerTitle}>Matches</Text>
       </View>
 
       {loading ? (
@@ -209,6 +209,9 @@ export default function MatchesScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+              
+              {/* Separator Line */}
+              <View style={styles.separatorLine} />
             </View>
           )}
 
@@ -300,6 +303,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: Colors.primary,
     fontWeight: '500',
+  },
+  separatorLine: {
+    height: 1,
+    backgroundColor: Colors.surfaceBorder,
+    marginTop: Spacing.md,
+    marginHorizontal: Spacing.base,
   },
   matchesScroll: {
     paddingHorizontal: Spacing.base,

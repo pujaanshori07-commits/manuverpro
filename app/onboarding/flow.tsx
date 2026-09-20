@@ -9,6 +9,7 @@ import {
   PanResponder,
   Platform,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1275,5 +1276,24 @@ const styles = StyleSheet.create({
   buttonPressed: {
     transform: [{ scale: 0.97 }],
     opacity: 0.9,
+  },
+  subFieldGroup: {
+    marginBottom: 20,
+  },
+  fieldLabel: {
+    fontSize: 14,
+    color: '#E0E3FF',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  glassInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    color: '#FFF',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
 });

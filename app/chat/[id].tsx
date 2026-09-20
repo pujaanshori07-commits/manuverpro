@@ -17,18 +17,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
-import { supabase } from '../../lib/supabase';
 import AjakMainSheet from '../../components/AjakMainSheet';
 import SparingInviteCard from '../../components/SparingInviteCard';
-import { sendPushNotification } from '../../lib/sendPushNotification';
-interface Message {
-  id: string;
-  sender_id: string;
-  content: string;
-  type?: string;
-  metadata?: any;
-  created_at: string;
-}
+import { useChat } from '../../hooks/useChat';
+import { Message } from '../../types/database';
+// Removed inline Message interface
 
 const CHEMISTRY_MESSAGES = [
   "Kalian berdua suka Badminton & Running 🏸🏃",
@@ -58,158 +51,17 @@ export default function ChatScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
-  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isSheetVisible, setIsSheetVisible] = useState(false);
+  
+  const { messages, loading, currentUserId, sendMessage, sendSparingInvite, updateInviteStatus } = useChat(id);
   
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) {
-        setCurrentUserId(data.user.id);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchMessages = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('match_id', id)
-        .order('created_at', { ascending: true });
-
-      if (!error && data) {
-        setMessages(data);
-      } else {
-        setMessages([
-          {
-            id: 'm-1',
-            sender_id: 'partner',
-            content: `Halo! Siap buat sparing bareng?`,
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-          },
-        ]);
-      }
-      setLoading(false);
-    };
-
-    fetchMessages();
-
-    const channel = supabase
-      .channel(`chat:${id}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${id}` },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id]);
-
-  const handleSendMessage = async (textToSend?: string) => {
-    const text = textToSend || inputText;
-    if (!text.trim() || !id || !currentUserId) return;
-
-    if (!textToSend) setInputText('');
-
-    const newMsg: Message = {
-      id: Math.random().toString(),
-      sender_id: currentUserId,
-      content: text.trim(),
-      created_at: new Date().toISOString(),
-    };
-
-    setMessages((prev) => [...prev, newMsg]);
-
-    try {
-      await supabase.from('messages').insert({
-        match_id: id,
-        sender_id: currentUserId,
-        content: text.trim(),
-      });
-
-      // Fetch recipient push token
-      const { data: match } = await supabase
-        .from('matches')
-        .select('user_a_id, user_b_id')
-        .eq('id', id)
-        .single();
-        
-      if (match) {
-        const recipientId = match.user_a_id === currentUserId ? match.user_b_id : match.user_a_id;
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('push_token, nama')
-          .eq('id', recipientId)
-          .single();
-
-        if (profile?.push_token) {
-          // Get sender's name to display in the notification
-          const { data: myProfile } = await supabase
-            .from('profiles')
-            .select('nama')
-            .eq('id', currentUserId)
-            .single();
-            
-          const senderName = myProfile?.nama || 'Teman Sparing';
-          await sendPushNotification(
-            profile.push_token,
-            `Pesan dari ${senderName}`,
-            text.trim()
-          );
-        }
-      }
-    } catch {
-      // offline handling
-    }
-  };
-
-  const handleUpdateInviteStatus = async (messageId: string, newStatus: string) => {
-    // Optimistic UI update
-    setMessages((prev) => 
-      prev.map((msg) => {
-        if (msg.id === messageId && msg.metadata) {
-          return {
-            ...msg,
-            metadata: {
-              ...msg.metadata,
-              status: newStatus
-            }
-          };
-        }
-        return msg;
-      })
-    );
-
-    // Database update
-    try {
-      const msgToUpdate = messages.find((m) => m.id === messageId);
-      if (msgToUpdate) {
-        await supabase
-          .from('messages')
-          .update({
-            metadata: {
-              ...msgToUpdate.metadata,
-              status: newStatus
-            }
-          })
-          .eq('id', messageId);
-      }
-    } catch (error) {
-      console.error("Failed to update invite status", error);
-    }
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
+    sendMessage(inputText);
+    setInputText('');
   };
 
   // Navigate to full profile when tapping avatar or name
@@ -233,8 +85,8 @@ export default function ChatScreen() {
           scheduledAt={item.metadata?.scheduled_at || new Date().toISOString()}
           status={item.metadata?.status || 'pending'}
           isReceiver={!isMe}
-          onAccept={() => handleUpdateInviteStatus(item.id, 'accepted')}
-          onDecline={() => handleUpdateInviteStatus(item.id, 'declined')}
+          onAccept={() => updateInviteStatus(item.id, 'accepted')}
+          onDecline={() => updateInviteStatus(item.id, 'declined')}
           note={item.metadata?.note}
         />
       );
@@ -352,65 +204,7 @@ export default function ChatScreen() {
         onSend={async (inviteData) => {
           setIsSheetVisible(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          
-          if (!id || !currentUserId) return;
-          
-          const newMsg: Message = {
-            id: Math.random().toString(),
-            sender_id: currentUserId,
-            content: `Mengajak sparing ${inviteData.sport} di ${inviteData.venue_name}`,
-            type: 'sparing_invite',
-            metadata: {
-              ...inviteData,
-              status: 'pending'
-            },
-            created_at: new Date().toISOString(),
-          };
-          
-          setMessages((prev) => [...prev, newMsg]);
-
-          try {
-            await supabase.from('messages').insert({
-              match_id: id,
-              sender_id: currentUserId,
-              content: newMsg.content,
-              type: 'sparing_invite',
-              metadata: newMsg.metadata
-            });
-
-            // Send push notification for the invite
-            const { data: match } = await supabase
-              .from('matches')
-              .select('user_a_id, user_b_id')
-              .eq('id', id)
-              .single();
-              
-            if (match) {
-              const recipientId = match.user_a_id === currentUserId ? match.user_b_id : match.user_a_id;
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('push_token')
-                .eq('id', recipientId)
-                .single();
-
-              if (profile?.push_token) {
-                const { data: myProfile } = await supabase
-                  .from('profiles')
-                  .select('nama')
-                  .eq('id', currentUserId)
-                  .single();
-                  
-                const senderName = myProfile?.nama || 'Teman Sparing';
-                await sendPushNotification(
-                  profile.push_token,
-                  `🔥 ${senderName} Mengajak Sparing!`,
-                  `Sparing ${inviteData.sport} di ${inviteData.venue_name}. Buka aplikasi untuk menerima.`
-                );
-              }
-            }
-          } catch (e) {
-            console.error("Failed to send invite", e);
-          }
+          await sendSparingInvite(inviteData);
         }}
       />
     </KeyboardAvoidingView>
