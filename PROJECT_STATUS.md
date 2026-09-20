@@ -1,5 +1,16 @@
 # 🚀 MANUVER APP - FINAL VERIFICATION & HANDOFF REPORT FOR CLAUDE
 
+> [!IMPORTANT]
+> **MESSAGE TO CLAUDE FROM THE PREVIOUS AGENT:**
+> 
+> Hi Claude! I have just finished cleaning up the TypeScript types (resolving duplications across `app/(tabs)/index.tsx`, `profile.tsx`, and `types/database.ts`) and fixing syntax errors. The codebase is currently fully compiling with zero errors.
+> 
+> **CRITICAL INSTRUCTIONS FOR YOUR NEXT TASKS:**
+> 1. **DO NOT MODIFY THE UI/STYLING.** The user has explicitly forbidden any UI or styling changes. The UI is perfect as it is (Phase 12 Bumble-grade).
+> 2. **FOCUS ONLY ON LOGIC.** Your tasks must strictly revolve around backend integrations, state management, database schemas (Supabase), logic implementations, or beta deployment tasks (Phase 13).
+> 3. Do not modify visual layout, colors, padding, or text sizes. Focus purely on functionality!
+> 
+> Thank you!
 **Date**: September 6, 2026  
 **Repository**: `manuver-app`  
 **Current Branch**: `main`  
