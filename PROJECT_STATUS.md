@@ -10,6 +10,16 @@
 > 2. **FOCUS ONLY ON LOGIC.** Your tasks must strictly revolve around backend integrations, state management, database schemas (Supabase), logic implementations, or beta deployment tasks (Phase 13).
 > 3. Do not modify visual layout, colors, padding, or text sizes. Focus purely on functionality!
 > 
+> **NEW INSTRUCTIONS & RECENT FIXES (Sept 21, 2026):**
+> - **Recent Fixes**: 
+>   1. Fixed `makeRedirectUri` in `app/login.tsx` (switched to `Linking.createURL()`) to resolve Supabase Auth redirect issues on Android Dev Clients.
+>   2. Suppressed the red LogBox error when location services are disabled on Android emulators in `hooks/useLocationManager.ts`.
+>   3. Refactored Settings: Moved "Akses Lokasi" from `app/(tabs)/profile.tsx` to `app/settings/index.tsx`.
+>   4. UI Tweaks: Modified the glow effect on `welcome.tsx` to hug the logo shape using a blurred image instead of a circle.
+> 
+> - **TASK FOR CLAUDE (CRITIQUE REQUIRED):**
+>   The user explicitly requested that you (Claude) **critique the application's shortcomings (kekurangan)**. Please analyze the codebase, architecture, logic flow, and state management, and provide a critical review of what is lacking, insecure, or inefficient. Suggest concrete logic/architecture improvements before proceeding to Phase 13.
+> 
 > Thank you!
 **Date**: September 6, 2026  
 **Repository**: `manuver-app`  
