@@ -14,10 +14,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
+import { useLocationManager } from '../../hooks/useLocationManager';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { permissionState, openSettings } = useLocationManager();
 
   const [notifications, setNotifications] = useState({
     push: true,
@@ -156,6 +158,31 @@ export default function SettingsScreen() {
         {/* 3. PRIVACY & SECURITY */}
         {renderSectionHeader('PRIVASI & KEAMANAN')}
         <View style={styles.groupContainer}>
+          <TouchableOpacity
+            style={styles.rowItem}
+            onPress={() => {
+              if (permissionState !== 'GRANTED') {
+                openSettings();
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.rowLeft}>
+              <View style={[styles.rowIcon, { backgroundColor: 'rgba(255, 149, 0, 0.15)' }]}>
+                <Ionicons name="location-outline" size={18} color="#FF9500" />
+              </View>
+              <View>
+                <Text style={styles.rowLabel}>Akses Lokasi (GPS)</Text>
+                <Text style={[styles.rowSubLabel, { color: permissionState === 'GRANTED' ? '#00C48C' : Colors.textSecondary }]}>
+                  {permissionState === 'GRANTED' ? 'Aktif' : 'Nonaktif'}
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+
+          <View style={styles.rowDivider} />
+
           <View style={styles.rowItem}>
             <View style={styles.rowLeft}>
               <View style={[styles.rowIcon, { backgroundColor: 'rgba(142, 68, 173, 0.15)' }]}>
