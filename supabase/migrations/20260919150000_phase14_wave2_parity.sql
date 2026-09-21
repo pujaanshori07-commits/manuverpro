@@ -1,5 +1,8 @@
 -- Phase 14: Tinder/Bumble Parity - Wave 2 Migration
 -- 1. Upgrade get_nearby_profiles with normalized match_percentage and full profile attributes
+SET search_path = public, extensions;
+
+DROP FUNCTION IF EXISTS get_nearby_profiles(UUID, FLOAT, INT, INT);
 
 CREATE OR REPLACE FUNCTION get_nearby_profiles(
   user_id_param UUID,

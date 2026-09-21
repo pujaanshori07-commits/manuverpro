@@ -1,8 +1,9 @@
 -- Phase 11: Growth Engineering Migration
 -- PostGIS, Last Active Tracking, Profile Completeness, Auto-Flagging, and Weighted Matching Scoring
 
--- 1. Enable PostGIS Extension
-CREATE EXTENSION IF NOT EXISTS postgis;
+-- 1. Enable PostGIS Extension in extensions schema and update search path
+CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA extensions;
+SET search_path = public, extensions;
 
 -- 2. Add Last Active, Location Geography, Profile Completeness & Review Flag columns
 ALTER TABLE public.profiles 
