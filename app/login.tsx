@@ -26,8 +26,7 @@ const { width } = Dimensions.get('window');
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Adaptive redirect URI
-const redirectTo = makeRedirectUri({ scheme: 'manuverapp', path: 'login' });
+// We will generate redirect URL dynamically inside the component
 
 // Robust query and hash fragment parser for React Native custom schemes
 function parseParamsFromUrl(url: string) {
@@ -128,10 +127,16 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     try {
       setIsLoading(true);
+      
+      // Generate redirect URI dynamically to ensure it captures the correct scheme for both Expo Go and Dev Client
+      const currentRedirectUrl = Linking.createURL('login');
+      
+      console.log('DEBUG: Generated Redirect URL ->', currentRedirectUrl);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo,
+          redirectTo: currentRedirectUrl,
           skipBrowserRedirect: true,
           queryParams: {
             prompt: 'select_account',
@@ -148,7 +153,7 @@ export default function LoginScreen() {
       // Pass showInRecents: true to prevent Android task affinity freezing
       const result = await WebBrowser.openAuthSessionAsync(
         data.url!,
-        redirectTo,
+        currentRedirectUrl,
         { showInRecents: true }
       );
 

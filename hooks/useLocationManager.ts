@@ -114,7 +114,7 @@ export function useLocationManager() {
       setLocation(loc);
       return loc;
     } catch (e) {
-      console.error('Error getting current location:', e);
+      console.warn('Warning: Could not get current location (is GPS enabled?).', e);
       return null;
     }
   }, [checkPermissions]);

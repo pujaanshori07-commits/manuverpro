@@ -47,18 +47,9 @@ export default function WelcomeScreen() {
   }, []);
 
   const glowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    opacity: pulseOpacity.value,
-    backgroundColor: themeColors.primary,
+    transform: [{ scale: pulseScale.value * 1.15 }],
+    opacity: pulseOpacity.value * 2.5,
     position: 'absolute',
-    width: width * 0.5,
-    height: width * 0.5,
-    borderRadius: width * 0.25,
-    shadowColor: themeColors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 30,
-    elevation: 20,
   }));
 
   const floatStyle = useAnimatedStyle(() => ({
@@ -76,7 +67,12 @@ export default function WelcomeScreen() {
 
         <SafeAreaView style={styles.content}>
           <View style={styles.brandContainer}>
-            <Animated.View style={glowStyle} />
+            <Animated.Image 
+              source={require('../assets/images/logo.png')} 
+              style={[styles.logoImage, glowStyle, { tintColor: themeColors.primary }]} 
+              blurRadius={25}
+              resizeMode="contain" 
+            />
             <Animated.View style={[floatStyle, styles.logoWrapper]}>
               <Image 
                 source={require('../assets/images/logo.png')} 
