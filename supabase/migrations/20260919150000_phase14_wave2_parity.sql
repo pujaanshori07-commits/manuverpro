@@ -8,6 +8,8 @@ CREATE OR REPLACE FUNCTION get_nearby_profiles(
   user_id_param UUID,
   max_distance_km FLOAT DEFAULT 50,
   max_age_val INT DEFAULT 60,
+  min_age_val INT DEFAULT 18,
+  filter_sports TEXT[] DEFAULT NULL,
   limit_val INT DEFAULT 25
 )
 RETURNS TABLE (
