@@ -78,7 +78,8 @@
           "locationAlwaysAndWhenInUsePermission": "Allow manuver-app to use your location to find sports friends near you."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
