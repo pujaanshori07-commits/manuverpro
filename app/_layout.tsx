@@ -310,7 +310,7 @@ export default function RootLayout() {
       redirectTo = '/';
     }
   } else {
-    if (!checkingProfile && !inAuthGroup && !inOnboardingGroup) redirectTo = '/onboarding/flow';
+    if (!checkingProfile && !inOnboardingGroup) redirectTo = '/onboarding/flow';
   }
 
   return (
