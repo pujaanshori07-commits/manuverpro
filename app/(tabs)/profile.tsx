@@ -11,12 +11,22 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
+import Animated, {
+  FadeIn,
+  SlideInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  interpolateColor,
+} from 'react-native-reanimated';
 
 import { Colors, Typography, BorderRadius, Spacing } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
@@ -31,6 +41,65 @@ const DEFAULT_PROFILE: Partial<Profile> = {
   hobi: 'Badminton, Gym, Running, Basket',
   bio: 'Cari partner olahraga santai weekend atau sparring badminton rutin di Jaksel.',
   foto_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80',
+};
+
+const AnimatedTextInput = (props: any) => {
+  const isFocused = useSharedValue(0);
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      borderColor: interpolateColor(
+        isFocused.value,
+        [0, 1],
+        [Colors.surfaceBorder, Colors.primary]
+      ),
+    };
+  });
+  return (
+    <Animated.View style={[props.containerStyle, animatedStyle, { borderWidth: 1, borderRadius: BorderRadius.md, backgroundColor: Colors.surfaceInput }]}>
+      <TextInput
+        {...props}
+        style={[props.style, { borderWidth: 0, backgroundColor: 'transparent' }]}
+        onFocus={(e) => {
+          isFocused.value = withTiming(1, { duration: 200 });
+          if (props.onFocus) props.onFocus(e);
+        }}
+        onBlur={(e) => {
+          isFocused.value = withTiming(0, { duration: 200 });
+          if (props.onBlur) props.onBlur(e);
+        }}
+      />
+    </Animated.View>
+  );
+};
+
+const AnimatedPressable = ({ children, style, onPress, disabled, activeOpacity = 0.7, ...props }: any) => {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      onPressIn={() => {
+        if (!disabled) {
+          scale.value = withSpring(0.97, { damping: 20, stiffness: 200 });
+          opacity.value = withTiming(activeOpacity, { duration: 150 });
+        }
+      }}
+      onPressOut={() => {
+        if (!disabled) {
+          scale.value = withSpring(1, { damping: 20, stiffness: 200 });
+          opacity.value = withTiming(1, { duration: 150 });
+        }
+      }}
+      {...props}
+    >
+      <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
+    </Pressable>
+  );
 };
 
 export default function ProfileScreen() {
@@ -215,17 +284,16 @@ export default function ProfileScreen() {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Photo Section */}
-            <View style={styles.photoSection}>
+                        {/* Photo Section */}
+            <Animated.View entering={FadeIn.delay(100).springify()} style={styles.photoSection}>
               <View style={styles.photoCard}>
                 <Image
                   source={{ uri: profile.foto_url }}
                   style={styles.photoImage}
                   resizeMode="cover"
                 />
-                <TouchableOpacity
+                <AnimatedPressable
                   style={styles.cameraBtn}
-                  activeOpacity={0.8}
                   onPress={uploadAvatar}
                   disabled={uploadingImage}
                 >
@@ -234,95 +302,96 @@ export default function ProfileScreen() {
                   ) : (
                     <Ionicons name="camera" size={20} color={Colors.white} />
                   )}
-                </TouchableOpacity>
+                </AnimatedPressable>
               </View>
               <Text style={styles.photoHint}>Tap untuk mengubah foto</Text>
               <View style={{ marginTop: 12 }}>
                 <ReliabilityBadge score={98} />
               </View>
-            </View>
+            </Animated.View>
 
             {/* Form Inputs */}
             <View style={styles.formContainer}>
               {/* Nama Panggilan */}
-              <View style={styles.inputGroup}>
+              <Animated.View entering={FadeIn.delay(150).springify()} style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Nama Panggilan</Text>
-                <TextInput
+                <AnimatedTextInput
                   style={styles.textInput}
                   value={profile.nama}
-                  onChangeText={(text) => setProfile({ ...profile, nama: text })}
+                  onChangeText={(text: string) => setProfile({ ...profile, nama: text })}
                   placeholder="Masukkan nama panggilan"
                   placeholderTextColor={Colors.textMuted}
                 />
-              </View>
+              </Animated.View>
 
               {/* Pekerjaan */}
-              <View style={styles.inputGroup}>
+              <Animated.View entering={FadeIn.delay(200).springify()} style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Pekerjaan</Text>
-                <TextInput
+                <AnimatedTextInput
                   style={styles.textInput}
                   value={profile.pekerjaan}
-                  onChangeText={(text) => setProfile({ ...profile, pekerjaan: text })}
+                  onChangeText={(text: string) => setProfile({ ...profile, pekerjaan: text })}
                   placeholder="Contoh: Product Designer, Software Engineer"
                   placeholderTextColor={Colors.textMuted}
                 />
-              </View>
+              </Animated.View>
 
               {/* Pendidikan */}
-              <View style={styles.inputGroup}>
+              <Animated.View entering={FadeIn.delay(250).springify()} style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Pendidikan</Text>
-                <TextInput
+                <AnimatedTextInput
                   style={styles.textInput}
                   value={profile.pendidikan}
-                  onChangeText={(text) => setProfile({ ...profile, pendidikan: text })}
+                  onChangeText={(text: string) => setProfile({ ...profile, pendidikan: text })}
                   placeholder="Contoh: Universitas Indonesia"
                   placeholderTextColor={Colors.textMuted}
                 />
-              </View>
+              </Animated.View>
 
               {/* Hobi & Olahraga */}
-              <View style={styles.inputGroup}>
+              <Animated.View entering={FadeIn.delay(300).springify()} style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>
                   Hobi & Olahraga (Pisahkan dengan koma)
                 </Text>
-                <TextInput
+                <AnimatedTextInput
                   style={styles.textInput}
                   value={profile.hobi}
-                  onChangeText={(text) => setProfile({ ...profile, hobi: text })}
+                  onChangeText={(text: string) => setProfile({ ...profile, hobi: text })}
                   placeholder="Futsal, Badminton, Running, Gym"
                   placeholderTextColor={Colors.textMuted}
                 />
-              </View>
+              </Animated.View>
 
               {/* Bio Singkat */}
-              <View style={styles.inputGroup}>
+              <Animated.View entering={FadeIn.delay(350).springify()} style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Bio Singkat</Text>
-                <TextInput
+                <AnimatedTextInput
                   style={[styles.textInput, styles.textArea]}
                   value={profile.bio}
-                  onChangeText={(text) => setProfile({ ...profile, bio: text })}
+                  onChangeText={(text: string) => setProfile({ ...profile, bio: text })}
                   placeholder="Ceritakan rutinitas olahraga atau partner seperti apa yang kamu cari..."
                   placeholderTextColor={Colors.textMuted}
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
                 />
-              </View>
+              </Animated.View>
 
 
               {/* Save Button */}
-              <TouchableOpacity
-                style={styles.saveBtn}
-                onPress={handleSave}
-                activeOpacity={0.8}
-                disabled={saving}
-              >
-                {saving ? (
-                  <ActivityIndicator color={Colors.white} size="small" />
-                ) : (
-                  <Text style={styles.saveBtnText}>Simpan Perubahan</Text>
-                )}
-              </TouchableOpacity>
+              <Animated.View entering={FadeIn.delay(400).springify()}>
+                <AnimatedPressable
+                  style={styles.saveBtn}
+                  onPress={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <ActivityIndicator color={Colors.white} size="small" />
+                  ) : (
+                    <Text style={styles.saveBtnText}>Simpan Perubahan</Text>
+                  )}
+                </AnimatedPressable>
+              </Animated.View>
             </View>
           </ScrollView>
         )}

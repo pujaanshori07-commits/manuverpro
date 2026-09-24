@@ -12,7 +12,18 @@ import {
   ActivityIndicator,
   Modal,
   Dimensions,
+  Pressable,
 } from 'react-native';
+import Animated, {
+  FadeIn,
+  SlideInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  interpolateColor,
+  FadeOut,
+} from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -58,6 +69,65 @@ const MAX_PHOTOS = 6;
 
 const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Pro'];
 const AVAILABILITY_OPTIONS = ['Pagi', 'Siang', 'Sore', 'Malam', 'Akhir Pekan'];
+
+const AnimatedTextInput = (props) => {
+  const isFocused = useSharedValue(0);
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      borderColor: interpolateColor(
+        isFocused.value,
+        [0, 1],
+        ['rgba(255, 255, 255, 0.08)', '#FF5A2A']
+      ),
+    };
+  });
+  return (
+    <Animated.View style={[props.containerStyle, animatedStyle, { borderWidth: 1, borderRadius: 12, backgroundColor: '#161920' }]}>
+      <TextInput
+        {...props}
+        style={[props.style, { borderWidth: 0, backgroundColor: 'transparent' }]}
+        onFocus={(e) => {
+          isFocused.value = withTiming(1, { duration: 200 });
+          if (props.onFocus) props.onFocus(e);
+        }}
+        onBlur={(e) => {
+          isFocused.value = withTiming(0, { duration: 200 });
+          if (props.onBlur) props.onBlur(e);
+        }}
+      />
+    </Animated.View>
+  );
+};
+
+const AnimatedPressable = ({ children, style, onPress, disabled, activeOpacity = 0.7, ...props }) => {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      onPressIn={() => {
+        if (!disabled) {
+          scale.value = withSpring(0.97, { damping: 20, stiffness: 200 });
+          opacity.value = withTiming(activeOpacity, { duration: 150 });
+        }
+      }}
+      onPressOut={() => {
+        if (!disabled) {
+          scale.value = withSpring(1, { damping: 20, stiffness: 200 });
+          opacity.value = withTiming(1, { duration: 150 });
+        }
+      }}
+      {...props}
+    >
+      <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
+    </Pressable>
+  );
+};
 
 export default function EditProfileScreen() {
   const { session, profile, refreshProfile } = useAuth();
@@ -449,202 +519,217 @@ export default function EditProfileScreen() {
         </View>
       </View>
 
-      {/* Form Inputs Section */}
+            {/* Form Inputs Section */}
       <View style={styles.inputsSection}>
-        <Text style={styles.label}>Nama Lengkap / Panggilan</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Nama Anda"
-          placeholderTextColor="#666"
-          value={nama}
-          onChangeText={setNama}
-        />
-
-        <Text style={styles.label}>Tanggal Lahir</Text>
-        <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
-          <Text style={styles.dateButtonText}>{date.toISOString().split('T')[0]}</Text>
-        </TouchableOpacity>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={date}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
-            themeVariant="dark"
-            maximumDate={new Date()}
-          />
-        )}
-
-        <Text style={styles.label}>Negara</Text>
-        <TouchableOpacity style={styles.dropdownButton} onPress={() => setShowNegaraPicker(true)}>
-          <Text style={styles.dropdownButtonText}>{negara}</Text>
-          <Ionicons name="chevron-down" size={20} color="#888A90" />
-        </TouchableOpacity>
-
-        <Text style={styles.label}>Domisili / Kota</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Contoh: Jakarta Selatan, Surabaya"
-          placeholderTextColor="#666"
-          value={alamat}
-          onChangeText={setAlamat}
-        />
-
-        <Text style={styles.label}>Pendidikan</Text>
-        <View style={styles.educationRow}>
-          <TouchableOpacity
-            style={[styles.dropdownButton, styles.jenjangButton]}
-            onPress={() => setShowJenjangPicker(true)}
-          >
-            <Text style={styles.dropdownButtonText}>{jenjang || 'Jenjang'}</Text>
-            <Ionicons name="chevron-down" size={16} color="#888A90" />
-          </TouchableOpacity>
-          <TextInput
-            style={[styles.input, styles.institusiInput]}
-            placeholder="Universitas / Sekolah"
+        {/* Identitas Section */}
+        <Animated.View entering={FadeIn.delay(100).springify().damping(20).stiffness(90)} style={styles.formSection}>
+          <Text style={styles.sectionHeading}>Identitas</Text>
+          <Text style={styles.label}>Nama Lengkap / Panggilan</Text>
+          <AnimatedTextInput
+            style={styles.input}
+            placeholder="Nama Anda"
             placeholderTextColor="#666"
-            value={institusi}
-            onChangeText={setInstitusi}
+            value={nama}
+            onChangeText={setNama}
           />
-        </View>
 
-        <Text style={styles.label}>Pekerjaan</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Contoh: Software Engineer, Mahasiswa"
-          placeholderTextColor="#666"
-          value={pekerjaan}
-          onChangeText={setPekerjaan}
-        />
+          <Text style={styles.label}>Tanggal Lahir</Text>
+          <AnimatedPressable style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+            <Text style={styles.dateButtonText}>{date.toISOString().split('T')[0]}</Text>
+          </AnimatedPressable>
 
-        <Text style={styles.label}>Bio Singkat</Text>
-        <TextInput
-          style={[styles.input, styles.bioInput]}
-          placeholder="Ceritakan sedikit tentang dirimu dan olahraga favoritmu..."
-          placeholderTextColor="#666"
-          multiline
-          numberOfLines={3}
-          value={bio}
-          onChangeText={setBio}
-        />
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleDateChange}
+              themeVariant="dark"
+              maximumDate={new Date()}
+            />
+          )}
+        </Animated.View>
 
-        <Text style={styles.label}>Hobi & Minat Lainnya</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Contoh: Musik, Fotografi, Ngopi"
-          placeholderTextColor="#666"
-          value={hobi}
-          onChangeText={setHobi}
-        />
+        {/* Lokasi & Latar Belakang Section */}
+        <Animated.View entering={FadeIn.delay(150).springify().damping(20).stiffness(90)} style={styles.formSection}>
+          <Text style={styles.sectionHeading}>Lokasi & Latar Belakang</Text>
+          <Text style={styles.label}>Negara</Text>
+          <AnimatedPressable style={styles.dropdownButton} onPress={() => setShowNegaraPicker(true)}>
+            <Text style={styles.dropdownButtonText}>{negara}</Text>
+            <Ionicons name="chevron-down" size={20} color="#888A90" />
+          </AnimatedPressable>
 
-        {/* Sports Matrix Section */}
-        <View style={styles.sportsHeaderRow}>
+          <Text style={styles.label}>Domisili / Kota</Text>
+          <AnimatedTextInput
+            style={styles.input}
+            placeholder="Contoh: Jakarta Selatan, Surabaya"
+            placeholderTextColor="#666"
+            value={alamat}
+            onChangeText={setAlamat}
+          />
+
+          <Text style={styles.label}>Pendidikan</Text>
+          <View style={styles.educationRow}>
+            <AnimatedPressable
+              style={[styles.dropdownButton, styles.jenjangButton]}
+              onPress={() => setShowJenjangPicker(true)}
+            >
+              <Text style={styles.dropdownButtonText}>{jenjang || 'Jenjang'}</Text>
+              <Ionicons name="chevron-down" size={16} color="#888A90" />
+            </AnimatedPressable>
+            <AnimatedTextInput
+              containerStyle={styles.institusiInput}
+              style={[styles.input]}
+              placeholder="Universitas / Sekolah"
+              placeholderTextColor="#666"
+              value={institusi}
+              onChangeText={setInstitusi}
+            />
+          </View>
+
+          <Text style={styles.label}>Pekerjaan</Text>
+          <AnimatedTextInput
+            style={styles.input}
+            placeholder="Contoh: Software Engineer, Mahasiswa"
+            placeholderTextColor="#666"
+            value={pekerjaan}
+            onChangeText={setPekerjaan}
+          />
+        </Animated.View>
+
+        {/* Tentang Kamu Section */}
+        <Animated.View entering={FadeIn.delay(200).springify().damping(20).stiffness(90)} style={styles.formSection}>
+          <Text style={styles.sectionHeading}>Tentang Kamu</Text>
+          <Text style={styles.label}>Bio Singkat</Text>
+          <AnimatedTextInput
+            style={[styles.input, styles.bioInput]}
+            placeholder="Ceritakan sedikit tentang dirimu dan olahraga favoritmu..."
+            placeholderTextColor="#666"
+            multiline
+            numberOfLines={3}
+            value={bio}
+            onChangeText={setBio}
+          />
+
+          <Text style={styles.label}>Hobi & Minat Lainnya</Text>
+          <AnimatedTextInput
+            style={styles.input}
+            placeholder="Contoh: Musik, Fotografi, Ngopi"
+            placeholderTextColor="#666"
+            value={hobi}
+            onChangeText={setHobi}
+          />
+        </Animated.View>
+
+        {/* Olahraga Section */}
+        <Animated.View entering={FadeIn.delay(250).springify().damping(20).stiffness(90)} style={styles.formSection}>
+          <View style={styles.sportsHeaderRow}>
+            <Text style={styles.sectionHeading}>Olahraga</Text>
+            <AnimatedPressable onPress={() => setIsModalVisible(true)}>
+              <Text style={styles.addSportText}>+ Lainnya</Text>
+            </AnimatedPressable>
+          </View>
+
           <Text style={styles.label}>Cabang Olahraga yang Dimainkan</Text>
-          <TouchableOpacity onPress={() => setIsModalVisible(true)}>
-            <Text style={styles.addSportText}>+ Lainnya</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.sportsContainer}>
+            {Object.entries(SPORT_TAG_MAP).map(([sportId, rawSport]) => {
+              const sport = rawSport as any;
+              const isSelected = selectedSports.includes(sportId);
+              return (
+                <AnimatedPressable
+                  key={sportId}
+                  style={[styles.sportChip, isSelected && styles.sportChipSelected]}
+                  onPress={() => toggleSport(sportId)}
+                >
+                  {sport.icon ? (
+                    <Ionicons
+                      name={sport.icon}
+                      size={18}
+                      color={isSelected ? '#FFFFFF' : '#888A90'}
+                      style={{ marginRight: 6 }}
+                    />
+                  ) : (
+                    <Ionicons
+                      name="fitness-outline"
+                      size={18}
+                      color={isSelected ? '#FFFFFF' : '#888A90'}
+                      style={{ marginRight: 6 }}
+                    />
+                  )}
+                  <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
+                    {sport.name}
+                  </Text>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+          {selectedSports.length === 0 && (
+            <Text style={styles.errorHint}>Pilih minimal satu cabang olahraga.</Text>
+          )}
 
-        <View style={styles.sportsContainer}>
-          {Object.entries(SPORT_TAG_MAP).map(([sportId, rawSport]) => {
-            const sport = rawSport as any;
-            const isSelected = selectedSports.includes(sportId);
-            return (
-              <TouchableOpacity
-                key={sportId}
-                style={[styles.sportChip, isSelected && styles.sportChipSelected]}
-                onPress={() => toggleSport(sportId)}
-                activeOpacity={0.7}
-              >
-                {sport.icon ? (
-                  <Ionicons
-                    name={sport.icon as any}
-                    size={18}
-                    color={isSelected ? '#FFFFFF' : '#888A90'}
-                    style={{ marginRight: 6 }}
-                  />
-                ) : (
-                  <Ionicons
-                    name="fitness-outline"
-                    size={18}
-                    color={isSelected ? '#FFFFFF' : '#888A90'}
-                    style={{ marginRight: 6 }}
-                  />
-                )}
-                <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
-                  {sport.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        {selectedSports.length === 0 && (
-          <Text style={styles.errorHint}>Pilih minimal satu cabang olahraga.</Text>
-        )}
+          <Text style={[styles.label, { marginTop: 16 }]}>Kemampuan Olahraga Umum (Skill Level)</Text>
+          <View style={styles.sportsContainer}>
+            {SKILL_LEVELS.map(level => {
+              const isSelected = skillLevel === level;
+              return (
+                <AnimatedPressable
+                  key={level}
+                  style={[styles.sportChip, isSelected && styles.sportChipSelected]}
+                  onPress={() => setSkillLevel(level)}
+                >
+                  <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
+                    {level}
+                  </Text>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
 
-        <Text style={[styles.label, { marginTop: 16 }]}>Kemampuan Olahraga Umum (Skill Level)</Text>
-        <View style={styles.sportsContainer}>
-          {SKILL_LEVELS.map(level => {
-            const isSelected = skillLevel === level;
-            return (
-              <TouchableOpacity
-                key={level}
-                style={[styles.sportChip, isSelected && styles.sportChipSelected]}
-                onPress={() => setSkillLevel(level)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
-                  {level}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <Text style={[styles.label, { marginTop: 16 }]}>Kapan kamu biasa berolahraga? (Pilih &gt;1)</Text>
-        <View style={styles.sportsContainer}>
-          {AVAILABILITY_OPTIONS.map(time => {
-            const isSelected = availability.includes(time);
-            return (
-              <TouchableOpacity
-                key={time}
-                style={[styles.sportChip, isSelected && styles.sportChipSelected]}
-                onPress={() => {
-                  setAvailability(prev => 
-                    prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
-                  );
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
-                  {time}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+          <Text style={[styles.label, { marginTop: 16 }]}>Kapan kamu biasa berolahraga? (Pilih &gt;1)</Text>
+          <View style={styles.sportsContainer}>
+            {AVAILABILITY_OPTIONS.map(time => {
+              const isSelected = availability.includes(time);
+              return (
+                <AnimatedPressable
+                  key={time}
+                  style={[styles.sportChip, isSelected && styles.sportChipSelected]}
+                  onPress={() => {
+                    setAvailability(prev => 
+                      prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
+                    );
+                  }}
+                >
+                  <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
+                    {time}
+                  </Text>
+                </AnimatedPressable>
+              );
+            })}
+          </View>
+        </Animated.View>
 
         {/* Save Button */}
-        <TouchableOpacity
-          style={[styles.saveButton, (saving || uploadingSlot !== null) && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={saving || uploadingSlot !== null}
-        >
-          {saving ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.saveButtonText}>Simpan Perubahan</Text>
-          )}
-        </TouchableOpacity>
+        <Animated.View entering={FadeIn.delay(300).springify().damping(20).stiffness(90)}>
+          <AnimatedPressable
+            style={[styles.saveButton, (saving || uploadingSlot !== null) && styles.saveButtonDisabled]}
+            onPress={handleSave}
+            disabled={saving || uploadingSlot !== null}
+          >
+            {saving ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.saveButtonText}>Simpan Perubahan</Text>
+            )}
+          </AnimatedPressable>
+        </Animated.View>
       </View>
 
       {/* Add Custom Sport Modal */}
-      <Modal visible={isModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+            <Modal visible={isModalVisible} transparent animationType="none">
+        <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalOverlay}>
+          <Animated.View entering={SlideInDown.springify().damping(20).stiffness(90)} style={styles.modalContent}>
             <Text style={styles.modalTitle}>Tambah Olahraga Baru</Text>
-            <TextInput
+            <AnimatedTextInput
               style={styles.modalInput}
               placeholder="Nama olahraga (misal: Wall Climbing)"
               placeholderTextColor="#666"
@@ -653,7 +738,7 @@ export default function EditProfileScreen() {
               autoFocus
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity
+              <AnimatedPressable
                 style={[styles.modalButton, styles.modalButtonCancel]}
                 onPress={() => {
                   setIsModalVisible(false);
@@ -661,31 +746,31 @@ export default function EditProfileScreen() {
                 }}
               >
                 <Text style={styles.modalButtonTextCancel}>Batal</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+              </AnimatedPressable>
+              <AnimatedPressable
                 style={[styles.modalButton, styles.modalButtonSave]}
                 onPress={handleAddCustomSport}
               >
                 <Text style={styles.modalButtonTextSave}>Tambah</Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             </View>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
 
       {/* Country Selection Modal */}
-      <Modal visible={showNegaraPicker} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.pickerModalContent}>
+      <Modal visible={showNegaraPicker} transparent animationType="none">
+        <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalOverlay}>
+          <Animated.View entering={SlideInDown.springify().damping(20).stiffness(90)} style={styles.pickerModalContent}>
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Pilih Negara</Text>
-              <TouchableOpacity onPress={() => setShowNegaraPicker(false)}>
+              <AnimatedPressable onPress={() => setShowNegaraPicker(false)}>
                 <Ionicons name="close" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
+              </AnimatedPressable>
             </View>
             <ScrollView style={{ maxHeight: 350 }}>
               {COUNTRIES.map((item) => (
-                <TouchableOpacity
+                <AnimatedPressable
                   key={item}
                   style={styles.pickerItem}
                   onPress={() => {
@@ -697,26 +782,26 @@ export default function EditProfileScreen() {
                     {item}
                   </Text>
                   {negara === item && <Ionicons name="checkmark" size={20} color="#FF5A2A" />}
-                </TouchableOpacity>
+                </AnimatedPressable>
               ))}
             </ScrollView>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
 
       {/* Education Level Selection Modal */}
-      <Modal visible={showJenjangPicker} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={styles.pickerModalContent}>
+      <Modal visible={showJenjangPicker} transparent animationType="none">
+        <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalOverlay}>
+          <Animated.View entering={SlideInDown.springify().damping(20).stiffness(90)} style={styles.pickerModalContent}>
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Pilih Jenjang</Text>
-              <TouchableOpacity onPress={() => setShowJenjangPicker(false)}>
+              <AnimatedPressable onPress={() => setShowJenjangPicker(false)}>
                 <Ionicons name="close" size={24} color="#FFFFFF" />
-              </TouchableOpacity>
+              </AnimatedPressable>
             </View>
             <ScrollView style={{ maxHeight: 300 }}>
               {JENJANG_PENDIDIKAN.map((item) => (
-                <TouchableOpacity
+                <AnimatedPressable
                   key={item}
                   style={styles.pickerItem}
                   onPress={() => {
@@ -728,12 +813,14 @@ export default function EditProfileScreen() {
                     {item}
                   </Text>
                   {jenjang === item && <Ionicons name="checkmark" size={20} color="#FF5A2A" />}
-                </TouchableOpacity>
+                </AnimatedPressable>
               ))}
             </ScrollView>
-          </View>
-        </View>
+          </Animated.View>
+        </Animated.View>
       </Modal>
+
+      
     </ScrollView>
   );
 }
@@ -866,9 +953,22 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
   },
+  formSection: {
+    marginBottom: 32,
+  },
+  sectionHeading: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    marginTop: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+    paddingBottom: 8,
+  },
   inputsSection: {
     paddingHorizontal: 20,
-    marginTop: 12,
+    marginTop: 24,
   },
   label: {
     color: '#FFFFFF',
