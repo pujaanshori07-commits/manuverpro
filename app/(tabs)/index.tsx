@@ -243,16 +243,7 @@ export default function DiscoverScreen() {
         
         {/* Header with Centered "manuver" Wordmark */}
         <View style={styles.header}>
-          {permissionState !== 'GRANTED' ? (
-            <TouchableOpacity 
-              style={[styles.filterBtn, { backgroundColor: 'transparent', borderColor: 'transparent' }]}
-              onPress={() => setModalVisible(true)}
-            >
-              <Ionicons name="location-outline" size={22} color="#FF572F" />
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.headerSpacer} />
-          )}
+          <View style={{ width: 38 }} />
           <Text style={styles.headerBrandText}>manuver</Text>
           <TouchableOpacity
             style={styles.filterBtn}
@@ -418,10 +409,9 @@ const styles = StyleSheet.create({
     width: 38,
   },
   headerBrandText: {
-    fontFamily: Typography.fontHeading,
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FF572F', // Brand orange
+    fontFamily: 'Lato_900Black',
+    fontSize: 24,
+    color: '#FF5A36', // Signature Manuver Orange
     letterSpacing: -0.5,
     textTransform: 'lowercase',
   },

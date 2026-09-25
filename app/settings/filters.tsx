@@ -62,6 +62,17 @@ const DEFAULT_FILTERS: MatchFilterSettings = {
   showMyProfile: true,
 };
 
+const RowItem = ({ label, isLast, onPress }: { label: string; isLast?: boolean; onPress?: () => void }) => (
+  <TouchableOpacity
+    style={[styles.rowItem, !isLast && styles.rowItemBorder]}
+    activeOpacity={0.7}
+    onPress={onPress}
+  >
+    <Text style={styles.rowLabel}>{label}</Text>
+    <Ionicons name="chevron-forward" size={20} color="#8F94A6" />
+  </TouchableOpacity>
+);
+
 export default function MatchFiltersScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -233,6 +244,20 @@ export default function MatchFiltersScreen() {
     } catch (e) {
       Alert.alert('Error', 'Gagal menghapus akun.');
     }
+  };
+
+  const handleLogout = async () => {
+    Alert.alert('Logout', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await supabase.auth.signOut();
+          router.replace('/login');
+        },
+      },
+    ]);
   };
 
   if (loading) {
@@ -546,8 +571,34 @@ export default function MatchFiltersScreen() {
           </View>
         </View>
 
+        {/* SECTION 6: GENERAL SETTINGS */}
+        <Text style={[styles.sectionTitle, { marginTop: 16, marginBottom: 12 }]}>General Settings</Text>
+        <View style={styles.groupContainer}>
+          <RowItem label="Community Guidelines" onPress={() => router.push('/settings/guidelines')} />
+          <RowItem label="Safety Tips" />
+          <RowItem label="Safety Center" isLast />
+        </View>
+
+        <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 12 }]}>Privacy</Text>
+        <View style={styles.groupContainer}>
+          <RowItem label="Cookie Policy" />
+          <RowItem label="Privacy Policy" onPress={() => router.push('/settings/privacy')} />
+          <RowItem label="Privacy Preferences" />
+          <RowItem label="From Manuver Group" isLast />
+        </View>
+
+        <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 12 }]}>Legal</Text>
+        <View style={styles.groupContainer}>
+          <RowItem label="Licenses" />
+          <RowItem label="Terms of Service" onPress={() => router.push('/settings/terms')} isLast />
+        </View>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+
         {/* SECTION 5: RED ZONE / HAPUS AKUN */}
-        <View style={styles.dangerZoneCard}>
+        <View style={[styles.dangerZoneCard, { marginTop: 16 }]}>
           <View style={styles.dangerHeader}>
             <Ionicons name="warning-outline" size={18} color="#EF4444" />
             <Text style={styles.dangerTitle}>Zona Bahaya</Text>
@@ -570,6 +621,12 @@ export default function MatchFiltersScreen() {
             <Text style={styles.deleteButtonText}>Hapus Akun Saya</Text>
           </TouchableOpacity>
         </View>
+
+        <View style={styles.footerContainer}>
+          <Ionicons name="flame" size={24} color="#FF5A1F" style={{ marginBottom: 4 }} />
+          <Text style={styles.versionText}>Version 1.0.4</Text>
+        </View>
+
       </ScrollView>
 
       {/* CONFIRMATION POPUP MODAL */}
@@ -657,9 +714,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#FFFFFF',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   headerDoneBtn: {
     paddingVertical: 6,
@@ -671,7 +727,7 @@ const styles = StyleSheet.create({
   },
   headerDoneText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#FF5A1F',
   },
   container: {
@@ -710,12 +766,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#FFFFFF',
   },
   highlightBadge: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#FF5A1F',
     backgroundColor: 'rgba(255, 90, 31, 0.1)',
     paddingHorizontal: 8,
@@ -729,7 +785,7 @@ const styles = StyleSheet.create({
   },
   boldText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
   },
   sliderInteractiveWrapper: {
     height: 36,
@@ -780,7 +836,7 @@ const styles = StyleSheet.create({
   rangeSubText: {
     fontSize: 11,
     color: '#555B6E',
-    fontWeight: '600',
+    fontFamily: 'Lato_700Bold',
   },
   distanceChipsRow: {
     flexDirection: 'row',
@@ -803,12 +859,12 @@ const styles = StyleSheet.create({
   },
   presetChipText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Lato_700Bold',
     color: '#8F94A6',
   },
   presetChipTextActive: {
     color: '#FF5A1F',
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
   },
   divider: {
     height: 1,
@@ -826,7 +882,7 @@ const styles = StyleSheet.create({
   },
   toggleTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Lato_700Bold',
     color: '#FFFFFF',
     marginBottom: 2,
   },
@@ -851,7 +907,7 @@ const styles = StyleSheet.create({
   },
   ageInputLabel: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#8F94A6',
     letterSpacing: 0.8,
     marginBottom: 4,
@@ -862,7 +918,7 @@ const styles = StyleSheet.create({
   },
   ageInput: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#FFFFFF',
     padding: 0,
     minWidth: 40,
@@ -878,7 +934,7 @@ const styles = StyleSheet.create({
   },
   textBtn: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Lato_700Bold',
     color: '#FF5A1F',
   },
   sportsGrid: {
@@ -904,11 +960,11 @@ const styles = StyleSheet.create({
   sportPillText: {
     fontSize: 13,
     color: '#8F94A6',
-    fontWeight: '500',
+    fontFamily: 'Lato_400Regular',
   },
   sportPillTextActive: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: 'Lato_700Bold',
   },
   ghostBadge: {
     paddingHorizontal: 8,
@@ -921,7 +977,7 @@ const styles = StyleSheet.create({
   },
   ghostBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#4ADE80',
   },
   ghostBadgeTextActive: {
@@ -942,7 +998,7 @@ const styles = StyleSheet.create({
   },
   dangerTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#EF4444',
   },
   dangerDescription: {
@@ -964,7 +1020,7 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#EF4444',
   },
   modalOverlay: {
@@ -994,7 +1050,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     color: '#FFFFFF',
     marginBottom: 6,
     textAlign: 'center',
@@ -1015,7 +1071,7 @@ const styles = StyleSheet.create({
     borderColor: '#363A48',
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -1034,7 +1090,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: 'Lato_700Bold',
     fontSize: 14,
   },
   modalDeleteBtn: {
@@ -1047,7 +1103,55 @@ const styles = StyleSheet.create({
   },
   modalDeleteText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Lato_700Bold',
     fontSize: 14,
+  },
+  groupContainer: {
+    backgroundColor: '#16181F',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  rowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  rowItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  rowLabel: {
+    fontFamily: 'Lato_700Bold',
+    fontSize: 14,
+    color: '#FFFFFF',
+  },
+  logoutButton: {
+    backgroundColor: '#16181F',
+    borderRadius: 30,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  logoutText: {
+    fontFamily: 'Lato_700Bold',
+    fontSize: 16,
+    color: '#FFFFFF',
+  },
+  footerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 32,
+  },
+  versionText: {
+    fontFamily: 'Lato_400Regular',
+    fontSize: 13,
+    color: '#8F94A6',
   },
 });

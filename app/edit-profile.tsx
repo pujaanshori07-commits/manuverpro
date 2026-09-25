@@ -7,178 +7,86 @@ import {
   ScrollView,
   Alert,
   StyleSheet,
-  Platform,
   Image,
   ActivityIndicator,
-  Modal,
   Dimensions,
-  Pressable,
 } from 'react-native';
-import Animated, {
-  FadeIn,
-  SlideInDown,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  interpolateColor,
-  FadeOut,
-} from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
-import DateTimePicker from '@react-native-community/datetimepicker';
+
+import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './_layout';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-
-const SPORT_TAG_MAP: Record<string, { name: string, icon: any }> = {
-  futsal: { name: 'Futsal', icon: 'football-outline' },
-  minisoccer: { name: 'Mini Soccer', icon: 'football-outline' },
-  basket: { name: 'Basket', icon: 'basketball-outline' },
-  lari: { name: 'Lari', icon: 'walk-outline' },
-  badminton: { name: 'Badminton', icon: 'tennisball-outline' },
-  gym: { name: 'Gym / Fitness', icon: 'barbell-outline' },
-  sepeda: { name: 'Bersepeda', icon: 'bicycle-outline' },
-  renang: { name: 'Berenang', icon: 'water-outline' },
-  yoga: { name: 'Yoga', icon: 'body-outline' },
-  tenis: { name: 'Tenis', icon: 'tennisball-outline' },
-  voli: { name: 'Voli', icon: 'basketball-outline' },
-};
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const GRID_PADDING = 20;
-const GRID_GAP = 10;
-const SLOT_SIZE = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * 2) / 3;
+const CARD_MARGIN = Spacing.base;
+const CARD_PADDING = Spacing.lg;
+const GRID_GAP = Spacing.md;
+const AVAILABLE_WIDTH = SCREEN_WIDTH - (CARD_MARGIN * 2) - (CARD_PADDING * 2) - 2; // -2 for borders
+const PHOTO_SIZE = Math.floor((AVAILABLE_WIDTH - GRID_GAP) / 2) - 1; // -1 for flex safety
+const MAX_PHOTOS = 4;
 
-type Sport = {
-  id: string;
-  nama: string;
-  icon?: string;
-};
-
-const COUNTRIES = [
-  'Indonesia', 'Australia', 'Amerika Serikat', 'Jepang', 'Inggris', 
-  'Belanda', 'Selandia Baru', 'Korea Selatan', 'Tiongkok', 'Brasil',
-  'Singapura', 'Malaysia', 'Lainnya'
+const SPORTS_OPTIONS = [
+  { id: 'Badminton', label: 'Badminton', icon: 'tennisball-outline' as const },
+  { id: 'Running', label: 'Running', icon: 'walk-outline' as const },
+  { id: 'Gym', label: 'Gym & Fitness', icon: 'barbell-outline' as const },
+  { id: 'Futsal', label: 'Futsal', icon: 'football-outline' as const },
+  { id: 'Mini Soccer', label: 'Mini Soccer', icon: 'football-outline' as const },
+  { id: 'Basket', label: 'Basketball', icon: 'basketball-outline' as const },
+  { id: 'Tennis', label: 'Tennis', icon: 'tennisball-outline' as const },
+  { id: 'Padel', label: 'Padel', icon: 'tennisball-outline' as const },
+  { id: 'Bicycle', label: 'Bersepeda', icon: 'bicycle-outline' as const },
+  { id: 'Swimming', label: 'Berenang', icon: 'water-outline' as const },
+  { id: 'Yoga', label: 'Yoga & Pilates', icon: 'flower-outline' as const },
+  { id: 'Volleyball', label: 'Voli', icon: 'basketball-outline' as const },
+  { id: 'Table Tennis', label: 'Tenis Meja', icon: 'tennisball-outline' as const },
+  { id: 'Boxing', label: 'Boxing / Muay Thai', icon: 'body-outline' as const },
+  { id: 'Martial Arts', label: 'Bela Diri', icon: 'body-outline' as const },
+  { id: 'Golf', label: 'Golf', icon: 'golf-outline' as const },
+  { id: 'Hiking', label: 'Mendaki', icon: 'trail-sign-outline' as const },
+  { id: 'Wall Climbing', label: 'Wall Climbing', icon: 'analytics-outline' as const },
+  { id: 'Calisthenics', label: 'Calisthenics', icon: 'barbell-outline' as const },
+  { id: 'Zumba', label: 'Senam / Zumba', icon: 'musical-notes-outline' as const },
+  { id: 'eSports', label: 'eSports', icon: 'game-controller-outline' as const },
+  { id: 'Lainnya', label: 'Lainnya', icon: 'ellipsis-horizontal-outline' as const },
 ];
 
-const JENJANG_PENDIDIKAN = ['D3', 'S1', 'S2', 'S3', 'Lainnya'];
-const MAX_PHOTOS = 6;
-
-const SKILL_LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Pro'];
-const AVAILABILITY_OPTIONS = ['Pagi', 'Siang', 'Sore', 'Malam', 'Akhir Pekan'];
-
-const AnimatedTextInput = (props) => {
-  const isFocused = useSharedValue(0);
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      borderColor: interpolateColor(
-        isFocused.value,
-        [0, 1],
-        ['rgba(255, 255, 255, 0.08)', '#FF5A2A']
-      ),
-    };
-  });
-  return (
-    <Animated.View style={[props.containerStyle, animatedStyle, { borderWidth: 1, borderRadius: 12, backgroundColor: '#161920' }]}>
-      <TextInput
-        {...props}
-        style={[props.style, { borderWidth: 0, backgroundColor: 'transparent' }]}
-        onFocus={(e) => {
-          isFocused.value = withTiming(1, { duration: 200 });
-          if (props.onFocus) props.onFocus(e);
-        }}
-        onBlur={(e) => {
-          isFocused.value = withTiming(0, { duration: 200 });
-          if (props.onBlur) props.onBlur(e);
-        }}
-      />
-    </Animated.View>
-  );
-};
-
-const AnimatedPressable = ({ children, style, onPress, disabled, activeOpacity = 0.7, ...props }) => {
-  const scale = useSharedValue(1);
-  const opacity = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: opacity.value,
-  }));
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      onPressIn={() => {
-        if (!disabled) {
-          scale.value = withSpring(0.97, { damping: 20, stiffness: 200 });
-          opacity.value = withTiming(activeOpacity, { duration: 150 });
-        }
-      }}
-      onPressOut={() => {
-        if (!disabled) {
-          scale.value = withSpring(1, { damping: 20, stiffness: 200 });
-          opacity.value = withTiming(1, { duration: 150 });
-        }
-      }}
-      {...props}
-    >
-      <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
-    </Pressable>
-  );
-};
+const SKILL_LEVELS = [
+  { id: 'Casual', label: 'Casual / Fun', desc: 'Olahraga santai & membangun jejaring' },
+  { id: 'Intermediate', label: 'Intermediate', desc: 'Rutin bermain & menguasai teknik' },
+  { id: 'Kompetitif', label: 'Competitive', desc: 'Siap uji tanding dan sparing terukur' },
+];
 
 export default function EditProfileScreen() {
-  const { session, profile, refreshProfile } = useAuth();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { session, profile, refreshProfile } = useAuth();
 
-  const [nama, setNama] = useState('');
-  const [date, setDate] = useState(new Date(2000, 0, 1));
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [alamat, setAlamat] = useState('');
-  const [hobi, setHobi] = useState('');
-  const [pekerjaan, setPekerjaan] = useState('');
-  const [bio, setBio] = useState('');
-
-  // Multi-Photo state (up to 6 photos)
   const [photos, setPhotos] = useState<string[]>([]);
-  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
-  // Form Fields
-  const [negara, setNegara] = useState('Indonesia');
-  const [showNegaraPicker, setShowNegaraPicker] = useState(false);
-  const [jenjang, setJenjang] = useState('');
-  const [showJenjangPicker, setShowJenjangPicker] = useState(false);
-  const [institusi, setInstitusi] = useState('');
-
-  // Sports list & user selected sports
+  const [bio, setBio] = useState('');
+  const [lookingFor, setLookingFor] = useState('');
   const [selectedSports, setSelectedSports] = useState<string[]>([]);
-  const [skillLevel, setSkillLevel] = useState('');
-  const [availability, setAvailability] = useState<string[]>([]);
-
-  // Add custom sport modal (disabled as we use hardcoded sports now)
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [customSportName, setCustomSportName] = useState('');
-
-  const [loading, setLoading] = useState(true);
+  const [skillLevel, setSkillLevel] = useState('Intermediate');
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [customSport, setCustomSport] = useState('');
+  const [isLainnyaActive, setIsLainnyaActive] = useState(false);
+
+  // States for Custom Scrollbar
+  const [contentHeight, setContentHeight] = useState(1);
+  const [scrollViewHeight, setScrollViewHeight] = useState(1);
+  const [scrollOffset, setScrollOffset] = useState(0);
 
   useEffect(() => {
-    if (!session || !profile) return;
-
-    // Load initial profile data
-    setNama(profile.nama || '');
-    setAlamat(profile.alamat || '');
-    setNegara(profile.negara || 'Indonesia');
-    setHobi(profile.hobi || '');
-    setPekerjaan(profile.pekerjaan || '');
+    if (!profile) return;
     setBio(profile.bio || '');
-    setSkillLevel(profile.skill_level || '');
-    setAvailability(profile.availability ? (profile.availability as any).split(', ') : []);
+    setLookingFor((profile as any).looking_for || '');
+    setSkillLevel((profile as any).skill_level || 'Intermediate');
 
-    // Initialize photos array (fallback to foto_url if photos column is not populated yet)
     const rawPhotos = (profile as any)?.photos;
     if (Array.isArray(rawPhotos) && rawPhotos.length > 0) {
       setPhotos(rawPhotos.slice(0, MAX_PHOTOS));
@@ -188,1009 +96,598 @@ export default function EditProfileScreen() {
       setPhotos([]);
     }
 
-    // Parsing pendidikan
-    if (profile.pendidikan) {
-      const idx = profile.pendidikan.indexOf(' - ');
-      if (idx !== -1) {
-        const possibleJenjang = profile.pendidikan.substring(0, idx);
-        if (JENJANG_PENDIDIKAN.includes(possibleJenjang)) {
-          setJenjang(possibleJenjang);
-          setInstitusi(profile.pendidikan.substring(idx + 3));
-        } else {
-          setJenjang('');
-          setInstitusi(profile.pendidikan);
-        }
-      } else {
-        if (JENJANG_PENDIDIKAN.includes(profile.pendidikan)) {
-          setJenjang(profile.pendidikan);
-          setInstitusi('');
-        } else {
-          setJenjang('');
-          setInstitusi(profile.pendidikan);
-        }
-      }
-    } else {
-      setJenjang('');
-      setInstitusi('');
-    }
-
-    if (profile.tanggal_lahir) {
-      setDate(new Date(profile.tanggal_lahir));
-    }
-
-    const loadData = async () => {
-      setLoading(true);
+    let initialSports: string[] = [];
+    if (Array.isArray(profile.hobi)) {
+      initialSports = profile.hobi;
+    } else if (typeof profile.hobi === 'string' && profile.hobi) {
       try {
-        // Fetch user selected sports IDs
-        const { data: userSportsData, error: userSportsError } = await supabase
-          .from('user_sports')
-          .select('sport_id')
-          .eq('user_id', session.user.id);
-
-        if (userSportsError) throw userSportsError;
-
-        if (userSportsData) {
-          const ids = userSportsData.map((us) => us.sport_id);
-          setSelectedSports(ids);
-        }
-      } catch (err: any) {
-        console.error('Error loading edit profile data:', err);
-        setErrorMsg(err.message || 'Gagal memuat profil. Coba lagi.');
-      } finally {
-        setLoading(false);
+        initialSports = JSON.parse(profile.hobi);
+        if (!Array.isArray(initialSports)) throw new Error('Not array');
+      } catch {
+        initialSports = profile.hobi.split(',').map((s) => s.trim()).filter(Boolean);
       }
-    };
-
-    loadData();
-  }, [session, profile]);
+    }
+    
+    const customOptions = initialSports.filter(s => !SPORTS_OPTIONS.some(o => o.id === s) && s !== 'Lainnya');
+    if (customOptions.length > 0) {
+      setIsLainnyaActive(true);
+      setCustomSport(customOptions[0]);
+      if (!initialSports.includes('Lainnya')) {
+        initialSports.push('Lainnya');
+      }
+    }
+    
+    setSelectedSports(initialSports.filter(s => SPORTS_OPTIONS.some(o => o.id === s)));
+  }, [profile]);
 
   const toggleSport = (sportId: string) => {
-    setSelectedSports((prev) =>
-      prev.includes(sportId)
-        ? prev.filter((id) => id !== sportId)
-        : [...prev, sportId]
-    );
-  };
-
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) setDate(selectedDate);
-  };
-
-  // Pick an image and immediately upload it
-  const handlePickImage = async () => {
-    if (photos.length >= MAX_PHOTOS) {
-      Alert.alert('Batas Maksimal', `Kamu dapat mengunggah maksimal ${MAX_PHOTOS} foto.`);
+    if (sportId === 'Lainnya') {
+      if (selectedSports.includes('Lainnya')) {
+        setIsLainnyaActive(false);
+        setCustomSport('');
+        setSelectedSports(selectedSports.filter((id) => id !== 'Lainnya'));
+      } else {
+        if (selectedSports.length >= 4) {
+          Alert.alert('Batas Olahraga', 'Pilih maksimal 4 cabang olahraga utama.');
+          return;
+        }
+        setIsLainnyaActive(true);
+        setSelectedSports([...selectedSports, 'Lainnya']);
+      }
       return;
     }
 
+    if (selectedSports.includes(sportId)) {
+      setSelectedSports(selectedSports.filter((id) => id !== sportId));
+    } else {
+      if (selectedSports.length >= 4) {
+        Alert.alert('Batas Olahraga', 'Pilih maksimal 4 cabang olahraga utama.');
+        return;
+      }
+      setSelectedSports([...selectedSports, sportId]);
+    }
+  };
+
+  const handlePickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Izin dibutuhkan',
-          'Maaf, kami membutuhkan akses galeri foto untuk menambahkan foto profil.'
-        );
+      const remainingSlots = MAX_PHOTOS - photos.length;
+      if (remainingSlots <= 0) {
+        Alert.alert('Slot Penuh', 'Maksimal 4 foto sudah terisi.');
+        return;
+      }
+
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Izin Dibutuhkan', 'Izinkan akses foto untuk memilih gambar profil.');
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 5],
+        allowsMultipleSelection: true,
+        selectionLimit: remainingSlots,
         quality: 0.8,
+        base64: true,
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const nextIndex = photos.length;
-        uploadImage(result.assets[0].uri, nextIndex);
+      if (result.canceled || !result.assets) return;
+
+      setUploadingIndex(-1); // Indicates global uploading state
+      const userId = session?.user?.id;
+      if (!userId) throw new Error('Sesi tidak valid');
+
+      const uploadedUrls: string[] = [];
+
+      for (let i = 0; i < result.assets.length; i++) {
+        const asset = result.assets[i];
+        if (!asset.base64) continue;
+
+        const fileName = `${userId}/${Date.now()}_img${i}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from('profile-photos')
+          .upload(fileName, decode(asset.base64), {
+            contentType: 'image/jpeg',
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(fileName);
+
+        uploadedUrls.push(publicUrlData.publicUrl);
       }
-    } catch (err: any) {
-      Alert.alert('Terjadi kesalahan', err.message);
-    }
-  };
 
-  const uploadImage = async (imageUri: string, targetSlot: number) => {
-    if (!session) return;
-    setUploadingSlot(targetSlot);
-    try {
-      // 1. Read base64 via expo-file-system
-      const base64 = await FileSystem.readAsStringAsync(imageUri, {
-        encoding: 'base64',
+      setPhotos((prev) => {
+        const newPhotos = [...prev, ...uploadedUrls];
+        return newPhotos.slice(0, MAX_PHOTOS); // pastikan maksimal 4
       });
-
-      const fileExt = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `photo_${Date.now()}_${Math.floor(Math.random() * 1000)}.${fileExt}`;
-      const filePath = `${session.user.id}/${fileName}`;
-      const contentType = fileExt === 'png' ? 'image/png' : 'image/jpeg';
-
-      // 2. Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('profile-photos')
-        .upload(filePath, decode(base64), {
-          contentType,
-          upsert: true,
-        });
-
-      if (uploadError) throw uploadError;
-
-      // 3. Get public URL with timestamp cache-buster
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-photos')
-        .getPublicUrl(filePath);
-
-      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
-      setPhotos((prev) => [...prev, cacheBustedUrl]);
     } catch (err: any) {
-      console.error('Upload error:', err);
-      Alert.alert('Gagal mengunggah foto', err.message);
+      Alert.alert('Upload Gagal', err.message || 'Gagal mengunggah foto');
     } finally {
-      setUploadingSlot(null);
+      setUploadingIndex(null);
     }
   };
 
-  const handleRemovePhoto = (indexToRemove: number) => {
-    Alert.alert(
-      'Hapus Foto',
-      'Apakah kamu yakin ingin menghapus foto ini dari profilmu?',
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Hapus',
-          style: 'destructive',
-          onPress: () => {
-            setPhotos((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-          },
-        },
-      ]
-    );
-  };
-
-  const handleAddCustomSport = async () => {
-    Alert.alert('Info', 'Penambahan olahraga custom dinonaktifkan sementara.');
+  const handleRemovePhoto = (index: number) => {
+    setPhotos(photos.filter((_, i) => i !== index));
   };
 
   const handleSave = async () => {
-    if (!session || !profile) return;
-    if (!nama.trim()) return Alert.alert('Nama tidak boleh kosong');
+    if (!nama.trim()) {
+      Alert.alert('Peringatan', 'Nama tidak boleh kosong');
+      return;
+    }
 
-    const age = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    if (age < 18) return Alert.alert('Umur belum cukup', 'Usia minimal adalah 18 tahun');
-
-    if (selectedSports.length === 0) return Alert.alert('Pilih minimal satu olahraga');
-
-    setSaving(true);
     try {
-      const tanggalLahir = date.toISOString().split('T')[0];
+      setSaving(true);
+      const userId = session?.user?.id;
+      if (!userId) throw new Error('Sesi kedaluwarsa');
 
-      let combinedPendidikan = null;
-      if (jenjang || institusi.trim()) {
-        combinedPendidikan = [jenjang, institusi.trim()].filter(Boolean).join(' - ');
+      const primaryPhoto = photos[0] || profile?.foto_url || '';
+
+      let finalSports = selectedSports.filter(s => s !== 'Lainnya');
+      if (isLainnyaActive && customSport.trim()) {
+        finalSports.push(customSport.trim());
+      } else if (isLainnyaActive) {
+        finalSports.push('Lainnya');
       }
 
-      // Primary avatar is the first photo in the array
-      const primaryAvatar = photos.length > 0 ? photos[0] : null;
+      const { error } = await supabase.from('profiles').upsert({
+        id: userId,
+        bio: bio.trim(),
+        looking_for: lookingFor.trim(),
+        skill_level: skillLevel,
+        hobi: finalSports,
+        photos: photos,
+        foto_url: primaryPhoto,
+        updated_at: new Date().toISOString(),
+      });
 
-      // 1. Update profil with both photos array and legacy foto_url
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          nama: nama.trim(),
-          tanggal_lahir: tanggalLahir,
-          alamat: alamat.trim(),
-          negara: negara,
-          hobi: hobi.trim(),
-          pendidikan: combinedPendidikan,
-          pekerjaan: pekerjaan.trim() || null,
-          bio: bio.trim() || null,
-          skill_level: skillLevel || null,
-          availability: availability.length > 0 ? availability.join(', ') : null,
-          foto_url: primaryAvatar,
-          photos: photos,
-        })
-        .eq('id', session.user.id);
+      if (error) throw error;
 
-      if (profileError) throw profileError;
-
-      // 2. Sync user_sports
-      const { error: deleteSportsError } = await supabase
-        .from('user_sports')
-        .delete()
-        .eq('user_id', session.user.id);
-
-      if (deleteSportsError) throw deleteSportsError;
-
-      const rows = selectedSports.map((sportId) => ({
-        user_id: session.user.id,
-        sport_id: sportId,
-      }));
-
-      const { error: insertSportsError } = await supabase.from('user_sports').insert(rows);
-      if (insertSportsError) throw insertSportsError;
-
-      Alert.alert('Berhasil', 'Profil Anda berhasil diperbarui!');
       await refreshProfile();
       router.back();
     } catch (err: any) {
-      Alert.alert('Gagal menyimpan profil', err.message);
+      Alert.alert('Gagal Menyimpan', err.message || 'Terjadi kesalahan sistem.');
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#FF5A2A" />
-      </View>
-    );
-  }
-
-  if (errorMsg) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={{ color: '#FF5A2A', fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>Error</Text>
-        <Text style={{ color: '#888A90', textAlign: 'center', marginHorizontal: 20 }}>{errorMsg}</Text>
-        <TouchableOpacity style={styles.saveButton} onPress={() => router.back()}>
-          <Text style={styles.saveButtonText}>Kembali</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={28} color="#FF5A2A" />
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      {/* Top Bar */}
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+          <Ionicons name="arrow-back" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>EDIT PROFIL</Text>
-        <View style={{ width: 28 }} />
-      </View>
-
-      {/* Modern 3x2 Photo Grid Section */}
-      <View style={styles.photoGridSection}>
-        <View style={styles.photoGridHeader}>
-          <Text style={styles.photoGridTitle}>FOTO PROFIL & AKTIVITAS</Text>
-          <Text style={styles.photoGridSubtitle}>
-            Unggah hingga 6 foto. Foto pertama adalah foto utama di Discover.
-          </Text>
-        </View>
-
-        <View style={styles.photoGrid}>
-          {Array.from({ length: MAX_PHOTOS }).map((_, index) => {
-            const photoUrl = photos[index];
-            const isUploading = uploadingSlot === index;
-            const isFirstSlot = index === 0;
-
-            if (photoUrl) {
-              return (
-                <View key={index} style={[styles.photoSlot, isFirstSlot && styles.photoSlotPrimary]}>
-                  <Image source={{ uri: photoUrl }} style={styles.slotImage} resizeMode="cover" />
-                  
-                  {/* Primary Hero Label */}
-                  {isFirstSlot && (
-                    <View style={styles.mainBadge}>
-                      <Text style={styles.mainBadgeText}>Utama</Text>
-                    </View>
-                  )}
-
-                  {/* Remove Button */}
-                  <TouchableOpacity
-                    style={styles.deleteBadge}
-                    onPress={() => handleRemovePhoto(index)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="close" size={14} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-              );
-            }
-
-            return (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.photoSlot,
-                  styles.emptyPhotoSlot,
-                  isFirstSlot && styles.photoSlotPrimary,
-                ]}
-                onPress={handlePickImage}
-                disabled={uploadingSlot !== null}
-                activeOpacity={0.7}
-              >
-                {isUploading ? (
-                  <ActivityIndicator size="small" color="#FF5A2A" />
-                ) : (
-                  <>
-                    <View style={styles.addIconCircle}>
-                      <Ionicons name="add" size={20} color="#FF5A2A" />
-                    </View>
-                    {isFirstSlot && (
-                      <Text style={styles.addSlotHelperText}>Foto Utama</Text>
-                    )}
-                  </>
-                )}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-            {/* Form Inputs Section */}
-      <View style={styles.inputsSection}>
-        {/* Identitas Section */}
-        <Animated.View entering={FadeIn.delay(100).springify().damping(20).stiffness(90)} style={styles.formSection}>
-          <Text style={styles.sectionHeading}>Identitas</Text>
-          <Text style={styles.label}>Nama Lengkap / Panggilan</Text>
-          <AnimatedTextInput
-            style={styles.input}
-            placeholder="Nama Anda"
-            placeholderTextColor="#666"
-            value={nama}
-            onChangeText={setNama}
-          />
-
-          <Text style={styles.label}>Tanggal Lahir</Text>
-          <AnimatedPressable style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
-            <Text style={styles.dateButtonText}>{date.toISOString().split('T')[0]}</Text>
-          </AnimatedPressable>
-
-          {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={handleDateChange}
-              themeVariant="dark"
-              maximumDate={new Date()}
-            />
+        <Text style={styles.barTitle}>Edit Profil</Text>
+        <TouchableOpacity
+          onPress={handleSave}
+          disabled={saving}
+          style={styles.saveAction}
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : (
+            <Text style={styles.saveActionText}>Simpan</Text>
           )}
-        </Animated.View>
+        </TouchableOpacity>
+      </View>
 
-        {/* Lokasi & Latar Belakang Section */}
-        <Animated.View entering={FadeIn.delay(150).springify().damping(20).stiffness(90)} style={styles.formSection}>
-          <Text style={styles.sectionHeading}>Lokasi & Latar Belakang</Text>
-          <Text style={styles.label}>Negara</Text>
-          <AnimatedPressable style={styles.dropdownButton} onPress={() => setShowNegaraPicker(true)}>
-            <Text style={styles.dropdownButtonText}>{negara}</Text>
-            <Ionicons name="chevron-down" size={20} color="#888A90" />
-          </AnimatedPressable>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}
+        showsVerticalScrollIndicator={false}
+      >
 
-          <Text style={styles.label}>Domisili / Kota</Text>
-          <AnimatedTextInput
-            style={styles.input}
-            placeholder="Contoh: Jakarta Selatan, Surabaya"
-            placeholderTextColor="#666"
-            value={alamat}
-            onChangeText={setAlamat}
-          />
 
-          <Text style={styles.label}>Pendidikan</Text>
-          <View style={styles.educationRow}>
-            <AnimatedPressable
-              style={[styles.dropdownButton, styles.jenjangButton]}
-              onPress={() => setShowJenjangPicker(true)}
-            >
-              <Text style={styles.dropdownButtonText}>{jenjang || 'Jenjang'}</Text>
-              <Ionicons name="chevron-down" size={16} color="#888A90" />
-            </AnimatedPressable>
-            <AnimatedTextInput
-              containerStyle={styles.institusiInput}
-              style={[styles.input]}
-              placeholder="Universitas / Sekolah"
-              placeholderTextColor="#666"
-              value={institusi}
-              onChangeText={setInstitusi}
-            />
+        {/* Section 1: Photos */}
+        <View style={styles.cardContainer}>
+          <View style={styles.cardHeader}>
+            <Text style={Typography.sectionTitle}>Foto & Aktivitas</Text>
+            <Text style={Typography.caption}>{photos.length}/4 Foto</Text>
           </View>
+          <Text style={[Typography.metadata, { marginBottom: Spacing.base }]}>
+            Foto pertama akan menjadi representasi utama profil olahragamu.
+          </Text>
 
-          <Text style={styles.label}>Pekerjaan</Text>
-          <AnimatedTextInput
-            style={styles.input}
-            placeholder="Contoh: Software Engineer, Mahasiswa"
-            placeholderTextColor="#666"
-            value={pekerjaan}
-            onChangeText={setPekerjaan}
-          />
-        </Animated.View>
+          <View style={styles.grid}>
+            {Array.from({ length: MAX_PHOTOS }).map((_, idx) => {
+              const photo = photos[idx];
+              const isUploading = uploadingIndex === idx;
+              const isPrimary = idx === 0;
 
-        {/* Tentang Kamu Section */}
-        <Animated.View entering={FadeIn.delay(200).springify().damping(20).stiffness(90)} style={styles.formSection}>
-          <Text style={styles.sectionHeading}>Tentang Kamu</Text>
-          <Text style={styles.label}>Bio Singkat</Text>
-          <AnimatedTextInput
+              if (photo) {
+                return (
+                  <View key={idx} style={[styles.photoCard, isPrimary && styles.photoCardPrimary]}>
+                    <Image source={{ uri: photo }} style={styles.photoImg} />
+                    {isPrimary && (
+                      <View style={styles.badgePrimary}>
+                        <Text style={styles.badgePrimaryText}>Utama</Text>
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      style={styles.btnRemove}
+                      onPress={() => handleRemovePhoto(idx)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="close" size={14} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                );
+              }
+
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  style={[styles.photoCard, styles.photoCardEmpty, isPrimary && styles.photoCardPrimaryEmpty]}
+                  onPress={handlePickImage}
+                  disabled={uploadingIndex !== null}
+                  activeOpacity={0.7}
+                >
+                  {isUploading ? (
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                  ) : (
+                    <>
+                      <Ionicons
+                        name="add"
+                        size={22}
+                        color={isPrimary ? Colors.primary : Colors.textMuted}
+                      />
+                      <Text style={[styles.emptyLabel, isPrimary && { color: Colors.primary }]}>
+                        {isPrimary ? 'Foto Utama' : 'Tambah'}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Section 4: About / Bio */}
+        <View style={styles.cardContainer}>
+          <Text style={Typography.sectionTitle}>About me</Text>
+          <Text style={[Typography.metadata, { marginTop: Spacing.xs, marginBottom: Spacing.md }]}>
+            Ceritakan preferensi latihan, jadwal kosong, atau gaya bermainmu.
+          </Text>
+
+          <TextInput
             style={[styles.input, styles.bioInput]}
-            placeholder="Ceritakan sedikit tentang dirimu dan olahraga favoritmu..."
-            placeholderTextColor="#666"
-            multiline
-            numberOfLines={3}
             value={bio}
             onChangeText={setBio}
+            placeholder="Tuliskan bio singkat..."
+            placeholderTextColor={Colors.textMuted}
+            multiline
+            numberOfLines={4}
           />
+        </View>
 
-          <Text style={styles.label}>Hobi & Minat Lainnya</Text>
-          <AnimatedTextInput
-            style={styles.input}
-            placeholder="Contoh: Musik, Fotografi, Ngopi"
-            placeholderTextColor="#666"
-            value={hobi}
-            onChangeText={setHobi}
+        {/* Section 5: Looking For */}
+        <View style={styles.cardContainer}>
+          <Text style={Typography.sectionTitle}>Looking for</Text>
+          <Text style={[Typography.metadata, { marginTop: Spacing.xs, marginBottom: Spacing.md }]}>
+            Apa yang kamu cari dari aplikasi ini? (Contoh: Teman lari, lawan sparring)
+          </Text>
+
+          <TextInput
+            style={[styles.input, styles.bioInput]}
+            value={lookingFor}
+            onChangeText={setLookingFor}
+            placeholder="Contoh: Mencari teman lari santai di akhir pekan..."
+            placeholderTextColor={Colors.textMuted}
+            multiline
+            numberOfLines={3}
           />
-        </Animated.View>
+        </View>
+      {/* Section 2: Sports Identity */}
+        <View style={styles.cardContainer}>
+          <Text style={Typography.sectionTitle}>My sports</Text>
+          <Text style={[Typography.metadata, { marginTop: Spacing.xs, marginBottom: Spacing.md }]}>
+            Pilih cabang olahraga yang aktif kamu mainkan.
+          </Text>
 
-        {/* Olahraga Section */}
-        <Animated.View entering={FadeIn.delay(250).springify().damping(20).stiffness(90)} style={styles.formSection}>
-          <View style={styles.sportsHeaderRow}>
-            <Text style={styles.sectionHeading}>Olahraga</Text>
-            <AnimatedPressable onPress={() => setIsModalVisible(true)}>
-              <Text style={styles.addSportText}>+ Lainnya</Text>
-            </AnimatedPressable>
+          <View style={{ height: 190, borderWidth: 1, borderColor: '#272C38', borderRadius: 12, padding: Spacing.sm, flexDirection: 'row' }}>
+            <ScrollView
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
+              scrollEventThrottle={16}
+              onContentSizeChange={(_, h) => setContentHeight(h > 0 ? h : 1)}
+              onLayout={(e) => setScrollViewHeight(e.nativeEvent.layout.height > 0 ? e.nativeEvent.layout.height : 1)}
+              onScroll={(e) => setScrollOffset(e.nativeEvent.contentOffset.y)}
+            >
+              <View style={styles.chipsRow}>
+                {SPORTS_OPTIONS.map((sport) => {
+                  const active = selectedSports.includes(sport.id);
+                  return (
+                    <TouchableOpacity
+                      key={sport.id}
+                      style={[styles.sportChip, active && styles.sportChipActive]}
+                      onPress={() => toggleSport(sport.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={sport.icon}
+                        size={15}
+                        color={active ? Colors.primary : Colors.textSecondary}
+                        style={{ marginRight: Spacing.xs }}
+                      />
+                      <Text style={[styles.sportChipText, active && styles.sportChipTextActive]}>
+                        {sport.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+
+            {/* Custom Thick Scrollbar */}
+            {contentHeight > scrollViewHeight && (
+              <View style={{ width: 6, backgroundColor: '#181C26', borderRadius: 3, marginLeft: Spacing.sm }}>
+                <View 
+                  style={{ 
+                    width: 6, 
+                    borderRadius: 3, 
+                    backgroundColor: '#6C727F', // Gray color like user requested
+                    height: Math.max(scrollViewHeight * (scrollViewHeight / contentHeight), 30), // Minimum thumb height
+                    transform: [{ 
+                      translateY: scrollOffset * ((scrollViewHeight - Math.max(scrollViewHeight * (scrollViewHeight / contentHeight), 30)) / (contentHeight - scrollViewHeight || 1))
+                    }]
+                  }} 
+                />
+              </View>
+            )}
           </View>
 
-          <Text style={styles.label}>Cabang Olahraga yang Dimainkan</Text>
-          <View style={styles.sportsContainer}>
-            {Object.entries(SPORT_TAG_MAP).map(([sportId, rawSport]) => {
-              const sport = rawSport as any;
-              const isSelected = selectedSports.includes(sportId);
-              return (
-                <AnimatedPressable
-                  key={sportId}
-                  style={[styles.sportChip, isSelected && styles.sportChipSelected]}
-                  onPress={() => toggleSport(sportId)}
-                >
-                  {sport.icon ? (
-                    <Ionicons
-                      name={sport.icon}
-                      size={18}
-                      color={isSelected ? '#FFFFFF' : '#888A90'}
-                      style={{ marginRight: 6 }}
-                    />
-                  ) : (
-                    <Ionicons
-                      name="fitness-outline"
-                      size={18}
-                      color={isSelected ? '#FFFFFF' : '#888A90'}
-                      style={{ marginRight: 6 }}
-                    />
-                  )}
-                  <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
-                    {sport.name}
-                  </Text>
-                </AnimatedPressable>
-              );
-            })}
-          </View>
-          {selectedSports.length === 0 && (
-            <Text style={styles.errorHint}>Pilih minimal satu cabang olahraga.</Text>
+          {isLainnyaActive && (
+            <TextInput
+              style={[styles.input, { marginTop: Spacing.md }]}
+              value={customSport}
+              onChangeText={setCustomSport}
+              placeholder="Ketik olahraga lainnya (Misal: Golf, Renang)"
+              placeholderTextColor={Colors.textMuted}
+            />
           )}
 
-          <Text style={[styles.label, { marginTop: 16 }]}>Kemampuan Olahraga Umum (Skill Level)</Text>
-          <View style={styles.sportsContainer}>
-            {SKILL_LEVELS.map(level => {
-              const isSelected = skillLevel === level;
+          <Text style={[Typography.sectionTitle, { marginTop: Spacing.xl, fontSize: 17 }]}>
+            Level Permainan
+          </Text>
+          <View style={{ gap: Spacing.sm, marginTop: Spacing.sm }}>
+            {SKILL_LEVELS.map((lvl) => {
+              const active = skillLevel === lvl.id;
               return (
-                <AnimatedPressable
-                  key={level}
-                  style={[styles.sportChip, isSelected && styles.sportChipSelected]}
-                  onPress={() => setSkillLevel(level)}
+                <TouchableOpacity
+                  key={lvl.id}
+                  style={[styles.skillBox, active && styles.skillBoxActive]}
+                  onPress={() => setSkillLevel(lvl.id)}
+                  activeOpacity={0.7}
                 >
-                  <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
-                    {level}
-                  </Text>
-                </AnimatedPressable>
+                  <View style={[styles.radioCircle, active && styles.radioCircleActive]}>
+                    {active && <View style={styles.radioDot} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.skillTitle, active && { color: Colors.textPrimary }]}>
+                      {lvl.label}
+                    </Text>
+                    <Text style={styles.skillDesc}>{lvl.desc}</Text>
+                  </View>
+                </TouchableOpacity>
               );
             })}
           </View>
+        </View>
 
-          <Text style={[styles.label, { marginTop: 16 }]}>Kapan kamu biasa berolahraga? (Pilih &gt;1)</Text>
-          <View style={styles.sportsContainer}>
-            {AVAILABILITY_OPTIONS.map(time => {
-              const isSelected = availability.includes(time);
-              return (
-                <AnimatedPressable
-                  key={time}
-                  style={[styles.sportChip, isSelected && styles.sportChipSelected]}
-                  onPress={() => {
-                    setAvailability(prev => 
-                      prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
-                    );
-                  }}
-                >
-                  <Text style={[styles.sportChipText, isSelected && styles.sportChipTextSelected]}>
-                    {time}
-                  </Text>
-                </AnimatedPressable>
-              );
-            })}
-          </View>
-        </Animated.View>
-
-        {/* Save Button */}
-        <Animated.View entering={FadeIn.delay(300).springify().damping(20).stiffness(90)}>
-          <AnimatedPressable
-            style={[styles.saveButton, (saving || uploadingSlot !== null) && styles.saveButtonDisabled]}
-            onPress={handleSave}
-            disabled={saving || uploadingSlot !== null}
-          >
-            {saving ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.saveButtonText}>Simpan Perubahan</Text>
-            )}
-          </AnimatedPressable>
-        </Animated.View>
-      </View>
-
-      {/* Add Custom Sport Modal */}
-            <Modal visible={isModalVisible} transparent animationType="none">
-        <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalOverlay}>
-          <Animated.View entering={SlideInDown.springify().damping(20).stiffness(90)} style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Tambah Olahraga Baru</Text>
-            <AnimatedTextInput
-              style={styles.modalInput}
-              placeholder="Nama olahraga (misal: Wall Climbing)"
-              placeholderTextColor="#666"
-              value={customSportName}
-              onChangeText={setCustomSportName}
-              autoFocus
-            />
-            <View style={styles.modalButtons}>
-              <AnimatedPressable
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => {
-                  setIsModalVisible(false);
-                  setCustomSportName('');
-                }}
-              >
-                <Text style={styles.modalButtonTextCancel}>Batal</Text>
-              </AnimatedPressable>
-              <AnimatedPressable
-                style={[styles.modalButton, styles.modalButtonSave]}
-                onPress={handleAddCustomSport}
-              >
-                <Text style={styles.modalButtonTextSave}>Tambah</Text>
-              </AnimatedPressable>
-            </View>
-          </Animated.View>
-        </Animated.View>
-      </Modal>
-
-      {/* Country Selection Modal */}
-      <Modal visible={showNegaraPicker} transparent animationType="none">
-        <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalOverlay}>
-          <Animated.View entering={SlideInDown.springify().damping(20).stiffness(90)} style={styles.pickerModalContent}>
-            <View style={styles.pickerHeader}>
-              <Text style={styles.pickerTitle}>Pilih Negara</Text>
-              <AnimatedPressable onPress={() => setShowNegaraPicker(false)}>
-                <Ionicons name="close" size={24} color="#FFFFFF" />
-              </AnimatedPressable>
-            </View>
-            <ScrollView style={{ maxHeight: 350 }}>
-              {COUNTRIES.map((item) => (
-                <AnimatedPressable
-                  key={item}
-                  style={styles.pickerItem}
-                  onPress={() => {
-                    setNegara(item);
-                    setShowNegaraPicker(false);
-                  }}
-                >
-                  <Text style={[styles.pickerItemText, negara === item && styles.pickerItemTextSelected]}>
-                    {item}
-                  </Text>
-                  {negara === item && <Ionicons name="checkmark" size={20} color="#FF5A2A" />}
-                </AnimatedPressable>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </Animated.View>
-      </Modal>
-
-      {/* Education Level Selection Modal */}
-      <Modal visible={showJenjangPicker} transparent animationType="none">
-        <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.modalOverlay}>
-          <Animated.View entering={SlideInDown.springify().damping(20).stiffness(90)} style={styles.pickerModalContent}>
-            <View style={styles.pickerHeader}>
-              <Text style={styles.pickerTitle}>Pilih Jenjang</Text>
-              <AnimatedPressable onPress={() => setShowJenjangPicker(false)}>
-                <Ionicons name="close" size={24} color="#FFFFFF" />
-              </AnimatedPressable>
-            </View>
-            <ScrollView style={{ maxHeight: 300 }}>
-              {JENJANG_PENDIDIKAN.map((item) => (
-                <AnimatedPressable
-                  key={item}
-                  style={styles.pickerItem}
-                  onPress={() => {
-                    setJenjang(item);
-                    setShowJenjangPicker(false);
-                  }}
-                >
-                  <Text style={[styles.pickerItemText, jenjang === item && styles.pickerItemTextSelected]}>
-                    {item}
-                  </Text>
-                  {jenjang === item && <Ionicons name="checkmark" size={20} color="#FF5A2A" />}
-                </AnimatedPressable>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </Animated.View>
-      </Modal>
-
-      
-    </ScrollView>
+                </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: '#0B0D12',
-    paddingBottom: 40,
-  },
-  centerContainer: {
+  screen: {
     flex: 1,
-    backgroundColor: '#0B0D12',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: Colors.background,
   },
-  header: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 56,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#1C1F26',
-    backgroundColor: '#0B0D12',
+    borderBottomColor: Colors.surfaceBorder,
   },
-  backButton: {
-    padding: 4,
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
   },
-  headerTitle: {
-    color: '#FFFFFF',
+  barTitle: {
+    ...Typography.sectionTitle,
     fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
   },
-  photoGridSection: {
-    paddingHorizontal: GRID_PADDING,
-    marginTop: 20,
-    marginBottom: 8,
+  saveAction: {
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.pill,
   },
-  photoGridHeader: {
-    marginBottom: 12,
-  },
-  photoGridTitle: {
+  saveActionText: {
+    fontSize: 14,
+    fontFamily: 'Lato_700Bold',
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 'bold',
-    letterSpacing: 0.6,
   },
-  photoGridSubtitle: {
-    color: '#888A90',
-    fontSize: 12,
-    marginTop: 2,
-    lineHeight: 16,
+  cardContainer: {
+    backgroundColor: Colors.surface,
+    marginHorizontal: Spacing.base,
+    marginTop: Spacing.base,
+    borderRadius: BorderRadius.card,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
   },
-  photoGrid: {
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: GRID_GAP,
   },
-  photoSlot: {
-    width: SLOT_SIZE,
-    height: SLOT_SIZE * 1.25,
-    borderRadius: 14,
-    backgroundColor: '#161920',
+  photoCard: {
+    width: PHOTO_SIZE,
+    height: PHOTO_SIZE * 1.25,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.elevatedSurface,
     overflow: 'hidden',
-    position: 'relative',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: Colors.surfaceBorder,
+    position: 'relative',
   },
-  photoSlotPrimary: {
-    borderColor: 'rgba(255, 90, 42, 0.5)',
+  photoCardPrimary: {
+    borderColor: Colors.primary,
   },
-  slotImage: {
+  photoCardEmpty: {
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoCardPrimaryEmpty: {
+    borderColor: 'rgba(255, 90, 54, 0.4)',
+  },
+  photoImg: {
     width: '100%',
     height: '100%',
   },
-  emptyPhotoSlot: {
-    borderStyle: 'dashed',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#12141A',
-  },
-  addIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 90, 42, 0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addSlotHelperText: {
-    color: '#888A90',
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 6,
-  },
-  deleteBadge: {
+  badgePrimary: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#FF3B30',
+    top: Spacing.sm,
+    left: Spacing.sm,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  badgePrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontFamily: 'Lato_700Bold',
+    textTransform: 'uppercase',
+  },
+  btnRemove: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    backgroundColor: 'rgba(8, 10, 15, 0.75)',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 3,
   },
-  mainBadge: {
-    position: 'absolute',
-    bottom: 6,
-    left: 6,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(11, 13, 18, 0.85)',
-    borderWidth: 1,
-    borderColor: '#FF5A2A',
+  emptyLabel: {
+    ...Typography.caption,
+    marginTop: Spacing.xs,
   },
-  mainBadgeText: {
-    color: '#FF5A2A',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  formSection: {
-    marginBottom: 32,
-  },
-  sectionHeading: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 4,
-    marginTop: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-    paddingBottom: 8,
-  },
-  inputsSection: {
-    paddingHorizontal: 20,
-    marginTop: 24,
-  },
-  label: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 8,
-    marginTop: 14,
-  },
-  input: {
-    backgroundColor: '#161920',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: '#FFFFFF',
-    fontSize: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  bioInput: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  dateButton: {
-    backgroundColor: '#161920',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  dateButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
-  dropdownButton: {
-    backgroundColor: '#161920',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  dropdownButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
-  educationRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  jenjangButton: {
-    flex: 1.2,
-  },
-  institusiInput: {
-    flex: 2,
-  },
-  sportsHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  addSportText: {
-    color: '#FF5A2A',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  sportsContainer: {
+  chipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: Spacing.sm,
   },
   sportChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161920',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    backgroundColor: Colors.chipBg,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: Colors.chipBorder,
   },
-  sportChipSelected: {
-    backgroundColor: 'rgba(255, 90, 42, 0.16)',
-    borderColor: '#FF5A2A',
+  sportChipActive: {
+    backgroundColor: Colors.chipBgActive,
+    borderColor: Colors.chipBorderActive,
   },
   sportChipText: {
-    color: '#888A90',
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'Lato_400Regular',
+    color: Colors.textSecondary,
   },
-  sportChipTextSelected: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+  sportChipTextActive: {
+    color: Colors.textPrimary,
   },
-  errorHint: {
-    color: '#FF3B30',
-    fontSize: 11,
-    marginTop: 6,
+  skillBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.elevatedSurface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
   },
-  saveButton: {
-    backgroundColor: '#FF5A2A',
-    borderRadius: 25,
-    paddingVertical: 14,
+  skillBoxActive: {
+    borderColor: Colors.primary,
+    backgroundColor: 'rgba(255, 90, 54, 0.05)',
+  },
+  radioCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1.5,
+    borderColor: Colors.textMuted,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 28,
-    marginBottom: 20,
-    shadowColor: '#FF5A2A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    marginRight: Spacing.md,
   },
-  saveButtonDisabled: {
-    opacity: 0.6,
+  radioCircleActive: {
+    borderColor: Colors.primary,
   },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: 'bold',
+  radioDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: Colors.primary,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  skillTitle: {
+    fontSize: 14,
+    fontFamily: 'Lato_700Bold',
+    color: Colors.textSecondary,
   },
-  modalContent: {
-    backgroundColor: '#161920',
-    borderRadius: 16,
-    padding: 20,
-    width: '100%',
-    maxWidth: 340,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+  skillDesc: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 2,
   },
-  modalTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
+  fieldGroup: {
+    marginTop: Spacing.md,
   },
-  modalInput: {
-    backgroundColor: '#0B0D12',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: '#FFFFFF',
+  fieldLabel: {
+    fontSize: 13,
+    fontFamily: 'Lato_400Regular',
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+  },
+  input: {
+    backgroundColor: Colors.surfaceInput,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.base,
+    paddingVertical: Spacing.md,
+    color: Colors.textPrimary,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 16,
+    borderColor: Colors.surfaceBorder,
   },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-  },
-  modalButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  modalButtonCancel: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  modalButtonSave: {
-    backgroundColor: '#FF5A2A',
-  },
-  modalButtonTextCancel: {
-    color: '#888A90',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  modalButtonTextSave: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  pickerModalContent: {
-    backgroundColor: '#161920',
-    borderRadius: 16,
-    padding: 20,
-    width: '100%',
-    maxHeight: '60%',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  pickerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.08)',
-    marginBottom: 8,
-  },
-  pickerTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  pickerItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
-  },
-  pickerItemText: {
-    color: '#E0E0E0',
-    fontSize: 14,
-  },
-  pickerItemTextSelected: {
-    color: '#FF5A2A',
-    fontWeight: 'bold',
+  bioInput: {
+    height: 96,
+    textAlignVertical: 'top',
   },
 });

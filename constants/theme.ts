@@ -1,47 +1,42 @@
 import { StyleSheet, TextStyle } from 'react-native';
 
 export const Colors = {
-  // Rich deep surfaces (warm charcoal black, no muddy grays)
-  background: '#0B0D13',
-  surface: '#151821',
-  elevatedSurface: '#1C202C',
-  surfaceCard: '#11141C',
-  surfaceBorder: 'rgba(255, 255, 255, 0.07)',
-  surfaceBorderHover: 'rgba(255, 255, 255, 0.14)',
-  surfaceInput: '#181C26',
-  tabBarBg: '#0D0F16',
+  // Sophisticated Dark Foundation
+  background: '#080A0F',
+  surface: '#11141C',
+  elevatedSurface: '#181C26',
+  surfaceBorder: '#272C38',
+  surfaceInput: '#141822',
+  tabBarBg: '#080A0F',
 
-  // Primary Accent (Signature Manuver Energy Orange)
-  primary: '#FF572F',
-  primaryDark: '#E04720',
-  primaryLight: '#FF7347',
-  primaryMuted: 'rgba(255, 87, 47, 0.14)',
-  primaryGlow: 'rgba(255, 87, 47, 0.38)',
-  primaryGradientStart: '#FF7347',
-  primaryGradientEnd: '#E6441D',
+  // Primary Brand Accent (Digunakan secara selektif & bermakna)
+  primary: '#FF5A36',
+  primaryDark: '#E04724',
+  primaryMuted: 'rgba(255, 90, 54, 0.12)',
+  primaryGlow: 'rgba(255, 90, 54, 0.25)',
 
-  // Status & Accents
-  success: '#00C48C',
-  successMuted: 'rgba(0, 196, 140, 0.14)',
+  // Supporting Semantic Accents
+  success: '#48E59A',
+  successMuted: 'rgba(72, 229, 154, 0.12)',
+  info: '#6C8CFF',
+  infoMuted: 'rgba(108, 140, 255, 0.12)',
+  warning: '#F4B740',
+  warningMuted: 'rgba(244, 183, 64, 0.12)',
   danger: '#FF4757',
-  dangerMuted: 'rgba(255, 71, 87, 0.14)',
-  warning: '#FFA502',
-  star: '#FFB800',
+  dangerMuted: 'rgba(255, 71, 87, 0.12)',
 
-  // Overlays & Pills
-  overlayDark: 'rgba(11, 13, 19, 0.88)',
-  overlayGradientMid: 'rgba(11, 13, 19, 0.55)',
-  pillBg: 'rgba(255, 255, 255, 0.06)',
-  pillBgActive: 'rgba(255, 87, 47, 0.14)',
-  pillBorder: 'rgba(255, 255, 255, 0.08)',
-  pillBorderActive: 'rgba(255, 87, 47, 0.38)',
-
-  // Typography
+  // Neutral Typography
+  textPrimary: '#F5F7FA',
+  textSecondary: '#969EAE',
+  textMuted: '#626A7A',
   white: '#FFFFFF',
   black: '#000000',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#9AA0B2',
-  textMuted: '#676D80',
+
+  // Interactive Chips & Pills
+  chipBg: '#181C26',
+  chipBorder: '#272C38',
+  chipBgActive: 'rgba(255, 90, 54, 0.14)',
+  chipBorderActive: '#FF5A36',
 } as const;
 
 export const Spacing = {
@@ -52,55 +47,50 @@ export const Spacing = {
   lg: 20,
   xl: 24,
   xxl: 32,
-  xxxl: 40,
 } as const;
 
 export const BorderRadius = {
-  xs: 6,
-  sm: 10,
-  md: 16,
-  lg: 22,
-  xl: 28,
-  card: 28,
-  pill: 9999,
-  round: 9999,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  card: 20,
+  pill: 999,
 } as const;
 
-export const Typography = {
-  fontDisplay: 'Lato_900Black',
-  fontHeading: 'Lato_900Black',
-  fontSemiBold: 'Lato_700Bold',
-  fontMedium: 'Lato_700Bold',
-  fontRegular: 'Lato_400Regular',
-} as const;
-
-export const TypographyStyles = StyleSheet.create({
-  heroTitle: {
-    fontFamily: Typography.fontHeading,
-    fontSize: 26,
+export const Typography: Record<string, TextStyle> = {
+  screenTitle: {
+    fontFamily: 'Lato_900Black',
+    fontSize: 28,
     color: Colors.textPrimary,
-  } as TextStyle,
-  sectionHeading: {
-    fontFamily: Typography.fontSemiBold,
-    fontSize: 13,
-    color: Colors.textMuted,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  } as TextStyle,
+    letterSpacing: -0.5,
+  },
+  sectionTitle: {
+    fontFamily: 'Lato_700Bold',
+    fontSize: 20,
+    color: Colors.textPrimary,
+    letterSpacing: -0.2,
+  },
   body: {
-    fontFamily: Typography.fontRegular,
+    fontFamily: 'Lato_400Regular',
     fontSize: 15,
     color: Colors.textPrimary,
     lineHeight: 22,
-  } as TextStyle,
-  pillInteractive: {
-    fontFamily: Typography.fontMedium,
-    fontSize: 12,
-    color: Colors.textPrimary,
-  } as TextStyle,
-  microMeta: {
-    fontFamily: Typography.fontRegular,
-    fontSize: 11,
+  },
+  bodyMuted: {
+    fontFamily: 'Lato_400Regular',
+    fontSize: 15,
     color: Colors.textSecondary,
-  } as TextStyle,
-});
+    lineHeight: 22,
+  },
+  metadata: {
+    fontFamily: 'Lato_700Bold',
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+  },
+  caption: {
+    fontFamily: 'Lato_400Regular',
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+};
