@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     width: '100%',
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     overflow: 'hidden',
   },
   buttonGradient: {

@@ -159,42 +159,54 @@ export default function ChatScreen() {
         />
       )}
 
-      {/* Sparing Floating Action Widget */}
-      <View style={styles.ajakContainer}>
-        <TouchableOpacity 
-          style={styles.ajakButton} 
-          activeOpacity={0.8}
-          onPress={() => setIsSheetVisible(true)}
-        >
-          <LinearGradient
-            colors={[Colors.primary, '#E04720']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.ajakGradient}
-          >
-            <Ionicons name="flash" size={16} color={Colors.white} />
-            <Text style={styles.ajakText}>Ajak Sparing</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+
 
       {/* Input Bar */}
       <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Ketik pesan..."
-          placeholderTextColor={Colors.textMuted}
-          value={inputText}
-          onChangeText={setInputText}
-          multiline
-        />
-        <TouchableOpacity 
-          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]} 
-          onPress={() => handleSendMessage()}
-          disabled={!inputText.trim()}
-        >
-          <Ionicons name="send" size={18} color={Colors.white} />
+        <TouchableOpacity style={styles.actionIconBtn} activeOpacity={0.7}>
+          <Ionicons name="camera-outline" size={26} color={Colors.textSecondary} />
         </TouchableOpacity>
+
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Send a message"
+            placeholderTextColor={Colors.textMuted}
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+          />
+          {!inputText.trim() && (
+            <TouchableOpacity style={styles.gifBtn} activeOpacity={0.7}>
+              <View style={styles.gifBadge}>
+                <Text style={styles.gifText}>GIF</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {!inputText.trim() ? (
+          <View style={styles.rightActionIcons}>
+            <TouchableOpacity 
+              style={styles.actionIconBtn} 
+              activeOpacity={0.7}
+              onPress={() => setIsSheetVisible(true)}
+            >
+              <Ionicons name="flash" size={24} color={Colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionIconBtn} activeOpacity={0.7}>
+              <Ionicons name="mic-outline" size={26} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={styles.sendButton} 
+            onPress={() => handleSendMessage()}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="send" size={18} color={Colors.white} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <AjakMainSheet
@@ -302,67 +314,67 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 14, lineHeight: 20 },
   textMe: { color: Colors.white },
   textThem: { color: Colors.white },
-  ajakContainer: {
-    position: 'absolute',
-    bottom: 74,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  ajakButton: {
-    borderRadius: BorderRadius.round,
-    overflow: 'hidden',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  ajakGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 6,
-  },
-  ajakText: {
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
+
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: Spacing.base,
-    paddingTop: 8,
-    backgroundColor: Colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Colors.surfaceBorder,
+    paddingHorizontal: 8,
+    paddingTop: 12,
+    backgroundColor: Colors.background,
+  },
+  actionIconBtn: {
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rightActionIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceInput,
+    borderRadius: 24, // Very rounded corner radius like Bumble
+    borderWidth: 1,
+    borderColor: Colors.surfaceBorder,
+    marginHorizontal: 4,
+    overflow: 'hidden',
   },
   textInput: {
     flex: 1,
-    backgroundColor: Colors.surfaceInput,
-    borderRadius: BorderRadius.round,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: 9,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingTop: Platform.OS === 'ios' ? 12 : 10,
     color: Colors.white,
     maxHeight: 100,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
-    fontSize: 14,
+    fontSize: 15,
+  },
+  gifBtn: {
+    paddingRight: 12,
+    paddingLeft: 4,
+    justifyContent: 'center',
+  },
+  gifBadge: {
+    borderWidth: 1.5,
+    borderColor: Colors.textSecondary,
+    borderRadius: 8,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  gifText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: Colors.textSecondary,
   },
   sendButton: {
-    marginLeft: Spacing.sm,
+    marginLeft: 8,
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: Colors.elevatedSurface,
-    opacity: 0.5,
   },
 });

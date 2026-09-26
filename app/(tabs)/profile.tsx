@@ -11,6 +11,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
@@ -19,35 +21,15 @@ import { useAuth } from '../_layout';
 // Oranye khas Manuver
 const MANUVER_ORANGE = '#FF5A36';
 
-// Mapping ikon untuk 4 ubin "My sports"
-const SPORT_ICON_CONFIG: Record<string, { iconName: string; type: 'ion' | 'mci' }> = {
-  Running: { iconName: 'walk-outline', type: 'ion' },
-  Lari: { iconName: 'walk-outline', type: 'ion' },
-  Gym: { iconName: 'dumbbell', type: 'mci' },
-  Fitness: { iconName: 'dumbbell', type: 'mci' },
-  Bicycle: { iconName: 'bicycle-outline', type: 'ion' },
-  Sepeda: { iconName: 'bicycle-outline', type: 'ion' },
-  Basketball: { iconName: 'basketball-outline', type: 'ion' },
-  Basket: { iconName: 'basketball-outline', type: 'ion' },
-  Badminton: { iconName: 'tennisball-outline', type: 'ion' },
-  Tennis: { iconName: 'tennisball-outline', type: 'ion' },
-  Football: { iconName: 'soccer', type: 'mci' },
-  Futsal: { iconName: 'soccer', type: 'mci' },
-  'Mini Soccer': { iconName: 'soccer', type: 'mci' },
-  Padel: { iconName: 'tennisball-outline', type: 'ion' },
-  Swimming: { iconName: 'water-outline', type: 'ion' },
-  Yoga: { iconName: 'flower-outline', type: 'ion' },
-  Volleyball: { iconName: 'basketball-outline', type: 'ion' },
-  'Table Tennis': { iconName: 'tennisball-outline', type: 'ion' },
-  Boxing: { iconName: 'body-outline', type: 'ion' },
-  'Martial Arts': { iconName: 'body-outline', type: 'ion' },
-  Golf: { iconName: 'golf-outline', type: 'ion' },
-  Hiking: { iconName: 'trail-sign-outline', type: 'ion' },
-  'Wall Climbing': { iconName: 'analytics-outline', type: 'ion' },
-  Calisthenics: { iconName: 'barbell-outline', type: 'ion' },
-  Zumba: { iconName: 'musical-notes-outline', type: 'ion' },
-  eSports: { iconName: 'game-controller-outline', type: 'ion' },
-  Lainnya: { iconName: 'ellipsis-horizontal-outline', type: 'ion' },
+const SPORT_EMOJI: Record<string, string> = {
+  Running: '🏃‍♂️', Lari: '🏃‍♂️', Gym: '🏋️‍♂️', Fitness: '🏋️‍♂️',
+  Bicycle: '🚴‍♂️', Sepeda: '🚴‍♂️', Basketball: '🏀', Basket: '🏀',
+  Badminton: '🏸', Tennis: '🎾', Football: '⚽', Futsal: '⚽',
+  'Mini Soccer': '⚽', Padel: '🎾', Swimming: '🏊‍♂️', Yoga: '🧘‍♀️',
+  Volleyball: '🏐', 'Table Tennis': '🏓', Boxing: '🥊',
+  'Martial Arts': '🥋', Golf: '⛳', Hiking: '🥾',
+  'Wall Climbing': '🧗‍♂️', Calisthenics: '💪', Zumba: '💃',
+  eSports: '🎮', Lainnya: '🔥'
 };
 
 export default function ProfileTabScreen() {
@@ -124,21 +106,31 @@ export default function ProfileTabScreen() {
     }
   });
 
-  const renderSportIcon = (sportName: string) => {
-    const config = SPORT_ICON_CONFIG[sportName] || { iconName: 'fitness-outline', type: 'ion' };
-    if (config.type === 'mci') {
-      return <MaterialCommunityIcons name={config.iconName as any} size={28} color="#FFFFFF" />;
-    }
-    return <Ionicons name={config.iconName as any} size={28} color="#FFFFFF" />;
+  const getSportEmoji = (sportName: string) => {
+    return SPORT_EMOJI[sportName] || '🔥';
   };
 
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
-      {/* Top Header */}
-      <View style={styles.topBar}>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={{ width: 40 }} />
-      </View>
+    <View style={styles.screen}>
+      {/* Dynamic Dominant Color Background Effect */}
+      <Image 
+        source={{ uri: mainPhoto }} 
+        style={[StyleSheet.absoluteFill, { opacity: 0.35, width: '100%', height: '100%' }]} 
+        blurRadius={90} 
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(8, 10, 15, 0.8)', '#080A0F', '#080A0F']}
+        locations={[0, 0.25, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
+
+      <View style={{ flex: 1, paddingTop: insets.top }}>
+        {/* Top Header */}
+        <View style={styles.topBar}>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <View style={{ width: 40 }} />
+        </View>
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 90 }]}
@@ -168,40 +160,28 @@ export default function ProfileTabScreen() {
               {profile?.nama || 'Rico Pratama'}
               {profile?.umur ? `, ${profile.umur}` : ', 24'}
             </Text>
-            <Ionicons
-              name="checkmark-circle"
-              size={20}
-              color="#48E59A"
-              style={{ marginLeft: 6 }}
-            />
+            <Ionicons name="checkmark-circle" size={22} color="#00F0FF" style={{ marginLeft: 6 }} />
+            <LinearGradient
+              colors={['#FFD700', '#FFA500']}
+              style={styles.proBadge}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            >
+              <Text style={styles.proBadgeText}>PRO</Text>
+            </LinearGradient>
           </View>
 
           <Text style={styles.roleLocationText}>
-            {(profile as any)?.skill_level || 'Runner'} • 📍 {profile?.kota || (profile as any)?.home_venue || 'Jakarta'}
+            {(profile as any)?.skill_level || 'MVP Runner'} • 📍 {profile?.kota || (profile as any)?.home_venue || 'Jakarta'}
           </Text>
 
-          <Text style={styles.taglineText}>
-            Keep running, keep growing. <Text style={{ color: MANUVER_ORANGE }}>⚡</Text>
-          </Text>
-        </View>
-
-        {/* 3 Stats Row */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats.workouts}</Text>
-            <Text style={styles.statLabel}>Workouts</Text>
-          </View>
-
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats.friends}</Text>
-            <Text style={styles.statLabel}>Friends</Text>
-          </View>
-
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>{stats.matches}</Text>
-            <Text style={styles.statLabel}>Matches</Text>
+          {/* Match Readiness Indicator */}
+          <View style={styles.readinessBadge}>
+            <View style={styles.readinessDot} />
+            <Text style={styles.readinessText}>🔥 Ready for a match this weekend!</Text>
           </View>
         </View>
+
+
 
         {/* Card 1: About Me */}
         <View style={styles.card}>
@@ -232,12 +212,14 @@ export default function ProfileTabScreen() {
                 onPress={() => router.push('/edit-profile')}
                 activeOpacity={0.7}
               >
+                <Text style={styles.chipEmoji}>{getSportEmoji(sport)}</Text>
                 <Text style={styles.chipText}>{sport}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
       </ScrollView>
+      </View>
     </View>
   );
 }
@@ -339,21 +321,34 @@ const styles = StyleSheet.create({
     color: '#F5F7FA',
     marginTop: 8,
   },
+  statsContainerWrapper: {
+    width: '100%',
+    position: 'relative',
+    marginBottom: 16,
+  },
+  statsGlowBackground: {
+    position: 'absolute',
+    top: -20,
+    left: 0,
+    right: 0,
+    bottom: -20,
+    borderRadius: 30,
+  },
   statsRow: {
     flexDirection: 'row',
     width: '100%',
     gap: 12,
-    marginBottom: 16,
   },
-  statBox: {
+  statBoxGlass: {
     flex: 1,
-    backgroundColor: '#11141C',
     borderRadius: 18,
     paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: '#272C38',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    overflow: 'hidden',
   },
   statValue: {
     fontFamily: 'Lato_700Bold',
@@ -369,9 +364,9 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: '#11141C',
-    borderRadius: 22,
-    padding: 20,
-    marginBottom: 14,
+    borderRadius: 28,
+    padding: 24,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: '#272C38',
   },
@@ -394,17 +389,63 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#181C26',
-    borderRadius: 20,
+    borderRadius: 100,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: '#272C38',
   },
+  chipEmoji: {
+    fontSize: 16,
+    marginRight: 6,
+  },
   chipText: {
-    fontFamily: 'Lato_400Regular',
-    fontSize: 13,
+    fontFamily: 'Lato_700Bold',
+    fontSize: 14,
     color: '#F5F7FA',
+  },
+  proBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  proBadgeText: {
+    fontFamily: 'Lato_900Black',
+    fontSize: 10,
+    color: '#080A0F',
+    letterSpacing: 0.5,
+  },
+  readinessBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 240, 255, 0.15)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 240, 255, 0.3)',
+  },
+  readinessDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#00F0FF',
+    marginRight: 8,
+    shadowColor: '#00F0FF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  readinessText: {
+    fontFamily: 'Lato_700Bold',
+    fontSize: 13,
+    color: '#00F0FF',
   },
   sportsTileRow: {
     flexDirection: 'row',

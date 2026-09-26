@@ -218,7 +218,7 @@ export default function LoginScreen() {
     <View style={styles.logoContainer}>
       <Image
         source={require('../assets/images/logo.png')}
-        style={{ width: width * 0.85, height: width * 0.85 }}
+        style={{ width: width * 0.65, height: width * 0.65 }}
         resizeMode="contain"
       />
       <Text style={styles.taglineText}>Swipe. Match. Play.</Text>
@@ -272,7 +272,7 @@ export default function LoginScreen() {
             <View style={{ flex: 1, justifyContent: 'center', paddingBottom: 20, alignItems: 'center' }}>
               <Image
                 source={require('../assets/images/logo.png')}
-                style={{ width: width * 0.85, height: width * 0.85 }}
+                style={{ width: width * 0.65, height: width * 0.65 }}
                 resizeMode="contain"
               />
               <Text style={styles.taglineTextSmall}>Temukan Partner Sparingmu</Text>

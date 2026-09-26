@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   checkboxActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   checkLabel: { flex: 1, fontFamily: Typography.fontRegular, fontSize: 12, color: Colors.textSecondary, lineHeight: 18 },
   checkLabelLink: { color: Colors.primary, fontFamily: Typography.fontSemiBold },
-  acceptButton: { borderRadius: BorderRadius.round, overflow: 'hidden' },
+  acceptButton: { borderRadius: BorderRadius.pill, overflow: 'hidden' },
   acceptButtonDisabled: { opacity: 0.5 },
   buttonGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, gap: 8 },
   acceptButtonText: { fontFamily: Typography.fontHeading, fontSize: 15, color: Colors.white, letterSpacing: 0.4 },

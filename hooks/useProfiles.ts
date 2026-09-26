@@ -5,6 +5,54 @@ import { supabase } from '../lib/supabase';
 import { Profile, MatchData } from '../types/database';
 
 export function useProfiles() {
+  const DUMMY_PROFILES = [
+    {
+      id: 'demo-1',
+      nama: 'Rina Dummy',
+      umur: 24,
+      age: 24,
+      foto_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80',
+      photos: [
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=80',
+        'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=80'
+      ],
+      alamat: 'Senopati, Jakarta Selatan',
+      jarak: '3 km away',
+      distance: 3,
+      hobi: 'Badminton, Running',
+      bio: 'Cari partner badminton santai atau sparring rutin di Jaksel.',
+      prompt_question: 'Target olahraga bulan ini',
+      prompt_answer: 'Bisa lari 5k di bawah 30 menit',
+      skill_level: 'Menengah',
+      availability: ['Pagi', 'Akhir Pekan'],
+      distance_pref: '10 km',
+      interests: ['Health', 'Coffee'],
+      user_sports: [{ sports: { nama: 'Badminton' } }, { sports: { nama: 'Running' } }]
+    },
+    {
+      id: 'demo-2',
+      nama: 'Ghifff Dummy',
+      umur: 26,
+      age: 26,
+      foto_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=80',
+      photos: [
+        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1000&q=80'
+      ],
+      alamat: 'GBK Senayan',
+      jarak: '5 km away',
+      distance: 5,
+      hobi: 'Gym & Fitness',
+      bio: 'Looking for a gym buddy for push pull legs.',
+      prompt_question: 'Partner sparing ideal buatku',
+      prompt_answer: 'Disiplin dan mau saling spot saat angkat beban berat.',
+      skill_level: 'Advanced',
+      availability: ['Malam'],
+      distance_pref: '5 km',
+      interests: ['Health', 'Food'],
+      user_sports: [{ sports: { nama: 'Gym & Fitness' } }]
+    }
+  ] as Profile[];
+
   const queryClient = useQueryClient();
   const [matchData, setMatchData] = useState<MatchData | null>(null);
   const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
@@ -45,7 +93,7 @@ export function useProfiles() {
       });
 
     if (error || !data || data.length === 0) {
-      return [];
+      return DUMMY_PROFILES;
     }
     
     return data.map((item: any) => {

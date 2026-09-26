@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.surfaceBorder,
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     paddingHorizontal: 18,
     paddingVertical: 10,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
   },
   emptyActionBtnText: {
     color: Colors.white,

@@ -4840,3 +4840,262 @@
 {"_e":"devserver:start","_t":1790335764368,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":true,"apiRoutes":false,"exporting":false}
 {"_e":"metro:config","_t":1790335770120,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":true,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
 {"_e":"expo:dev-tools-plugin:load","_t":1790335772670,"plugins":[]}
+{"_e":"metro:instantiate","_t":1790335786416,"atlas":false,"workers":10,"host":"::","port":8081}
+{"_e":"metro:bundling:started","_t":1790335803474,"id":"1","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790335803474,"id":"1","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790335803478,"id":"1","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790335807380,"id":"1","progress":0.010000000000000002,"total":1,"current":1}
+{"_e":"metro:bundling:progress","_t":1790335807487,"id":"1","progress":0.010000000000000002,"total":2,"current":1}
+{"_e":"metro:bundling:progress","_t":1790335807489,"id":"1","progress":0.04000000000000001,"total":2,"current":2}
+{"_e":"metro:bundling:progress","_t":1790335807592,"id":"1","progress":0.09765625,"total":16,"current":5}
+{"_e":"metro:bundling:progress","_t":1790335807692,"id":"1","progress":0.09765625,"total":25,"current":7}
+{"_e":"metro:bundling:progress","_t":1790335807792,"id":"1","progress":0.09765625,"total":56,"current":11}
+{"_e":"metro:bundling:progress","_t":1790335807920,"id":"1","progress":0.09765625,"total":57,"current":12}
+{"_e":"metro:bundling:progress","_t":1790335807926,"id":"1","progress":0.09765625,"total":57,"current":13}
+{"_e":"metro:bundling:progress","_t":1790335808029,"id":"1","progress":0.09765625,"total":57,"current":16}
+{"_e":"metro:bundling:progress","_t":1790335808129,"id":"1","progress":0.09765625,"total":160,"current":20}
+{"_e":"metro:bundling:progress","_t":1790335808236,"id":"1","progress":0.09765625,"total":165,"current":26}
+{"_e":"metro:bundling:progress","_t":1790335808347,"id":"1","progress":0.09765625,"total":170,"current":32}
+{"_e":"metro:bundling:progress","_t":1790335808449,"id":"1","progress":0.09765625,"total":173,"current":37}
+{"_e":"metro:bundling:progress","_t":1790335808549,"id":"1","progress":0.09765625,"total":173,"current":41}
+{"_e":"metro:bundling:progress","_t":1790335808673,"id":"1","progress":0.09765625,"total":173,"current":45}
+{"_e":"metro:bundling:progress","_t":1790335808773,"id":"1","progress":0.09765625,"total":188,"current":58}
+{"_e":"metro:bundling:progress","_t":1790335808891,"id":"1","progress":0.10554252879486715,"total":197,"current":64}
+{"_e":"metro:bundling:progress","_t":1790335809000,"id":"1","progress":0.1280195269758438,"total":218,"current":78}
+{"_e":"metro:bundling:progress","_t":1790335809111,"id":"1","progress":0.14872609543727,"total":223,"current":86}
+{"_e":"metro:bundling:progress","_t":1790335809211,"id":"1","progress":0.1715831305474344,"total":239,"current":99}
+{"_e":"metro:bundling:progress","_t":1790335809325,"id":"1","progress":0.19716250835375362,"total":268,"current":119}
+{"_e":"metro:bundling:progress","_t":1790335809429,"id":"1","progress":0.23477521521947073,"total":291,"current":141}
+{"_e":"metro:bundling:progress","_t":1790335809530,"id":"1","progress":0.287840765936004,"total":315,"current":169}
+{"_e":"metro:bundling:progress","_t":1790335809634,"id":"1","progress":0.287840765936004,"total":362,"current":186}
+{"_e":"metro:bundling:progress","_t":1790335809734,"id":"1","progress":0.287840765936004,"total":402,"current":214}
+{"_e":"metro:bundling:progress","_t":1790335809834,"id":"1","progress":0.32381519274376414,"total":420,"current":239}
+{"_e":"metro:bundling:progress","_t":1790335809935,"id":"1","progress":0.3393864152849086,"total":436,"current":254}
+{"_e":"metro:bundling:progress","_t":1790335810036,"id":"1","progress":0.3486153673263861,"total":481,"current":284}
+{"_e":"metro:bundling:progress","_t":1790335810135,"id":"1","progress":0.3571371882985985,"total":502,"current":300}
+{"_e":"metro:bundling:progress","_t":1790335810237,"id":"1","progress":0.3704068228905374,"total":511,"current":311}
+{"_e":"metro:bundling:progress","_t":1790335810340,"id":"1","progress":0.3982467716090113,"total":515,"current":325}
+{"_e":"metro:bundling:progress","_t":1790335810444,"id":"1","progress":0.3982467716090113,"total":531,"current":330}
+{"_e":"metro:bundling:progress","_t":1790335810564,"id":"1","progress":0.3982467716090113,"total":547,"current":342}
+{"_e":"metro:bundling:progress","_t":1790335810665,"id":"1","progress":0.3982467716090113,"total":614,"current":354}
+{"_e":"metro:bundling:progress","_t":1790335810767,"id":"1","progress":0.3982467716090113,"total":655,"current":373}
+{"_e":"metro:bundling:progress","_t":1790335810870,"id":"1","progress":0.3982467716090113,"total":668,"current":390}
+{"_e":"metro:bundling:progress","_t":1790335810976,"id":"1","progress":0.3982467716090113,"total":679,"current":413}
+{"_e":"metro:bundling:progress","_t":1790335811077,"id":"1","progress":0.40445136965220063,"total":684,"current":435}
+{"_e":"metro:bundling:progress","_t":1790335811183,"id":"1","progress":0.4406212841854935,"total":696,"current":462}
+{"_e":"metro:bundling:progress","_t":1790335811291,"id":"1","progress":0.4686535333670768,"total":707,"current":484}
+{"_e":"metro:bundling:progress","_t":1790335811394,"id":"1","progress":0.513875110649858,"total":724,"current":519}
+{"_e":"metro:bundling:progress","_t":1790335811503,"id":"1","progress":0.5318080429450692,"total":735,"current":536}
+{"_e":"metro:bundling:progress","_t":1790335811618,"id":"1","progress":0.5349210615663197,"total":752,"current":550}
+{"_e":"metro:bundling:progress","_t":1790335811725,"id":"1","progress":0.5364834875663348,"total":755,"current":553}
+{"_e":"metro:bundling:progress","_t":1790335811858,"id":"1","progress":0.5384255076531732,"total":755,"current":554}
+{"_e":"metro:bundling:progress","_t":1790335811972,"id":"1","progress":0.5384255076531732,"total":768,"current":555}
+{"_e":"metro:bundling:progress","_t":1790335812075,"id":"1","progress":0.5384255076531732,"total":771,"current":564}
+{"_e":"metro:bundling:progress","_t":1790335812175,"id":"1","progress":0.5399302795345499,"total":773,"current":568}
+{"_e":"metro:bundling:progress","_t":1790335812276,"id":"1","progress":0.5414380513338294,"total":776,"current":571}
+{"_e":"metro:bundling:progress","_t":1790335812379,"id":"1","progress":0.549050443724094,"total":776,"current":575}
+{"_e":"metro:bundling:progress","_t":1790335812487,"id":"1","progress":0.5553207500151649,"total":781,"current":582}
+{"_e":"metro:bundling:progress","_t":1790335812588,"id":"1","progress":0.5553207500151649,"total":793,"current":590}
+{"_e":"metro:bundling:progress","_t":1790335812688,"id":"1","progress":0.5705678151670751,"total":793,"current":599}
+{"_e":"metro:bundling:progress","_t":1790335812788,"id":"1","progress":0.5839978661789361,"total":810,"current":619}
+{"_e":"metro:bundling:progress","_t":1790335812890,"id":"1","progress":0.5839978661789361,"total":860,"current":633}
+{"_e":"metro:bundling:progress","_t":1790335812990,"id":"1","progress":0.5839978661789361,"total":860,"current":636}
+{"_e":"metro:bundling:progress","_t":1790335813115,"id":"1","progress":0.5839978661789361,"total":869,"current":645}
+{"_e":"metro:bundling:progress","_t":1790335813215,"id":"1","progress":0.5856934610578924,"total":882,"current":675}
+{"_e":"metro:bundling:progress","_t":1790335813320,"id":"1","progress":0.6112711534947493,"total":903,"current":706}
+{"_e":"metro:bundling:progress","_t":1790335813428,"id":"1","progress":0.6424186778288641,"total":927,"current":743}
+{"_e":"metro:bundling:progress","_t":1790335813533,"id":"1","progress":0.6424186778288641,"total":1050,"current":768}
+{"_e":"metro:bundling:progress","_t":1790335813636,"id":"1","progress":0.6424186778288641,"total":1070,"current":779}
+{"_e":"metro:bundling:progress","_t":1790335813755,"id":"1","progress":0.6424186778288641,"total":1070,"current":780}
+{"_e":"metro:bundling:progress","_t":1790335813861,"id":"1","progress":0.6424186778288641,"total":1071,"current":780}
+{"_e":"metro:bundling:progress","_t":1790335813945,"id":"1","progress":0.6424186778288641,"total":1071,"current":781}
+{"_e":"metro:bundling:progress","_t":1790335814046,"id":"1","progress":0.6424186778288641,"total":1075,"current":787}
+{"_e":"metro:bundling:progress","_t":1790335814146,"id":"1","progress":0.6424186778288641,"total":1102,"current":811}
+{"_e":"metro:bundling:progress","_t":1790335814248,"id":"1","progress":0.6424186778288641,"total":1128,"current":834}
+{"_e":"metro:bundling:progress","_t":1790335814349,"id":"1","progress":0.6424186778288641,"total":1154,"current":858}
+{"_e":"metro:bundling:progress","_t":1790335814449,"id":"1","progress":0.6424186778288641,"total":1212,"current":878}
+{"_e":"metro:bundling:progress","_t":1790335814554,"id":"1","progress":0.6424186778288641,"total":1229,"current":907}
+{"_e":"metro:bundling:progress","_t":1790335814655,"id":"1","progress":0.6424186778288641,"total":1234,"current":927}
+{"_e":"metro:bundling:progress","_t":1790335814761,"id":"1","progress":0.6424186778288641,"total":1237,"current":939}
+{"_e":"metro:bundling:progress","_t":1790335814861,"id":"1","progress":0.6424186778288641,"total":1337,"current":986}
+{"_e":"metro:bundling:progress","_t":1790335814961,"id":"1","progress":0.6424186778288641,"total":1361,"current":1011}
+{"_e":"metro:bundling:progress","_t":1790335815054,"id":"1","progress":0.6424186778288641,"total":1361,"current":1012}
+{"_e":"metro:bundling:progress","_t":1790335815155,"id":"1","progress":0.6424186778288641,"total":1364,"current":1061}
+{"_e":"metro:bundling:progress","_t":1790335815257,"id":"1","progress":0.6424186778288641,"total":1384,"current":1101}
+{"_e":"metro:bundling:progress","_t":1790335815357,"id":"1","progress":0.6718817091095257,"total":1392,"current":1141}
+{"_e":"metro:bundling:progress","_t":1790335815461,"id":"1","progress":0.6718817091095257,"total":1453,"current":1172}
+{"_e":"metro:bundling:progress","_t":1790335815564,"id":"1","progress":0.6718817091095257,"total":1467,"current":1192}
+{"_e":"metro:bundling:progress","_t":1790335815664,"id":"1","progress":0.6817403214024835,"total":1480,"current":1222}
+{"_e":"metro:bundling:progress","_t":1790335815764,"id":"1","progress":0.7055096195722715,"total":1487,"current":1249}
+{"_e":"metro:bundling:progress","_t":1790335815867,"id":"1","progress":0.7058663395276843,"total":1514,"current":1272}
+{"_e":"metro:bundling:progress","_t":1790335815979,"id":"1","progress":0.7397135357100065,"total":1515,"current":1303}
+{"_e":"metro:bundling:progress","_t":1790335816084,"id":"1","progress":0.7586580228967947,"total":1535,"current":1337}
+{"_e":"metro:bundling:progress","_t":1790335816185,"id":"1","progress":0.776186204365861,"total":1538,"current":1355}
+{"_e":"metro:bundling:progress","_t":1790335816288,"id":"1","progress":0.7865729145326822,"total":1556,"current":1380}
+{"_e":"metro:bundling:progress","_t":1790335816390,"id":"1","progress":0.7865729145326822,"total":1636,"current":1413}
+{"_e":"metro:bundling:progress","_t":1790335816490,"id":"1","progress":0.7865729145326822,"total":1650,"current":1438}
+{"_e":"metro:bundling:progress","_t":1790335816593,"id":"1","progress":0.7865729145326822,"total":1670,"current":1457}
+{"_e":"metro:bundling:progress","_t":1790335816693,"id":"1","progress":0.7865729145326822,"total":1695,"current":1483}
+{"_e":"metro:bundling:progress","_t":1790335816799,"id":"1","progress":0.7865729145326822,"total":1724,"current":1512}
+{"_e":"metro:bundling:progress","_t":1790335816899,"id":"1","progress":0.7870560117779282,"total":1737,"current":1541}
+{"_e":"metro:bundling:progress","_t":1790335817001,"id":"1","progress":0.8034529189865143,"total":1756,"current":1574}
+{"_e":"metro:bundling:progress","_t":1790335817102,"id":"1","progress":0.8183509852279502,"total":1772,"current":1603}
+{"_e":"metro:bundling:progress","_t":1790335817203,"id":"1","progress":0.8383884522871086,"total":1778,"current":1628}
+{"_e":"metro:bundling:progress","_t":1790335817304,"id":"1","progress":0.8383884522871086,"total":1806,"current":1647}
+{"_e":"metro:bundling:progress","_t":1790335817404,"id":"1","progress":0.8383884522871086,"total":1822,"current":1660}
+{"_e":"metro:bundling:progress","_t":1790335817505,"id":"1","progress":0.839188656916002,"total":1823,"current":1670}
+{"_e":"metro:bundling:progress","_t":1790335817606,"id":"1","progress":0.849446043565829,"total":1838,"current":1694}
+{"_e":"metro:bundling:progress","_t":1790335817707,"id":"1","progress":0.863888664150173,"total":1857,"current":1726}
+{"_e":"metro:bundling:progress","_t":1790335817807,"id":"1","progress":0.892538371032806,"total":1864,"current":1761}
+{"_e":"metro:bundling:progress","_t":1790335817909,"id":"1","progress":0.9121782149904201,"total":1870,"current":1786}
+{"_e":"metro:bundling:progress","_t":1790335818009,"id":"1","progress":0.9251442595686494,"total":1887,"current":1815}
+{"_e":"metro:bundling:progress","_t":1790335818111,"id":"1","progress":0.9401274123298567,"total":1908,"current":1850}
+{"_e":"metro:bundling:progress","_t":1790335818211,"id":"1","progress":0.9401274123298567,"total":1979,"current":1890}
+{"_e":"metro:bundling:progress","_t":1790335818313,"id":"1","progress":0.9401274123298567,"total":2045,"current":1904}
+{"_e":"metro:bundling:progress","_t":1790335818419,"id":"1","progress":0.9401274123298567,"total":2052,"current":1929}
+{"_e":"metro:bundling:progress","_t":1790335818519,"id":"1","progress":0.9401274123298567,"total":2074,"current":1985}
+{"_e":"metro:bundling:progress","_t":1790335818620,"id":"1","progress":0.9490410523198637,"total":2092,"current":2038}
+{"_e":"metro:bundling:progress","_t":1790335818722,"id":"1","progress":0.9490410523198637,"total":2135,"current":2076}
+{"_e":"metro:bundling:progress","_t":1790335818822,"id":"1","progress":0.9623800839297181,"total":2159,"current":2118}
+{"_e":"metro:bundling:progress","_t":1790335818923,"id":"1","progress":0.9972407463136359,"total":2173,"current":2170}
+{"_e":"metro:bundling:progress","_t":1790335819030,"id":"1","progress":0.999,"total":2173,"current":2173}
+{"_e":"metro:bundling:done","_t":1790335819307,"id":"1","total":2173,"ms":15834.3872}
+{"_e":"metro:client_log","_t":1790335840336,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790335840357,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790335841319,"id":"3","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790335841319,"id":"3","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790335841321,"id":"3","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790335841421,"id":"3","progress":0.419904,"total":375,"current":243}
+{"_e":"metro:bundling:progress","_t":1790335841521,"id":"3","progress":0.9173659133074716,"total":616,"current":590}
+{"_e":"metro:bundling:done","_t":1790335841561,"id":"3","total":616,"ms":241.7973}
+{"_e":"metro:client_log","_t":1790335844190,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:client_log","_t":1790339323739,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790342835698,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790345671545,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790346347815,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790349859587,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790351544877,"id":"4","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790351544877,"id":"4","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790351544992,"id":"4","total":1,"ms":115.6879}
+{"_e":"metro:client_log","_t":1790351563349,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790351563370,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790351564351,"id":"5","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790351564351,"id":"5","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790351564383,"id":"5","total":1,"ms":31.6592}
+{"_e":"metro:client_log","_t":1790351566809,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:bundling:started","_t":1790351640989,"id":"6","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790351640989,"id":"6","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790351641049,"id":"6","total":1,"ms":60.4569}
+{"_e":"metro:client_log","_t":1790351659442,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790351659446,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790351660355,"id":"7","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790351660355,"id":"7","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790351660375,"id":"7","total":1,"ms":19.4924}
+{"_e":"metro:client_log","_t":1790351662436,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:bundling:started","_t":1790352823575,"id":"8","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790352823576,"id":"8","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790352823645,"id":"8","total":1,"ms":69.045}
+{"_e":"metro:client_log","_t":1790352842335,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790352842342,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790352843544,"id":"9","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790352843544,"id":"9","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790352843562,"id":"9","total":1,"ms":18.0268}
+{"_e":"metro:client_log","_t":1790352845790,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:bundling:started","_t":1790352960127,"id":"a","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790352960127,"id":"a","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790352960200,"id":"a","total":1,"ms":72.8659}
+{"_e":"metro:client_log","_t":1790352977965,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790352977991,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790352978867,"id":"b","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790352978867,"id":"b","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790352978891,"id":"b","total":1,"ms":24.9194}
+{"_e":"metro:client_log","_t":1790352980847,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:bundling:started","_t":1790353045188,"id":"c","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790353045189,"id":"c","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790353045251,"id":"c","total":1,"ms":62.049}
+{"_e":"metro:client_log","_t":1790353062764,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790353063097,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790353063864,"id":"d","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790353063864,"id":"d","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790353063882,"id":"d","total":1,"ms":18.093}
+{"_e":"metro:client_log","_t":1790353066532,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:client_log","_t":1790353362761,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790354321743,"id":"e","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790354321743,"id":"e","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790354321803,"id":"e","total":1,"ms":59.4137}
+{"_e":"metro:client_log","_t":1790354341161,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790354341164,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790354342513,"id":"f","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790354342513,"id":"f","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790354342536,"id":"f","total":1,"ms":22.5374}
+{"_e":"metro:client_log","_t":1790354344853,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:bundling:started","_t":1790354821512,"id":"g","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790354821512,"id":"g","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790354821569,"id":"g","total":1,"ms":57.2095}
+{"_e":"metro:client_log","_t":1790354840481,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790354840481,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790354841434,"id":"h","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790354841434,"id":"h","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790354841455,"id":"h","total":1,"ms":20.2671}
+{"_e":"metro:client_log","_t":1790354843842,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:bundling:failed","_t":1790354882970,"id":null,"message":"SyntaxError: C:\\Users\\user\\Downloads\\manuver-main (4) (1)\\manuver-main\\components\\ProfileCardSummary.tsx: Unexpected token (192:2)\n\n  190 |       </View>\n  191 |     </View>\n> 192 |   );\n      |   ^\n  193 | }\n  194 |\n  195 | const styles = StyleSheet.create({","importStack":null,"filename":"components\\ProfileCardSummary.tsx","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:bundling:failed","_t":1790354883184,"id":null,"message":"SyntaxError: C:\\Users\\user\\Downloads\\manuver-main (4) (1)\\manuver-main\\components\\ProfileCardSummary.tsx: Unexpected token (192:2)\n\n  190 |       </View>\n  191 |     </View>\n> 192 |   );\n      |   ^\n  193 | }\n  194 |\n  195 | const styles = StyleSheet.create({","importStack":null,"filename":"components\\ProfileCardSummary.tsx","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:bundling:failed","_t":1790354884451,"id":null,"message":"SyntaxError: C:\\Users\\user\\Downloads\\manuver-main (4) (1)\\manuver-main\\components\\ProfileCardSummary.tsx: Unexpected token (192:2)\n\n  190 |       </View>\n  191 |     </View>\n> 192 |   );\n      |   ^\n  193 | }\n  194 |\n  195 | const styles = StyleSheet.create({","importStack":null,"filename":"components\\ProfileCardSummary.tsx","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:bundling:failed","_t":1790354887494,"id":null,"message":"SyntaxError: C:\\Users\\user\\Downloads\\manuver-main (4) (1)\\manuver-main\\components\\ProfileCardSummary.tsx: Unexpected token (192:2)\n\n  190 |       </View>\n  191 |     </View>\n> 192 |   );\n      |   ^\n  193 | }\n  194 |\n  195 | const styles = StyleSheet.create({","importStack":null,"filename":"components\\ProfileCardSummary.tsx","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:bundling:started","_t":1790354924610,"id":"k","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790354924610,"id":"k","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790354924612,"id":"k","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:failed","_t":1790354924621,"id":"k","message":"SyntaxError: C:\\Users\\user\\Downloads\\manuver-main (4) (1)\\manuver-main\\components\\ProfileCardSummary.tsx: Unexpected token (192:2)\n\n  190 |       </View>\n  191 |     </View>\n> 192 |   );\n      |   ^\n  193 | }\n  194 |\n  195 | const styles = StyleSheet.create({","importStack":null,"filename":"components\\ProfileCardSummary.tsx","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:bundling:started","_t":1790355055511,"id":"n","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790355055511,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355055514,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355055624,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355055893,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355055993,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355056093,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355056193,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355056294,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355056394,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790355056500,"id":"n","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:failed","_t":1790355056512,"id":"n","message":"SyntaxError: C:\\Users\\user\\Downloads\\manuver-main (4) (1)\\manuver-main\\components\\ProfileCardSummary.tsx: Unexpected token (192:2)\n\n  190 |       </View>\n  191 |     </View>\n> 192 |   );\n      |   ^\n  193 | }\n  194 |\n  195 | const styles = StyleSheet.create({","importStack":null,"filename":"components\\ProfileCardSummary.tsx","targetModuleName":null,"originModulePath":null}
+{"_e":"metro:bundling:started","_t":1790356209072,"id":"p","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790356209072,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209074,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209174,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209350,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209450,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209550,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209650,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209750,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209850,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356209965,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790356210066,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790356210136,"id":"p","total":1,"ms":1064.4706}
+{"_e":"metro:client_log","_t":1790356232678,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790356232683,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790356233336,"level":"log","data":["[PushNotif] Push notifications are disabled in Expo Go on Android. Use a Development Build (EAS Build) for testing remote push."]}
+{"_e":"root:init","_t":1790391555328,"format":"v0-jsonl","version":"57.0.24"}
+{"_e":"env:mode","_t":1790391555342,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1790391555357,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_t0D439864i-iPurq459Ebw_mFX83y_H","EXPO_PUBLIC_SUPABASE_URL":"https://uggjtloxneeqwvjbqofg.supabase.co"}}
+{"_e":"devserver:start","_t":1790391562689,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":true,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1790391568750,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":true,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1790391571238,"plugins":[]}
+{"_e":"metro:instantiate","_t":1790391585839,"atlas":false,"workers":10,"host":"::","port":8081}
+{"_e":"root:init","_t":1790391610420,"format":"v0-jsonl","version":"57.0.24"}
+{"_e":"env:mode","_t":1790391610421,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1790391610424,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_t0D439864i-iPurq459Ebw_mFX83y_H","EXPO_PUBLIC_SUPABASE_URL":"https://uggjtloxneeqwvjbqofg.supabase.co"}}
+{"_e":"devserver:start","_t":1790391613028,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":true,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1790391613349,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":true,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1790391613557,"plugins":[]}
+{"_e":"metro:instantiate","_t":1790391622479,"atlas":false,"workers":10,"host":"::","port":8082}
+{"_e":"metro:bundling:started","_t":1790391645557,"id":"4","platform":"ios","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:done","_t":1790391660309,"id":"4","total":2077,"ms":14751.9224}
+{"_e":"metro:client_log","_t":1790391692545,"level":"log","data":["DEBUG: Generated Redirect URL ->","exp://192.168.100.10:8081/--/login"]}
+{"_e":"metro:client_log","_t":1790391714618,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790391714748,"level":"log","data":["[PushNotif] Push notifications are disabled in Expo Go on Android. Use a Development Build (EAS Build) for testing remote push."]}
+{"_e":"root:init","_t":1790391782898,"format":"v0-jsonl","version":"57.0.24"}
+{"_e":"env:mode","_t":1790391782899,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1790391782902,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_t0D439864i-iPurq459Ebw_mFX83y_H","EXPO_PUBLIC_SUPABASE_URL":"https://uggjtloxneeqwvjbqofg.supabase.co"}}
+{"_e":"devserver:start","_t":1790391785430,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":true,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1790391785897,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":true,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1790391786179,"plugins":[]}

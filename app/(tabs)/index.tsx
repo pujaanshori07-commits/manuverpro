@@ -12,7 +12,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -44,9 +44,9 @@ import { Profile } from '../../types/database';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.35;
-// Hero photo height matches 1.25x width for consistent mobile portrait presentation
-const HERO_PHOTO_HEIGHT = Math.round((SCREEN_WIDTH - 20) * 1.25);
-const SECOND_PHOTO_HEIGHT = Math.round((SCREEN_WIDTH - 20) * 1.15);
+// Hero photo height matches 1.35x width for a more full-screen mobile portrait presentation
+const HERO_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.35);
+const SECOND_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.15);
 
 const DEMO_PROFILES: Profile[] = [
   {
@@ -243,8 +243,12 @@ export default function DiscoverScreen() {
         
         {/* Header with Centered "manuver" Wordmark */}
         <View style={styles.header}>
-          <View style={{ width: 38 }} />
-          <Text style={styles.headerBrandText}>manuver</Text>
+          <View style={{ width: 38, height: 38 }} />
+
+          <View pointerEvents="none" style={styles.headerCenter}>
+            <Text style={styles.headerBrandText}>manuver</Text>
+          </View>
+
           <TouchableOpacity
             style={styles.filterBtn}
             onPress={() => router.push('/settings/filters')}
@@ -304,7 +308,7 @@ export default function DiscoverScreen() {
                   <ScrollView
                     ref={scrollRef}
                     style={{ flex: 1 }}
-                    contentContainerStyle={{ paddingBottom: 150 }}
+                    contentContainerStyle={{ paddingBottom: 100 }}
                     showsVerticalScrollIndicator={false}
                     bounces={true}
                   >
@@ -327,29 +331,23 @@ export default function DiscoverScreen() {
               />
 
               <View style={styles.actionRow}>
-                {/* PASS */}
-                <View style={styles.actionCol}>
-                  <TouchableOpacity
-                    style={[styles.actionCircle, styles.btnPass]}
-                    onPress={() => triggerSwipe('left')}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="close" size={28} color="#FFFFFF" />
-                  </TouchableOpacity>
-                  <Text style={styles.actionLabel}>Pass</Text>
-                </View>
+                {/* SMALL ACTION (LEFT) */}
+                <TouchableOpacity
+                  style={[styles.actionCircle, styles.btnSmallLeft]}
+                  onPress={() => triggerSwipe('left')}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="directions-run" size={26} color="#0B0D13" style={{ transform: [{ scaleX: -1 }] }} />
+                </TouchableOpacity>
 
-                {/* INTERESTED */}
-                <View style={styles.actionCol}>
-                  <TouchableOpacity
-                    style={[styles.actionCircle, styles.btnInterested]}
-                    onPress={() => triggerSwipe('right')}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="walk" size={28} color="#FFFFFF" />
-                  </TouchableOpacity>
-                  <Text style={styles.actionLabel}>Interested</Text>
-                </View>
+                {/* BIG ACTION (RIGHT) */}
+                <TouchableOpacity
+                  style={[styles.actionCircle, styles.btnBigRight]}
+                  onPress={() => triggerSwipe('right')}
+                  activeOpacity={0.8}
+                >
+                  <MaterialIcons name="directions-run" size={38} color="#0B0D13" />
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -404,9 +402,27 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     height: 48,
     zIndex: 20,
+    position: 'relative',
   },
-  headerSpacer: {
+  headerCenter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: -1,
+  },
+  menuBtn: {
     width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#171A21',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   headerBrandText: {
     fontFamily: 'Lato_900Black',
@@ -414,6 +430,7 @@ const styles = StyleSheet.create({
     color: '#FF5A36', // Signature Manuver Orange
     letterSpacing: -0.5,
     textTransform: 'lowercase',
+    marginLeft: 6, // Optical centering
   },
   filterBtn: {
     width: 38,
@@ -434,18 +451,19 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     alignItems: 'center',
-    paddingBottom: 8,
+    paddingBottom: 0,
+    paddingHorizontal: 12,
   },
   card: {
-    width: SCREEN_WIDTH - 20,
-    borderRadius: 24,
+    width: '100%',
     backgroundColor: '#0F1117',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
     overflow: 'hidden',
     position: 'absolute',
     top: 0,
-    bottom: 8,
+    bottom: 0,
+    alignSelf: 'center',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   nextCard: {
     transform: [{ scale: 0.96 }],
@@ -804,17 +822,12 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 48,
-  },
-  actionCol: {
-    alignItems: 'center',
-    gap: 6,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16, // Aligns perfectly with the text margin
+    paddingBottom: 16,
   },
   actionCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    borderRadius: BorderRadius.pill,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000000',
@@ -823,19 +836,15 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  btnPass: {
-    backgroundColor: '#1E222B',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-  },
-  btnInterested: {
+  btnSmallLeft: {
+    width: 48,
+    height: 48,
     backgroundColor: Colors.primary,
   },
-  actionLabel: {
-    fontFamily: Typography.fontMedium,
-    fontSize: 12,
-    color: '#8E95A5',
-    fontWeight: '600',
+  btnBigRight: {
+    width: 64,
+    height: 64,
+    backgroundColor: Colors.primary,
   },
 
   // Empty Deck View
@@ -879,7 +888,7 @@ const styles = StyleSheet.create({
   emptyFilterBtn: {
     paddingHorizontal: 28,
     paddingVertical: 12,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     borderWidth: 1.5,
     borderColor: Colors.primary,
   },

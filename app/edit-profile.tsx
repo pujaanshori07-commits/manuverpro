@@ -214,11 +214,20 @@ export default function EditProfileScreen() {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
+  const handleMakePrimary = (index: number) => {
+    if (index === 0) return; // Already primary
+    setPhotos((prev) => {
+      const newPhotos = [...prev];
+      const selected = newPhotos[index];
+      // Remove from current position and move to the front
+      newPhotos.splice(index, 1);
+      newPhotos.unshift(selected);
+      return newPhotos;
+    });
+  };
+
   const handleSave = async () => {
-    if (!nama.trim()) {
-      Alert.alert('Peringatan', 'Nama tidak boleh kosong');
-      return;
-    }
+
 
     try {
       setSaving(true);
@@ -301,7 +310,12 @@ export default function EditProfileScreen() {
 
               if (photo) {
                 return (
-                  <View key={idx} style={[styles.photoCard, isPrimary && styles.photoCardPrimary]}>
+                  <TouchableOpacity 
+                    key={idx} 
+                    style={[styles.photoCard, isPrimary && styles.photoCardPrimary]}
+                    activeOpacity={0.9}
+                    onPress={() => handleMakePrimary(idx)}
+                  >
                     <Image source={{ uri: photo }} style={styles.photoImg} />
                     {isPrimary && (
                       <View style={styles.badgePrimary}>
@@ -315,7 +329,7 @@ export default function EditProfileScreen() {
                     >
                       <Ionicons name="close" size={14} color="#FFFFFF" />
                     </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
                 );
               }
 

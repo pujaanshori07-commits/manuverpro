@@ -4,9 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing } from '../constants/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const HERO_PHOTO_HEIGHT = Math.round((SCREEN_WIDTH - 20) * 1.25);
-const SECOND_PHOTO_HEIGHT = Math.round((SCREEN_WIDTH - 20) * 1.15);
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+// Make the first photo fill the initial viewport like Bumble
+const HERO_PHOTO_HEIGHT = Math.round(SCREEN_HEIGHT * 0.74);
+const SECOND_PHOTO_HEIGHT = Math.round(SCREEN_WIDTH * 1.15);
 
 import { Profile } from '../types/database';
 
@@ -36,12 +37,7 @@ export default function ProfileCardSummary({ profile, onExpandPress }: Props) {
   };
 
   return (
-    <ScrollView
-      style={styles.profileScrollView}
-      contentContainerStyle={styles.scrollContentContainer}
-      showsVerticalScrollIndicator={false}
-      bounces={true}
-    >
+    <View style={styles.profileScrollView}>
       {/* BLOCK 1 (Hero Photo) */}
       <View style={styles.heroPhotoWrapper}>
         <Image
@@ -193,7 +189,7 @@ export default function ProfileCardSummary({ profile, onExpandPress }: Props) {
           </View>
         </View>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -202,7 +198,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContentContainer: {
-    paddingBottom: 210,
+    paddingBottom: 100, // Reduced from 210 to remove massive wasted space
   },
   heroPhotoWrapper: {
     width: '100%',
@@ -248,8 +244,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: Spacing.base,
-    paddingBottom: 16,
-    paddingTop: 40,
+    paddingBottom: 80,
+    paddingTop: 80,
     justifyContent: 'flex-end',
   },
   photoVerifiedPill: {
@@ -282,6 +278,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     letterSpacing: -0.3,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
   verifiedCheck: {
     width: 20,

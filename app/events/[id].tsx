@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
   statusBox: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.surface, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: Colors.surfaceBorder },
   statusText: { flex: 1, fontSize: 14, color: Colors.white, lineHeight: 20 },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: Colors.background, paddingHorizontal: Spacing.base, paddingTop: 16, borderTopWidth: 1, borderTopColor: Colors.surfaceBorder },
-  registerBtn: { backgroundColor: Colors.primary, paddingVertical: 16, borderRadius: BorderRadius.round, alignItems: 'center' },
+  registerBtn: { backgroundColor: Colors.primary, paddingVertical: 16, borderRadius: BorderRadius.pill, alignItems: 'center' },
   registeredBtn: { backgroundColor: '#00C48C' },
   registerBtnText: { color: Colors.white, fontSize: 16, fontWeight: '700' },
 });

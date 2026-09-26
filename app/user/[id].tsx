@@ -31,6 +31,9 @@ const DEMO_USER_DETAILS = {
   photos: [
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=85',
     'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1000&q=85',
+    'https://images.unsplash.com/photo-1517365830460-955ce3ccd263?auto=format&fit=crop&w=1000&q=85',
+    'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=1000&q=85',
+    'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&w=1000&q=85',
   ],
   favorite_venue: 'GBK Senayan Badminton Hall',
   preferred_time: 'Pagi (06:00 - 09:00)',
@@ -212,16 +215,20 @@ export default function UserDetailScreen() {
           </View>
         </View>
 
-        {/* Secondary Story Photo */}
+        {/* Activity Gallery (4 Photos) */}
         {user.photos.length > 1 && (
           <View style={styles.bodySection}>
             <Text style={styles.sectionHeading}>GALERI AKTIVITAS</Text>
-            <View style={styles.storyPhotoCard}>
-              <Image
-                source={{ uri: user.photos[1] }}
-                style={styles.secondaryStoryPhoto}
-                resizeMode="cover"
-              />
+            <View style={styles.galleryGrid}>
+              {user.photos.slice(1, 5).map((photoUri, idx) => (
+                <View key={idx} style={styles.galleryPhotoCard}>
+                  <Image
+                    source={{ uri: photoUri }}
+                    style={styles.galleryImage}
+                    resizeMode="cover"
+                  />
+                </View>
+              ))}
             </View>
           </View>
         )}
@@ -263,7 +270,7 @@ const styles = StyleSheet.create({
   circleIconBtn: {
     width: 42,
     height: 42,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     backgroundColor: 'rgba(11, 13, 19, 0.75)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -298,7 +305,7 @@ const styles = StyleSheet.create({
   verifiedCheck: {
     width: 20,
     height: 20,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     backgroundColor: Colors.success,
     alignItems: 'center',
     justifyContent: 'center',
@@ -335,11 +342,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sportCard: {
-    backgroundColor: Colors.surface,
-    padding: 16,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    paddingVertical: 12,
   },
   sportCardTop: {
     flexDirection: 'row',
@@ -350,7 +353,7 @@ const styles = StyleSheet.create({
   sportIconWrap: {
     width: 32,
     height: 32,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     backgroundColor: Colors.pillBgActive,
     alignItems: 'center',
     justifyContent: 'center',
@@ -368,7 +371,7 @@ const styles = StyleSheet.create({
   levelBadge: {
     paddingVertical: 4,
     paddingHorizontal: 10,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     backgroundColor: Colors.pillBgActive,
   },
   levelBadgeText: {
@@ -385,17 +388,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: Colors.surface,
-    padding: 16,
-    borderRadius: BorderRadius.lg,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+    paddingVertical: 10,
   },
   routineIconWrap: {
     width: 36,
     height: 36,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     backgroundColor: 'rgba(255, 87, 47, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -411,15 +409,21 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     marginTop: 2,
   },
-  storyPhotoCard: {
-    borderRadius: BorderRadius.card,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.surfaceBorder,
+  galleryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
-  secondaryStoryPhoto: {
+  galleryPhotoCard: {
+    width: (SCREEN_WIDTH - Spacing.base * 2 - 8) / 2, // 2 columns layout
+    height: 180,
+    borderRadius: BorderRadius.md, // Kotak standard dengan sedikit sudut bulat
+    backgroundColor: Colors.surface,
+    overflow: 'hidden',
+  },
+  galleryImage: {
     width: '100%',
-    height: 240,
+    height: '100%',
   },
   bottomBar: {
     position: 'absolute',
@@ -437,7 +441,7 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: Colors.primary,
     height: 52,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.42,

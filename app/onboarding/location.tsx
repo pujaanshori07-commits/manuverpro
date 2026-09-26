@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(23, 26, 33, 0.88)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.18)',
     shadowColor: Colors.black,
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   enableButton: {
-    borderRadius: BorderRadius.round,
+    borderRadius: BorderRadius.pill,
     overflow: 'hidden',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
