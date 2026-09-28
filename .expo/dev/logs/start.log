@@ -5099,3 +5099,183 @@
 {"_e":"devserver:start","_t":1790391785430,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":true,"apiRoutes":false,"exporting":false}
 {"_e":"metro:config","_t":1790391785897,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":true,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
 {"_e":"expo:dev-tools-plugin:load","_t":1790391786179,"plugins":[]}
+{"_e":"metro:instantiate","_t":1790391795843,"atlas":false,"workers":10,"host":"::","port":8082}
+{"_e":"metro:server_log","_t":1790391814408,"level":"error","data":["[timeout] connection terminated with Device for app='%s' on device='%s' after not responding for %s seconds.","host.exp.Exponent","iPhone","60"]}
+{"_e":"metro:bundling:started","_t":1790391873175,"id":"1","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790391873175,"id":"1","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790391873179,"id":"1","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790391873278,"id":"1","progress":0.04225308641975308,"total":180,"current":37}
+{"_e":"metro:bundling:progress","_t":1790391873378,"id":"1","progress":0.19648986013742592,"total":379,"current":168}
+{"_e":"metro:bundling:progress","_t":1790391873478,"id":"1","progress":0.3142517114215695,"total":619,"current":347}
+{"_e":"metro:bundling:progress","_t":1790391873578,"id":"1","progress":0.3730319971303303,"total":799,"current":488}
+{"_e":"metro:bundling:progress","_t":1790391873678,"id":"1","progress":0.603211111111111,"total":900,"current":699}
+{"_e":"metro:bundling:progress","_t":1790391873779,"id":"1","progress":0.795664,"total":1000,"current":892}
+{"_e":"metro:bundling:progress","_t":1790391873879,"id":"1","progress":0.9375157470395565,"total":1134,"current":1098}
+{"_e":"metro:bundling:progress","_t":1790391873979,"id":"1","progress":0.9755734413085386,"total":1302,"current":1286}
+{"_e":"metro:bundling:progress","_t":1790391874079,"id":"1","progress":0.9755734413085386,"total":1388,"current":1351}
+{"_e":"metro:bundling:progress","_t":1790391874179,"id":"1","progress":0.9755734413085386,"total":1615,"current":1445}
+{"_e":"metro:bundling:progress","_t":1790391874279,"id":"1","progress":0.9755734413085386,"total":1885,"current":1703}
+{"_e":"metro:bundling:progress","_t":1790391874379,"id":"1","progress":0.9755734413085386,"total":2020,"current":1971}
+{"_e":"metro:bundling:progress","_t":1790391874480,"id":"1","progress":0.999,"total":2173,"current":2173}
+{"_e":"metro:bundling:done","_t":1790391874556,"id":"1","total":2173,"ms":1380.7225}
+{"_e":"metro:client_log","_t":1790391892747,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790391892749,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790391893405,"id":"3","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790391893405,"id":"3","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790391893406,"id":"3","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790391893506,"id":"3","progress":0.41847995873322624,"total":371,"current":240}
+{"_e":"metro:bundling:progress","_t":1790391893606,"id":"3","progress":0.8800761749953188,"total":501,"current":470}
+{"_e":"metro:bundling:done","_t":1790391893716,"id":"3","total":501,"ms":311.0891}
+{"_e":"metro:client_log","_t":1790391895662,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:bundling:started","_t":1790392849727,"id":"5","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790392849727,"id":"5","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790392849790,"id":"5","total":1,"ms":62.7476}
+{"_e":"metro:client_log","_t":1790392867799,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790392867799,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790392867864,"id":"6","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790392867865,"id":"6","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790392867887,"id":"6","total":1,"ms":22.9041}
+{"_e":"metro:client_log","_t":1790392869829,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:bundling:started","_t":1790393188598,"id":"d","platform":"ios","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790393188599,"id":"d","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790393188600,"id":"d","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790393188700,"id":"d","progress":0.07388180712580514,"total":298,"current":81}
+{"_e":"metro:bundling:progress","_t":1790393188800,"id":"d","progress":0.24746837073874617,"total":591,"current":294}
+{"_e":"metro:bundling:progress","_t":1790393188900,"id":"d","progress":0.3507829553298798,"total":802,"current":475}
+{"_e":"metro:bundling:progress","_t":1790393189000,"id":"d","progress":0.5644609537161693,"total":957,"current":719}
+{"_e":"metro:bundling:progress","_t":1790393189100,"id":"d","progress":0.5957910156249999,"total":1280,"current":988}
+{"_e":"metro:bundling:progress","_t":1790393189200,"id":"d","progress":0.6633124256712579,"total":1482,"current":1207}
+{"_e":"metro:bundling:progress","_t":1790393189300,"id":"d","progress":0.7648734663029487,"total":1746,"current":1527}
+{"_e":"metro:bundling:progress","_t":1790393189400,"id":"d","progress":0.9226763909149984,"total":1927,"current":1851}
+{"_e":"metro:bundling:done","_t":1790393189542,"id":"d","total":1927,"ms":943.4729}
+{"_e":"metro:client_log","_t":1790393204381,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790393204525,"level":"log","data":["[PushNotif] Push notifications are disabled in Expo Go on Android. Use a Development Build (EAS Build) for testing remote push."]}
+{"_e":"metro:client_log","_t":1790393204978,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790395389269,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790398871335,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790402353095,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790405835691,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790409318279,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790412829343,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790416311323,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790419792564,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790423260519,"id":"j","platform":"ios","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790423260519,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790423260521,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790423260623,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790423260790,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790423260901,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790423261001,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790423261101,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790423261201,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790423261301,"id":"j","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790423261450,"id":"j","total":1,"ms":930.6523}
+{"_e":"metro:client_log","_t":1790423274931,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790423276566,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790423276714,"level":"log","data":["[PushNotif] Push notifications are disabled in Expo Go on Android. Use a Development Build (EAS Build) for testing remote push."]}
+{"_e":"metro:client_log","_t":1790423276785,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790426756711,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790428461903,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790428517545,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790428554342,"level":"log","data":["DEBUG: Generated Redirect URL ->","manuverapp://login"]}
+{"_e":"metro:bundling:started","_t":1790430555905,"id":"p","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790430555905,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430555910,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430556014,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430556292,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430556392,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430556492,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430556592,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430556692,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430556792,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430556894,"id":"p","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790430557032,"id":"p","total":1,"ms":1126.6701}
+{"_e":"metro:client_log","_t":1790430575116,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790430575120,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790430575985,"id":"q","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790430575985,"id":"q","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430575985,"id":"q","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430576087,"id":"q","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790430576091,"id":"q","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790430576202,"id":"q","total":1,"ms":217.6704}
+{"_e":"metro:client_log","_t":1790430578171,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:client_log","_t":1790432076034,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790432421576,"id":"r","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790432421576,"id":"r","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790432421635,"id":"r","total":1,"ms":58.5167}
+{"_e":"metro:client_log","_t":1790432439759,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790432439773,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790432440592,"id":"s","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790432440592,"id":"s","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790432440614,"id":"s","total":1,"ms":22.1103}
+{"_e":"metro:client_log","_t":1790432442516,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:client_log","_t":1790432443308,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790432451612,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790433872640,"id":"t","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790433872640,"id":"t","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790433872700,"id":"t","total":1,"ms":59.7484}
+{"_e":"metro:client_log","_t":1790433890565,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790433890567,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790433891391,"id":"u","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790433891391,"id":"u","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790433891412,"id":"u","total":1,"ms":20.6623}
+{"_e":"metro:client_log","_t":1790433893307,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:client_log","_t":1790433894690,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790433899300,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790433900891,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790433921327,"level":"error","data":["[Error: Uncaught (in promise, id: 0) ReferenceError: Property 'nama' doesn't exist]","\n\n\u001b[1mCode: edit-profile.tsx\u001b[22m\n\u001b[0m \u001b[90m 216 |\u001b[39m\n \u001b[90m 217 |\u001b[39m   \u001b[36mconst\u001b[39m handleSave \u001b[33m=\u001b[39m \u001b[36masync\u001b[39m () \u001b[33m=>\u001b[39m {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 218 |\u001b[39m     \u001b[36mif\u001b[39m (\u001b[33m!\u001b[39mnama\u001b[33m.\u001b[39mtrim()) {\n \u001b[90m     |\u001b[39m          \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 219 |\u001b[39m       \u001b[33mAlert\u001b[39m\u001b[33m.\u001b[39malert(\u001b[32m'Peringatan'\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'Nama tidak boleh kosong'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 220 |\u001b[39m       \u001b[36mreturn\u001b[39m\u001b[33m;\u001b[39m\n \u001b[90m 221 |\u001b[39m     }\u001b[0m\n\u001b[1mCall Stack\u001b[22m\n\u001b[90m  handleSave (app\\edit-profile.tsx:218:10)\u001b[39m\n\u001b[90m  handleSave (app\\edit-profile.tsx:217:22)\u001b[39m"]}
+{"_e":"metro:client_log","_t":1790433969115,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790433991978,"id":"z","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790433991978,"id":"z","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790433992035,"id":"z","total":1,"ms":56.881}
+{"_e":"metro:client_log","_t":1790434008486,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790434008488,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790434009241,"id":"10","platform":"android","environment":null,"entry":"node_modules\\expo-device\\build\\Device.js"}
+{"_e":"metro:bundling:progress","_t":1790434009241,"id":"10","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790434009258,"id":"10","total":1,"ms":16.9635}
+{"_e":"metro:client_log","_t":1790434011404,"level":"log","data":["[PushNotif] Requires physical device for push tokens."]}
+{"_e":"metro:client_log","_t":1790434018469,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790434148489,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790435570456,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790439052718,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790442534691,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790446017007,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790449498612,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790452981664,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790456462921,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:bundling:started","_t":1790569310489,"id":"e","platform":"web","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:started","_t":1790569310490,"id":"f","platform":"web","environment":"node","entry":"node_modules\\expo\\node_modules\\@expo\\cli\\node_modules\\@expo\\router-server\\node\\render.js"}
+{"_e":"metro:bundling:started","_t":1790569310503,"id":"g","platform":"web","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:started","_t":1790569310503,"id":"h","platform":"web","environment":"node","entry":"node_modules\\expo\\node_modules\\@expo\\cli\\node_modules\\@expo\\router-server\\node\\render.js"}
+{"_e":"metro:bundling:done","_t":1790569326634,"id":"f","total":1745,"ms":16143.9472}
+{"_e":"metro:bundling:done","_t":1790569328712,"id":"h","total":1,"ms":18208.5148}
+{"_e":"metro:bundling:done","_t":1790569329054,"id":"e","total":1708,"ms":18564.5}
+{"_e":"metro:bundling:done","_t":1790569329110,"id":"g","total":1,"ms":18606.5543}
+{"_e":"metro:bundling:started","_t":1790570385659,"id":"11","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790570385659,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570385665,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570385771,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570386051,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570386151,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570386251,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570386351,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570386478,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570386578,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:progress","_t":1790570386678,"id":"11","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790570386823,"id":"11","total":1,"ms":1163.9816}
+{"_e":"metro:bundling:started","_t":1790570431225,"id":"18","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:progress","_t":1790570431225,"id":"18","progress":0,"total":1,"current":0}
+{"_e":"metro:bundling:done","_t":1790570431286,"id":"18","total":1,"ms":61.0741}
+{"_e":"metro:client_log","_t":1790570462520,"level":"log","data":["DEBUG: Generated Redirect URL ->","exp://abzfloi-pujaanshori-8082.exp.direct/--/login"]}
+{"_e":"metro:bundling:started","_t":1790570479308,"id":"l","platform":"android","environment":null,"entry":"node_modules\\expo-router\\entry.js"}
+{"_e":"metro:bundling:done","_t":1790570480592,"id":"l","total":2173,"ms":1283.893}
+{"_e":"metro:client_log","_t":1790570504138,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:client_log","_t":1790570505025,"level":"log","data":["[PushNotif] Push notifications are disabled in Expo Go on Android. Use a Development Build (EAS Build) for testing remote push."]}
+{"_e":"metro:client_log","_t":1790573984188,"level":"log","data":["Push notifications temporarily disabled for Expo Go compatibility on Android."]}
+{"_e":"metro:server_log","_t":1790593570537,"level":"error","data":["[timeout] connection terminated with Device for app='%s' on device='%s' after not responding for %s seconds.","host.exp.exponent","sdk_gphone16k_x86_64 - 17 - API 37","60"]}
+{"_e":"root:init","_t":1790602511844,"format":"v0-jsonl","version":"57.0.24"}
+{"_e":"env:mode","_t":1790602511861,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1790602511879,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_t0D439864i-iPurq459Ebw_mFX83y_H","EXPO_PUBLIC_SUPABASE_URL":"https://uggjtloxneeqwvjbqofg.supabase.co"}}
+{"_e":"devserver:start","_t":1790602523929,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":true,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1790602531186,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":true,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1790602534202,"plugins":[]}
