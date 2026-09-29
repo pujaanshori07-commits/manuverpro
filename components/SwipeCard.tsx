@@ -24,20 +24,20 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ onSwipedLeft, onSw
   const translateY = useSharedValue(0);
 
   const swipeLeft = () => {
-    translateX.value = withTiming(-SCREEN_WIDTH * 1.5, { duration: 300 }, () => {
-      runOnJS(onSwipedLeft)();
+    translateX.value = withSpring(-SCREEN_WIDTH * 1.5, { velocity: -800, damping: 20, stiffness: 100 }, (isFinished) => {
+      if (isFinished) runOnJS(onSwipedLeft)();
     });
   };
 
   const swipeRight = () => {
-    translateX.value = withTiming(SCREEN_WIDTH * 1.5, { duration: 300 }, () => {
-      runOnJS(onSwipedRight)();
+    translateX.value = withSpring(SCREEN_WIDTH * 1.5, { velocity: 800, damping: 20, stiffness: 100 }, (isFinished) => {
+      if (isFinished) runOnJS(onSwipedRight)();
     });
   };
 
   const swipeUp = () => {
-    translateY.value = withTiming(-SCREEN_HEIGHT * 1.5, { duration: 300 }, () => {
-      if (onSwipedUp) runOnJS(onSwipedUp)();
+    translateY.value = withSpring(-SCREEN_HEIGHT * 1.5, { velocity: -800, damping: 20, stiffness: 100 }, (isFinished) => {
+      if (isFinished && onSwipedUp) runOnJS(onSwipedUp)();
     });
   };
 
@@ -56,18 +56,27 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(({ onSwipedLeft, onSw
       translateY.value = event.translationY * 0.15;
     })
     .onEnd((event) => {
-      if (event.translationX > SWIPE_THRESHOLD) {
-        runOnJS(swipeRight)();
-      } else if (event.translationX < -SWIPE_THRESHOLD) {
-        runOnJS(swipeLeft)();
+      // Allow throwing with high velocity even if threshold not met
+      const isThrowLeft = event.translationX < -SWIPE_THRESHOLD || event.velocityX < -800;
+      const isThrowRight = event.translationX > SWIPE_THRESHOLD || event.velocityX > 800;
+
+      if (isThrowRight) {
+        translateX.value = withSpring(SCREEN_WIDTH * 1.5, { velocity: event.velocityX, damping: 20, stiffness: 100 }, (isFinished) => {
+          if (isFinished) runOnJS(onSwipedRight)();
+        });
+      } else if (isThrowLeft) {
+        translateX.value = withSpring(-SCREEN_WIDTH * 1.5, { velocity: event.velocityX, damping: 20, stiffness: 100 }, (isFinished) => {
+          if (isFinished) runOnJS(onSwipedLeft)();
+        });
       } else {
-        translateX.value = withSpring(0, { damping: 15 });
-        translateY.value = withSpring(0, { damping: 15 });
+        translateX.value = withSpring(0, { damping: 15, stiffness: 150 });
+        translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
       }
     });
 
   const animatedStyle = useAnimatedStyle(() => {
-    const rotate = interpolate(translateX.value, [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2], [-8, 0, 8], Extrapolation.CLAMP);
+    // Increased rotation angle for a lighter, "paper-like" feel during drag
+    const rotate = interpolate(translateX.value, [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2], [-12, 0, 12], Extrapolation.CLAMP);
     return {
       transform: [
         { translateX: translateX.value },

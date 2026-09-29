@@ -84,7 +84,6 @@ export function useProfiles() {
 
     const { data, error } = await supabase
       .rpc('get_nearby_profiles', {
-        user_id_param: userId,
         max_distance_km: maxDist,
         max_age_val: maxAge,
         min_age_val: minAge,
@@ -92,8 +91,19 @@ export function useProfiles() {
         limit_val: 25
       });
 
-    if (error || !data || data.length === 0) {
-      return DUMMY_PROFILES;
+    if (error) {
+      if (__DEV__) {
+        console.warn('RPC Error (using dummy profiles):', error);
+        return DUMMY_PROFILES;
+      }
+      throw error;
+    }
+    
+    if (!data || data.length === 0) {
+      if (__DEV__) {
+        return DUMMY_PROFILES;
+      }
+      return [];
     }
     
     return data.map((item: any) => {
@@ -110,14 +120,10 @@ export function useProfiles() {
         umur: item.umur || 25, // legacy support
         foto_url: rawPhotos[0],
         photos: rawPhotos,
-        alamat: item.alamat || 'Unknown Location',
-        jarak: item.jarak || '1 km',
-        distance: parseFloat(item.jarak) || 1, // mapping legacy jarak to distance
-        hobi: Array.isArray(item.hobi)
-          ? item.hobi.join(', ')
-          : item.hobi
-          ? item.hobi
-          : 'Olahraga',
+        alamat: item.alamat || item.domisili || 'Unknown Location',
+        jarak: item.distance_km != null ? `${item.distance_km} km away` : '1 km away',
+        distance: item.distance_km || 1,
+        hobi: item.hobi || 'Olahraga',
         bio: item.bio || '',
         prompt_question: item.prompt_question,
         prompt_answer: item.prompt_answer,
@@ -152,10 +158,11 @@ export function useProfiles() {
       // Optimistically remove from cache
       await queryClient.cancelQueries({ queryKey: ['profiles'] });
       const previousProfiles = queryClient.getQueryData<Profile[]>(['profiles']);
+      const swipedProfile = previousProfiles?.find(p => p.id === swipedId);
       if (previousProfiles) {
         queryClient.setQueryData<Profile[]>(['profiles'], old => old?.filter(p => p.id !== swipedId));
       }
-      return { previousProfiles };
+      return { previousProfiles, swipedProfile };
     },
     onError: (err, variables, context) => {
       console.error('Error recording swipe:', err);
@@ -163,16 +170,14 @@ export function useProfiles() {
         queryClient.setQueryData(['profiles'], context.previousProfiles);
       }
     },
-    onSuccess: async (data, variables) => {
+    onSuccess: async (data, variables, context) => {
       if (data?.is_match) {
         const { data: userData } = await supabase.auth.getUser();
         if (userData?.user?.id) {
           const { data: myProfile } = await supabase.from('profiles').select('foto_url').eq('id', userData.user.id).single();
           setMyAvatarUrl(myProfile?.foto_url || null);
           
-          // We need the swiped profile data from cache to show celebration
-          const previousProfiles = queryClient.getQueryData<Profile[]>(['profiles']);
-          const swipedProfile = previousProfiles?.find(p => p.id === variables.swipedId);
+          const swipedProfile = context?.swipedProfile;
           
           setMatchData({
             matchId: data.match_id,

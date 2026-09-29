@@ -5279,3 +5279,10 @@
 {"_e":"devserver:start","_t":1790602523929,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":true,"apiRoutes":false,"exporting":false}
 {"_e":"metro:config","_t":1790602531186,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":true,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
 {"_e":"expo:dev-tools-plugin:load","_t":1790602534202,"plugins":[]}
+{"_e":"metro:instantiate","_t":1790602550635,"atlas":false,"workers":10,"host":"::","port":8082}
+{"_e":"root:init","_t":1790609201960,"format":"v0-jsonl","version":"57.0.24"}
+{"_e":"env:mode","_t":1790609201961,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1790609201964,"mode":"development","files":["../..\\..\\.env"],"env":{"EXPO_PUBLIC_SUPABASE_ANON_KEY":"sb_publishable_t0D439864i-iPurq459Ebw_mFX83y_H","EXPO_PUBLIC_SUPABASE_URL":"https://uggjtloxneeqwvjbqofg.supabase.co"}}
+{"_e":"devserver:start","_t":1790609203930,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../..\\..\\app","serverComponents":false,"serverActions":false,"serverRendering":true,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1790609204326,"serverRoot":"../..\\..","projectRoot":"../..\\..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":true,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"expo:dev-tools-plugin:load","_t":1790609204585,"plugins":[]}

@@ -30,14 +30,18 @@ export function useChat(matchId: string | string[] | undefined) {
       return data;
     }
     
-    return [
-      {
-        id: 'm-1',
-        sender_id: 'partner',
-        content: `Halo! Siap buat sparing bareng?`,
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-      },
-    ];
+    if (__DEV__) {
+      return [
+        {
+          id: 'm-1',
+          sender_id: 'partner',
+          content: `Halo! Siap buat sparing bareng?`,
+          created_at: new Date(Date.now() - 3600000).toISOString(),
+        },
+      ];
+    }
+    
+    return [];
   };
 
   const {

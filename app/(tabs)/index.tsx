@@ -115,7 +115,6 @@ const DEMO_PROFILES: Profile[] = [
 export default function DiscoverScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [currentIndex, setCurrentIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
   const swipeCardRef = useRef<SwipeCardRef>(null);
 
@@ -188,8 +187,8 @@ export default function DiscoverScreen() {
     }, [fetchProfiles])
   );
 
-  const currentProfile = profiles[currentIndex];
-  const nextProfile = profiles[currentIndex + 1];
+  const currentProfile = profiles[0];
+  const nextProfile = profiles[1];
 
   const resetScrollPosition = () => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -199,7 +198,6 @@ export default function DiscoverScreen() {
     if (currentProfile) {
       await handleSwipeComplete(currentProfile, direction);
     }
-    setCurrentIndex((prev) => prev + 1);
     resetScrollPosition();
   };
 
@@ -274,7 +272,6 @@ export default function DiscoverScreen() {
             <TouchableOpacity
               style={styles.emptyFilterBtn}
               onPress={() => {
-                setCurrentIndex(0);
                 fetchProfiles();
               }}
               activeOpacity={0.8}
@@ -299,6 +296,7 @@ export default function DiscoverScreen() {
 
               {/* Active Card with Pan Gesture & Bumble Vertical Scroll */}
               <SwipeCard
+                key={currentProfile.id}
                 ref={swipeCardRef}
                 onSwipedLeft={() => onSwipeComplete('left')}
                 onSwipedRight={() => onSwipeComplete('right')}
