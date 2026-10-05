@@ -134,7 +134,11 @@ export default function MatchesScreen() {
 
       {/* Screen Header */}
       <View style={styles.header}>
+        <View style={{ width: 40 }} />
         <Text style={styles.headerTitle}>Matches</Text>
+        <TouchableOpacity style={styles.headerSettingsButton}>
+          <Ionicons name="settings-sharp" size={22} color={Colors.white} />
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -169,11 +173,9 @@ export default function MatchesScreen() {
           {newMatches.length > 0 && (
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Match Baru</Text>
-                <View style={styles.expiryHint}>
-                  <Ionicons name="time-outline" size={12} color={Colors.primary} />
-                  <Text style={styles.expiryHintText}>Ajak main dlm 48 jam</Text>
-                </View>
+                <Text style={styles.sectionTitle}>
+                  New Matches <Text style={{ color: Colors.primary }}>({newMatches.length})</Text>
+                </Text>
               </View>
 
               <ScrollView
@@ -200,7 +202,7 @@ export default function MatchesScreen() {
 
                     {/* Expiry Pill Badge */}
                     <View style={styles.expiryBadge}>
-                      <Text style={styles.expiryBadgeText}>47h</Text>
+                      <Text style={styles.expiryBadgeText}>47H</Text>
                     </View>
 
                     <Text style={styles.newMatchName} numberOfLines={1}>
@@ -218,7 +220,7 @@ export default function MatchesScreen() {
           {/* Section: Active Conversations */}
           <View style={styles.sectionContainer}>
             <Text style={[styles.sectionTitle, { paddingHorizontal: Spacing.base, marginBottom: Spacing.sm }]}>
-              Pesan
+              Messages
             </Text>
 
             <FlatList
@@ -231,7 +233,10 @@ export default function MatchesScreen() {
                   activeOpacity={0.7}
                   onPress={() => openChat(item.id, item.name, item.avatar)}
                 >
-                  <Image source={{ uri: item.avatar }} style={styles.chatAvatar} />
+                  <View>
+                    <Image source={{ uri: item.avatar }} style={styles.chatAvatar} />
+                    <View style={styles.onlineIndicator} />
+                  </View>
                   <View style={styles.chatContent}>
                     <View style={styles.chatTopLine}>
                       <Text style={styles.chatPartnerName}>{item.name}</Text>
@@ -269,15 +274,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: Spacing.base,
     paddingTop: Spacing.sm,
     paddingBottom: Spacing.xs,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     color: Colors.white,
     letterSpacing: -0.4,
+  },
+  headerSettingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#007AFF', // Blue matching image
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sectionContainer: {
     marginTop: Spacing.md,
@@ -369,6 +385,17 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     marginRight: 14,
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 2,
+    right: 16,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#4CAF50',
+    borderWidth: 2,
+    borderColor: Colors.background,
   },
   chatContent: {
     flex: 1,
