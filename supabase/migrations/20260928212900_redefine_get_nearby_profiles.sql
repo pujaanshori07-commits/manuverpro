@@ -78,8 +78,21 @@ BEGIN
       p.sport_role,
       p.last_active,
       p.profile_completeness,
-      p.prompt_question,
-      p.prompt_answer,
+      (
+        SELECT pq.question_text
+        FROM public.profile_prompts pp
+        JOIN public.prompt_questions pq ON pq.id = pp.question_id
+        WHERE pp.user_id = p.id
+        ORDER BY pp.display_order ASC
+        LIMIT 1
+      ) AS prompt_question,
+      (
+        SELECT pp.answer_text
+        FROM public.profile_prompts pp
+        WHERE pp.user_id = p.id
+        ORDER BY pp.display_order ASC
+        LIMIT 1
+      ) AS prompt_answer,
       ROUND((ST_Distance(p.location, requester_location) / 1000)::numeric, 1)::float AS distance_km,
       
       (

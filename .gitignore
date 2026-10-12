@@ -8,3 +8,4 @@ node_modules/
 scratch/
 .expo/
 .env
+supabase/.temp/

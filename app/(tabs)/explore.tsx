@@ -105,6 +105,31 @@ export default function ExploreScreen() {
         />
       </View>
 
+      {/* Category Filter (Fitur Tambahan Orange) */}
+      <View style={styles.categoryScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryList}
+        >
+          {CATEGORIES.map((cat) => {
+            const isActive = selectedCategory === cat;
+            return (
+              <TouchableOpacity
+                key={cat}
+                activeOpacity={0.8}
+                onPress={() => setSelectedCategory(cat)}
+                style={[styles.pill, isActive && styles.pillActive]}
+              >
+                <Text style={[styles.pillText, isActive && styles.pillTextActive]}>
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
 
       <ScrollView
         showsVerticalScrollIndicator={false}
